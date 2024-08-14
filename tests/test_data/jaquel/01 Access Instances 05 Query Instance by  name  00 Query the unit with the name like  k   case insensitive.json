@@ -1,0 +1,8 @@
+{
+    "AoUnit": {
+        "name": {
+            "$like": "k*"
+        },
+        "$options": "i"
+    }
+}

@@ -1,0 +1,19 @@
+{
+    "AoUnit": {
+        "phys_dimension": {
+            "length_exp": 1,
+            "mass_exp": 0,
+            "time_exp": -1,
+            "current_exp": 0,
+            "temperature_exp": 0,
+            "molar_amount_exp": 0,
+            "luminous_intensity_exp": 0
+        }
+    },
+    "$attributes": {
+        "name": 1,
+        "factor": 1,
+        "offset": 1,
+        "phys_dimension.name": 1
+    }
+}

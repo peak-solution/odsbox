@@ -1,0 +1,8 @@
+{
+    "AoUnit": {
+        "name": {
+            "$eq": "s"
+        },
+        "$options": "i"
+    }
+}

@@ -1,0 +1,51 @@
+{
+  "columns": [
+    {
+      "aid": "79",
+      "attribute": "Id"
+    },
+    {
+      "aid": "79",
+      "attribute": "Name"
+    },
+    {
+      "aid": "56",
+      "attribute": "Id"
+    },
+    {
+      "aid": "95",
+      "attribute": "model"
+    },
+    {
+      "aid": "88",
+      "attribute": "type"
+    },
+    {
+      "aid": "91",
+      "attribute": "transmission"
+    }
+  ],
+  "joins": [
+    {
+      "aidFrom": "79",
+      "aidTo": "56",
+      "relation": "UnitUnderTest"
+    },
+    {
+      "aidFrom": "95",
+      "aidTo": "56",
+      "relation": "UnitUnderTest"
+    },
+    {
+      "aidFrom": "88",
+      "aidTo": "56",
+      "relation": "UnitUnderTest"
+    },
+    {
+      "aidFrom": "91",
+      "aidTo": "56",
+      "relation": "UnitUnderTest"
+    }
+  ],
+  "rowLimit": "5"
+}

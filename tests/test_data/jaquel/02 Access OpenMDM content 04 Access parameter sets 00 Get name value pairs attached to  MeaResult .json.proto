@@ -1,0 +1,51 @@
+{
+  "columns": [
+    {
+      "aid": "66",
+      "attribute": "Name"
+    },
+    {
+      "aid": "66",
+      "attribute": "Value"
+    },
+    {
+      "aid": "66",
+      "attribute": "DataType"
+    },
+    {
+      "aid": "49",
+      "attribute": "Name"
+    },
+    {
+      "aid": "79",
+      "attribute": "Id"
+    }
+  ],
+  "where": [
+    {
+      "condition": {
+        "aid": "79",
+        "attribute": "Name",
+        "operator": "OP_LIKE",
+        "stringArray": {
+          "values": [
+            "APS*"
+          ]
+        }
+      }
+    }
+  ],
+  "joins": [
+    {
+      "aidFrom": "66",
+      "aidTo": "49",
+      "relation": "ResultParameterSet"
+    },
+    {
+      "aidFrom": "49",
+      "aidTo": "79",
+      "relation": "MeaResult"
+    }
+  ],
+  "rowLimit": "20"
+}

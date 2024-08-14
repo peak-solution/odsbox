@@ -1,0 +1,11 @@
+{
+    "AoMeasurementQuantity": {},
+    "$attributes": {
+        "name": 1,
+        "unit:OUTER.name": 1,
+        "quantity:OUTER.name": 1
+    },
+    "$options": {
+        "$rowlimit": 5
+    }
+}

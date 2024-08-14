@@ -1,0 +1,172 @@
+{
+  "columns": [
+    {
+      "aid": "54",
+      "attribute": "Name"
+    },
+    {
+      "aid": "54",
+      "attribute": "Factor"
+    },
+    {
+      "aid": "54",
+      "attribute": "Offset"
+    },
+    {
+      "aid": "47",
+      "attribute": "Name"
+    }
+  ],
+  "where": [
+    {
+      "conjunction": "CO_OPEN"
+    },
+    {
+      "conjunction": "CO_OPEN"
+    },
+    {
+      "condition": {
+        "aid": "47",
+        "attribute": "Length",
+        "longArray": {
+          "values": [
+            1
+          ]
+        }
+      }
+    },
+    {
+      "conjunction": "CO_CLOSE"
+    },
+    {
+      "conjunction": "CO_AND"
+    },
+    {
+      "conjunction": "CO_OPEN"
+    },
+    {
+      "condition": {
+        "aid": "47",
+        "attribute": "Mass",
+        "longArray": {
+          "values": [
+            0
+          ]
+        }
+      }
+    },
+    {
+      "conjunction": "CO_CLOSE"
+    },
+    {
+      "conjunction": "CO_AND"
+    },
+    {
+      "conjunction": "CO_OPEN"
+    },
+    {
+      "condition": {
+        "aid": "47",
+        "attribute": "Time",
+        "longArray": {
+          "values": [
+            -1
+          ]
+        }
+      }
+    },
+    {
+      "conjunction": "CO_CLOSE"
+    },
+    {
+      "conjunction": "CO_AND"
+    },
+    {
+      "conjunction": "CO_OPEN"
+    },
+    {
+      "condition": {
+        "aid": "47",
+        "attribute": "Current",
+        "longArray": {
+          "values": [
+            0
+          ]
+        }
+      }
+    },
+    {
+      "conjunction": "CO_CLOSE"
+    },
+    {
+      "conjunction": "CO_AND"
+    },
+    {
+      "conjunction": "CO_OPEN"
+    },
+    {
+      "condition": {
+        "aid": "47",
+        "attribute": "Temperature",
+        "longArray": {
+          "values": [
+            0
+          ]
+        }
+      }
+    },
+    {
+      "conjunction": "CO_CLOSE"
+    },
+    {
+      "conjunction": "CO_AND"
+    },
+    {
+      "conjunction": "CO_OPEN"
+    },
+    {
+      "condition": {
+        "aid": "47",
+        "attribute": "MolarAmount",
+        "longArray": {
+          "values": [
+            0
+          ]
+        }
+      }
+    },
+    {
+      "conjunction": "CO_CLOSE"
+    },
+    {
+      "conjunction": "CO_AND"
+    },
+    {
+      "conjunction": "CO_OPEN"
+    },
+    {
+      "condition": {
+        "aid": "47",
+        "attribute": "LuminousIntensity",
+        "longArray": {
+          "values": [
+            0
+          ]
+        }
+      }
+    },
+    {
+      "conjunction": "CO_CLOSE"
+    },
+    {
+      "conjunction": "CO_CLOSE"
+    }
+  ],
+  "joins": [
+    {
+      "aidFrom": "54",
+      "aidTo": "47",
+      "relation": "PhysDimension"
+    }
+  ]
+}

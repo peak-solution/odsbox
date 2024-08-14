@@ -1,0 +1,22 @@
+{
+  "columns": [
+    {
+      "aid": "80",
+      "attribute": "*"
+    }
+  ],
+  "where": [
+    {
+      "condition": {
+        "aid": "80",
+        "attribute": "DataType",
+        "longArray": {
+          "values": [
+            8
+          ]
+        }
+      }
+    }
+  ],
+  "rowLimit": "5"
+}

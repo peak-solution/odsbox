@@ -1,0 +1,6 @@
+{
+    "MeaResult": {},
+    "$options": {
+        "$rowlimit": 5
+    }
+}

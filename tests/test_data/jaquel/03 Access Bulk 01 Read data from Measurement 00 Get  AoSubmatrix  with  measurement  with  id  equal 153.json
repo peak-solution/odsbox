@@ -1,0 +1,13 @@
+{
+    "AoSubmatrix": {
+        "measurement": 153
+    },
+    "$attributes": {
+        "name": 1,
+        "id": 1,
+        "number_of_rows": 1
+    },
+    "$options": {
+        "$rowlimit": 5
+    }
+}

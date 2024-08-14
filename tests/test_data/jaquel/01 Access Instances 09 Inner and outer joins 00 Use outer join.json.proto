@@ -1,0 +1,31 @@
+{
+  "columns": [
+    {
+      "aid": "80",
+      "attribute": "Name"
+    },
+    {
+      "aid": "54",
+      "attribute": "Name"
+    },
+    {
+      "aid": "55",
+      "attribute": "Name"
+    }
+  ],
+  "joins": [
+    {
+      "aidFrom": "80",
+      "aidTo": "54",
+      "relation": "Unit",
+      "joinType": "JT_OUTER"
+    },
+    {
+      "aidFrom": "80",
+      "aidTo": "55",
+      "relation": "Quantity",
+      "joinType": "JT_OUTER"
+    }
+  ],
+  "rowLimit": "5"
+}

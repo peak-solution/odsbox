@@ -1,0 +1,27 @@
+{
+  "columns": [
+    {
+      "aid": "54",
+      "attribute": "Name"
+    },
+    {
+      "aid": "54",
+      "attribute": "Factor"
+    },
+    {
+      "aid": "54",
+      "attribute": "Offset"
+    },
+    {
+      "aid": "47",
+      "attribute": "*"
+    }
+  ],
+  "joins": [
+    {
+      "aidFrom": "54",
+      "aidTo": "47",
+      "relation": "PhysDimension"
+    }
+  ]
+}

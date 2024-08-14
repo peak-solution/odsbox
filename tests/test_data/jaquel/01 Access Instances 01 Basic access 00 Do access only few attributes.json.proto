@@ -1,0 +1,16 @@
+{
+  "columns": [
+    {
+      "aid": "54",
+      "attribute": "Name"
+    },
+    {
+      "aid": "54",
+      "attribute": "Factor"
+    },
+    {
+      "aid": "54",
+      "attribute": "Offset"
+    }
+  ]
+}

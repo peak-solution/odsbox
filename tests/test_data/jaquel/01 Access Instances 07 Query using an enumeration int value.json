@@ -1,0 +1,8 @@
+{
+    "AoMeasurementQuantity": {
+        "datatype": 8
+    },
+    "$options": {
+        "$rowlimit": 5
+    }
+}

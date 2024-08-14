@@ -1,0 +1,33 @@
+{
+  "columns": [
+    {
+      "aid": "79",
+      "attribute": "Name"
+    },
+    {
+      "aid": "79",
+      "attribute": "Id"
+    }
+  ],
+  "where": [
+    {
+      "condition": {
+        "aid": "78",
+        "attribute": "Id",
+        "longlongArray": {
+          "values": [
+            "4"
+          ]
+        }
+      }
+    }
+  ],
+  "joins": [
+    {
+      "aidFrom": "79",
+      "aidTo": "78",
+      "relation": "TestStep"
+    }
+  ],
+  "rowLimit": "5"
+}

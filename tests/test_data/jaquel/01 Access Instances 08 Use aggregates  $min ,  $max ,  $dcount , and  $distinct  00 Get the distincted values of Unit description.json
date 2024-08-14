@@ -1,0 +1,8 @@
+{
+    "AoUnit": {},
+    "$attributes": {
+        "description": {
+            "$distinct": 1
+        }
+    }
+}

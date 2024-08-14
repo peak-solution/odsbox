@@ -1,0 +1,6 @@
+{
+    "Test": {},
+    "$options": {
+        "$rowlimit": 5
+    }
+}

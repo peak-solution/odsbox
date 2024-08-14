@@ -1,0 +1,29 @@
+{
+  "columns": [
+    {
+      "aid": "80",
+      "attribute": "Name"
+    },
+    {
+      "aid": "54",
+      "attribute": "Name"
+    },
+    {
+      "aid": "55",
+      "attribute": "Name"
+    }
+  ],
+  "joins": [
+    {
+      "aidFrom": "80",
+      "aidTo": "54",
+      "relation": "Unit"
+    },
+    {
+      "aidFrom": "80",
+      "aidTo": "55",
+      "relation": "Quantity"
+    }
+  ],
+  "rowLimit": "5"
+}

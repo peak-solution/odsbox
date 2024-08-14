@@ -3,11 +3,11 @@ requires = ["flit_core >=2,<4"]
 build-backend = "flit_core.buildapi"
 
 [project]
-name =  "py-project-toml"
+name =  "asam-odsbox"
 authors = [
-    {name = "Daniel Ciborowski", email = "dciborow@microsoft.com"},
+    {name = "Andreas Krantz", email = "a.krantz@peak-solution.de"},
 ]
-description = "Sample Python Project for creating a new Python Module"
+description = "Toolbox for accessing ASAM ODS servers using the HTTP API"
 readme = "README.md"
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -21,6 +21,11 @@ classifiers = [
 ]
 requires-python = ">=3.8.1"
 dynamic = ["version"]
+dependencies=[
+    "protobuf>=5.26.0",
+    "requests>=2.32.2",
+    "pandas>=2.2.0"
+]
 
 [project.optional-dependencies]
 spark = [
@@ -47,12 +52,12 @@ test = [
 ]
 
 [project.urls]
-Documentation = "https://github.com/microsoft/python-package-template/tree/main#readme"
-Source = "https://github.com/microsoft/python-package-template"
-Tracker = "https://github.com/microsoft/python-package-template/issues"
+Documentation = "https://github.com/peak-solution/asam-odsbox/tree/main#readme"
+Source = "https://github.com/peak-solution/asam-odsbox"
+Tracker = "https://github.com/peak-solution/asam-odsbox/issues"
 
 [tool.flit.module]
-name = "python_package"
+name = "asam_odsbox"
 
 [tool.bandit]
 exclude_dirs = ["build","dist","tests","scripts"]

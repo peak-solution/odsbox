@@ -1,0 +1,26 @@
+{
+  "columns": [
+    {
+      "aid": "80",
+      "attribute": "Name"
+    },
+    {
+      "aid": "80",
+      "attribute": "Id"
+    }
+  ],
+  "where": [
+    {
+      "condition": {
+        "aid": "80",
+        "attribute": "MeaResult",
+        "longlongArray": {
+          "values": [
+            "153"
+          ]
+        }
+      }
+    }
+  ],
+  "rowLimit": "5"
+}

@@ -1,0 +1,16 @@
+{
+    "MeaResult": {},
+    "$attributes": {
+        "id": 1,
+        "name": 1,
+        "units_under_test": {
+            "id": 1,
+            "vehicle.model": 1,
+            "engine.type": 1,
+            "gearbox.transmission": 1
+        }
+    },
+    "$options": {
+        "$rowlimit": 5
+    }
+}

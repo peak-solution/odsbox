@@ -1,0 +1,14 @@
+{
+  "columns": [
+    {
+      "aid": "54",
+      "attribute": "Factor",
+      "aggregate": "AG_MAX"
+    },
+    {
+      "aid": "54",
+      "attribute": "Factor",
+      "aggregate": "AG_MIN"
+    }
+  ]
+}

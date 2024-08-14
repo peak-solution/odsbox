@@ -1,0 +1,14 @@
+{
+    "AoMeasurement": {},
+    "$attributes": {
+        "name": 1,
+        "description": 1
+    },
+    "$orderby": {
+        "name": 1
+    },
+    "$groupby": {
+        "name": 1,
+        "description": 1
+    }
+}
