@@ -53,9 +53,7 @@ class ConI:
                 for key, value in context_variables.items():
                     _context_variables.variables[key].string_array.values.append(value)
 
-        response = session.post(
-            url + "/ods", data=_context_variables.SerializeToString()
-        )
+        response = session.post(url + "/ods", data=_context_variables.SerializeToString())
         if 201 == response.status_code:
             con_i = response.headers["location"]
             self.__log.debug("ConI: %s", con_i)
@@ -132,9 +130,7 @@ class ConI:
         return_value.ParseFromString(response.content)
         return return_value
 
-    def n_m_relation_read(
-        self, data: ods.NtoMRelationIdentifier
-    ) -> ods.NtoMRelatedInstances:
+    def n_m_relation_read(self, data: ods.NtoMRelationIdentifier) -> ods.NtoMRelatedInstances:
         """Read n-m relations for a defined instance."""
         response = self.ods_post_request("n-m-relation-read", data)
         return_value = ods.NtoMRelatedInstances()
@@ -212,9 +208,7 @@ class ConI:
         return_value.ParseFromString(response.content)
         return return_value
 
-    def context_read(
-        self, pattern_or_filter: ods.ContextVariablesFilter | str = "*"
-    ) -> ods.ContextVariables:
+    def context_read(self, pattern_or_filter: ods.ContextVariablesFilter | str = "*") -> ods.ContextVariables:
         """Read the session context variables."""
         context_variables_filter = (
             pattern_or_filter
@@ -234,9 +228,7 @@ class ConI:
         """Update the password of the defined user."""
         self.ods_post_request("password-update", data)
 
-    def ods_post_request(
-        self, url: str, data: Message | None = None
-    ) -> requests.Response:
+    def ods_post_request(self, url: str, data: Message | None = None) -> requests.Response:
         """Do ODS post call with the given relative URL."""
 
         response = self.__session.post(

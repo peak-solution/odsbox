@@ -25,45 +25,31 @@ def query_physical_dimensions(
     select.columns.add(aid=physical_dimension_entity.aid, attribute="*")
     ci = select.where.add()
     ci.condition.aid = physical_dimension_entity.aid
-    ci.condition.attribute = con_i.mc.attribute_by_base_name(
-        physical_dimension_entity, "length_exp"
-    ).name
+    ci.condition.attribute = con_i.mc.attribute_by_base_name(physical_dimension_entity, "length_exp").name
     ci.condition.long_array.values.append(length)
     ci = select.where.add()
     ci.condition.aid = physical_dimension_entity.aid
-    ci.condition.attribute = con_i.mc.attribute_by_base_name(
-        physical_dimension_entity, "mass_exp"
-    ).name
+    ci.condition.attribute = con_i.mc.attribute_by_base_name(physical_dimension_entity, "mass_exp").name
     ci.condition.long_array.values.append(mass)
     ci = select.where.add()
     ci.condition.aid = physical_dimension_entity.aid
-    ci.condition.attribute = con_i.mc.attribute_by_base_name(
-        physical_dimension_entity, "time_exp"
-    ).name
+    ci.condition.attribute = con_i.mc.attribute_by_base_name(physical_dimension_entity, "time_exp").name
     ci.condition.long_array.values.append(time)
     ci = select.where.add()
     ci.condition.aid = physical_dimension_entity.aid
-    ci.condition.attribute = con_i.mc.attribute_by_base_name(
-        physical_dimension_entity, "current_exp"
-    ).name
+    ci.condition.attribute = con_i.mc.attribute_by_base_name(physical_dimension_entity, "current_exp").name
     ci.condition.long_array.values.append(current)
     ci = select.where.add()
     ci.condition.aid = physical_dimension_entity.aid
-    ci.condition.attribute = con_i.mc.attribute_by_base_name(
-        physical_dimension_entity, "temperature_exp"
-    ).name
+    ci.condition.attribute = con_i.mc.attribute_by_base_name(physical_dimension_entity, "temperature_exp").name
     ci.condition.long_array.values.append(temperature)
     ci = select.where.add()
     ci.condition.aid = physical_dimension_entity.aid
-    ci.condition.attribute = con_i.mc.attribute_by_base_name(
-        physical_dimension_entity, "molar_amount_exp"
-    ).name
+    ci.condition.attribute = con_i.mc.attribute_by_base_name(physical_dimension_entity, "molar_amount_exp").name
     ci.condition.long_array.values.append(molar_amount)
     ci = select.where.add()
     ci.condition.aid = physical_dimension_entity.aid
-    ci.condition.attribute = con_i.mc.attribute_by_base_name(
-        physical_dimension_entity, "luminous_intensity_exp"
-    ).name
+    ci.condition.attribute = con_i.mc.attribute_by_base_name(physical_dimension_entity, "luminous_intensity_exp").name
     ci.condition.long_array.values.append(luminous_intensity)
     return to_pandas(con_i.data_read(select))
 
@@ -91,45 +77,31 @@ def query_units(
     )
     ci = select.where.add()
     ci.condition.aid = physical_dimension_entity.aid
-    ci.condition.attribute = con_i.mc.attribute_by_base_name(
-        physical_dimension_entity, "length_exp"
-    ).name
+    ci.condition.attribute = con_i.mc.attribute_by_base_name(physical_dimension_entity, "length_exp").name
     ci.condition.long_array.values.append(length)
     ci = select.where.add()
     ci.condition.aid = physical_dimension_entity.aid
-    ci.condition.attribute = con_i.mc.attribute_by_base_name(
-        physical_dimension_entity, "mass_exp"
-    ).name
+    ci.condition.attribute = con_i.mc.attribute_by_base_name(physical_dimension_entity, "mass_exp").name
     ci.condition.long_array.values.append(mass)
     ci = select.where.add()
     ci.condition.aid = physical_dimension_entity.aid
-    ci.condition.attribute = con_i.mc.attribute_by_base_name(
-        physical_dimension_entity, "time_exp"
-    ).name
+    ci.condition.attribute = con_i.mc.attribute_by_base_name(physical_dimension_entity, "time_exp").name
     ci.condition.long_array.values.append(time)
     ci = select.where.add()
     ci.condition.aid = physical_dimension_entity.aid
-    ci.condition.attribute = con_i.mc.attribute_by_base_name(
-        physical_dimension_entity, "current_exp"
-    ).name
+    ci.condition.attribute = con_i.mc.attribute_by_base_name(physical_dimension_entity, "current_exp").name
     ci.condition.long_array.values.append(current)
     ci = select.where.add()
     ci.condition.aid = physical_dimension_entity.aid
-    ci.condition.attribute = con_i.mc.attribute_by_base_name(
-        physical_dimension_entity, "temperature_exp"
-    ).name
+    ci.condition.attribute = con_i.mc.attribute_by_base_name(physical_dimension_entity, "temperature_exp").name
     ci.condition.long_array.values.append(temperature)
     ci = select.where.add()
     ci.condition.aid = physical_dimension_entity.aid
-    ci.condition.attribute = con_i.mc.attribute_by_base_name(
-        physical_dimension_entity, "molar_amount_exp"
-    ).name
+    ci.condition.attribute = con_i.mc.attribute_by_base_name(physical_dimension_entity, "molar_amount_exp").name
     ci.condition.long_array.values.append(molar_amount)
     ci = select.where.add()
     ci.condition.aid = physical_dimension_entity.aid
-    ci.condition.attribute = con_i.mc.attribute_by_base_name(
-        physical_dimension_entity, "luminous_intensity_exp"
-    ).name
+    ci.condition.attribute = con_i.mc.attribute_by_base_name(physical_dimension_entity, "luminous_intensity_exp").name
     ci.condition.long_array.values.append(luminous_intensity)
     return to_pandas(con_i.data_read(select))
 
@@ -164,44 +136,30 @@ def query_quantity(
     )
     ci = select.where.add()
     ci.condition.aid = physical_dimension_entity.aid
-    ci.condition.attribute = con_i.mc.attribute_by_base_name(
-        physical_dimension_entity, "length_exp"
-    ).name
+    ci.condition.attribute = con_i.mc.attribute_by_base_name(physical_dimension_entity, "length_exp").name
     ci.condition.long_array.values.append(length)
     ci = select.where.add()
     ci.condition.aid = physical_dimension_entity.aid
-    ci.condition.attribute = con_i.mc.attribute_by_base_name(
-        physical_dimension_entity, "mass_exp"
-    ).name
+    ci.condition.attribute = con_i.mc.attribute_by_base_name(physical_dimension_entity, "mass_exp").name
     ci.condition.long_array.values.append(mass)
     ci = select.where.add()
     ci.condition.aid = physical_dimension_entity.aid
-    ci.condition.attribute = con_i.mc.attribute_by_base_name(
-        physical_dimension_entity, "time_exp"
-    ).name
+    ci.condition.attribute = con_i.mc.attribute_by_base_name(physical_dimension_entity, "time_exp").name
     ci.condition.long_array.values.append(time)
     ci = select.where.add()
     ci.condition.aid = physical_dimension_entity.aid
-    ci.condition.attribute = con_i.mc.attribute_by_base_name(
-        physical_dimension_entity, "current_exp"
-    ).name
+    ci.condition.attribute = con_i.mc.attribute_by_base_name(physical_dimension_entity, "current_exp").name
     ci.condition.long_array.values.append(current)
     ci = select.where.add()
     ci.condition.aid = physical_dimension_entity.aid
-    ci.condition.attribute = con_i.mc.attribute_by_base_name(
-        physical_dimension_entity, "temperature_exp"
-    ).name
+    ci.condition.attribute = con_i.mc.attribute_by_base_name(physical_dimension_entity, "temperature_exp").name
     ci.condition.long_array.values.append(temperature)
     ci = select.where.add()
     ci.condition.aid = physical_dimension_entity.aid
-    ci.condition.attribute = con_i.mc.attribute_by_base_name(
-        physical_dimension_entity, "molar_amount_exp"
-    ).name
+    ci.condition.attribute = con_i.mc.attribute_by_base_name(physical_dimension_entity, "molar_amount_exp").name
     ci.condition.long_array.values.append(molar_amount)
     ci = select.where.add()
     ci.condition.aid = physical_dimension_entity.aid
-    ci.condition.attribute = con_i.mc.attribute_by_base_name(
-        physical_dimension_entity, "luminous_intensity_exp"
-    ).name
+    ci.condition.attribute = con_i.mc.attribute_by_base_name(physical_dimension_entity, "luminous_intensity_exp").name
     ci.condition.long_array.values.append(luminous_intensity)
     return to_pandas(con_i.data_read(select))

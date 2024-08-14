@@ -47,8 +47,6 @@ def to_pandas(data_matrices: ods.DataMatrices) -> pd.DataFrame:
         for column in matrix.columns:
             values = __get_datamatrix_column_values(column)
             # The flags are ignored here. There might be NULL in here. Check column IsNull for this.
-            column_dict[matrix.name + "." + column.name] = (
-                [] if values is None else list(values)
-            )
+            column_dict[matrix.name + "." + column.name] = [] if values is None else list(values)
 
     return pd.DataFrame(column_dict)

@@ -18,9 +18,7 @@ class UnitCatalog:
 
     def __init__(self, con_i: ConI):
         self.__con_i = con_i
-        units_df = con_i.data_read_jaquel(
-            {"AoUnit": {}, "$attributes": {"name": 1, "id": 1}}
-        )
+        units_df = con_i.data_read_jaquel({"AoUnit": {}, "$attributes": {"name": 1, "id": 1}})
         self.__unit_map = {}
         for _, row in units_df.iterrows():
             unit_name = row.iloc[0]
@@ -48,16 +46,12 @@ class UnitCatalog:
 
     def __get_or_create_unknown_physical_dimension(self):
         if self.unknown_physical_dimension is None:
-            self.unknown_physical_dimension = self.__get_or_create_unknown_phys_dim(
-                "unknown"
-            )
+            self.unknown_physical_dimension = self.__get_or_create_unknown_phys_dim("unknown")
 
         return self.unknown_physical_dimension
 
     def __get_or_create_unknown_phys_dim(self, name):
-        physical_dimension_entity = self.__con_i.getEntityByBaseName(
-            "AoPhysicalDimension"
-        )
+        physical_dimension_entity = self.__con_i.getEntityByBaseName("AoPhysicalDimension")
         existing_physical_dimension = self.__con_i.data_read_jaquel(
             {"AoPhysicalDimension": {"name": name}, "$attributes": {"id": 1}}
         )
@@ -72,54 +66,34 @@ class UnitCatalog:
             ts = ods.DataMatrices()
             dm = ts.matrices.add(aid=physical_dimension_entity.aid)
             dm.columns.add(
-                name=self.__con_i.getAttributeByBaseName(
-                    physical_dimension_entity, "name"
-                ).name
+                name=self.__con_i.getAttributeByBaseName(physical_dimension_entity, "name").name
             ).string_array.values[:] = [name]
             dm.columns.add(
-                name=self.__con_i.getAttributeByBaseName(
-                    physical_dimension_entity, "mime_type"
-                ).name
+                name=self.__con_i.getAttributeByBaseName(physical_dimension_entity, "mime_type").name
             ).string_array.values[:] = ["application/x-asam.aophysicaldimension"]
             dm.columns.add(
-                name=self.__con_i.getAttributeByBaseName(
-                    physical_dimension_entity, "length_exp"
-                ).name
+                name=self.__con_i.getAttributeByBaseName(physical_dimension_entity, "length_exp").name
             ).long_array.values[:] = [0]
             dm.columns.add(
-                name=self.__con_i.getAttributeByBaseName(
-                    physical_dimension_entity, "mass_exp"
-                ).name
+                name=self.__con_i.getAttributeByBaseName(physical_dimension_entity, "mass_exp").name
             ).long_array.values[:] = [0]
             dm.columns.add(
-                name=self.__con_i.getAttributeByBaseName(
-                    physical_dimension_entity, "time_exp"
-                ).name
+                name=self.__con_i.getAttributeByBaseName(physical_dimension_entity, "time_exp").name
             ).long_array.values[:] = [0]
             dm.columns.add(
-                name=self.__con_i.getAttributeByBaseName(
-                    physical_dimension_entity, "current_exp"
-                ).name
+                name=self.__con_i.getAttributeByBaseName(physical_dimension_entity, "current_exp").name
             ).long_array.values[:] = [0]
             dm.columns.add(
-                name=self.__con_i.getAttributeByBaseName(
-                    physical_dimension_entity, "temperature_exp"
-                ).name
+                name=self.__con_i.getAttributeByBaseName(physical_dimension_entity, "temperature_exp").name
             ).long_array.values[:] = [0]
             dm.columns.add(
-                name=self.__con_i.getAttributeByBaseName(
-                    physical_dimension_entity, "molar_amount_exp"
-                ).name
+                name=self.__con_i.getAttributeByBaseName(physical_dimension_entity, "molar_amount_exp").name
             ).long_array.values[:] = [0]
             dm.columns.add(
-                name=self.__con_i.getAttributeByBaseName(
-                    physical_dimension_entity, "luminous_intensity_exp"
-                ).name
+                name=self.__con_i.getAttributeByBaseName(physical_dimension_entity, "luminous_intensity_exp").name
             ).long_array.values[:] = [0]
             if "angle" in physical_dimension_entity.attributes:
-                dm.columns.add(
-                    name=physical_dimension_entity.attributes["angle"].name
-                ).long_array.values[:] = [0]
+                dm.columns.add(name=physical_dimension_entity.attributes["angle"].name).long_array.values[:] = [0]
 
             ids = self.__con_i.data_create(ts)
             physical_dimension_id = ids[0]
@@ -135,21 +109,15 @@ class UnitCatalog:
         unit = self.__con_i.getEntityByBaseName("AoUnit")
         ts = ods.DataMatrices()
         dm = ts.matrices.add(aid=unit.aid)
-        dm.columns.add(
-            name=self.__con_i.getAttributeByBaseName(unit, "name").name
-        ).string_array.values[:] = [name]
-        dm.columns.add(
-            name=self.__con_i.getAttributeByBaseName(unit, "mime_type").name
-        ).string_array.values[:] = ["application/x-asam.aounit"]
-        dm.columns.add(
-            name=self.__con_i.getAttributeByBaseName(unit, "factor").name
-        ).double_array.values[:] = [1.0]
-        dm.columns.add(
-            name=self.__con_i.getAttributeByBaseName(unit, "offset").name
-        ).double_array.values[:] = [0.0]
-        dm.columns.add(
-            name=self.__con_i.getRelationByBaseName(unit, "phys_dimension").name
-        ).longlong_array.values[:] = [physical_dimension_id]
+        dm.columns.add(name=self.__con_i.getAttributeByBaseName(unit, "name").name).string_array.values[:] = [name]
+        dm.columns.add(name=self.__con_i.getAttributeByBaseName(unit, "mime_type").name).string_array.values[:] = [
+            "application/x-asam.aounit"
+        ]
+        dm.columns.add(name=self.__con_i.getAttributeByBaseName(unit, "factor").name).double_array.values[:] = [1.0]
+        dm.columns.add(name=self.__con_i.getAttributeByBaseName(unit, "offset").name).double_array.values[:] = [0.0]
+        dm.columns.add(name=self.__con_i.getRelationByBaseName(unit, "phys_dimension").name).longlong_array.values[
+            :
+        ] = [physical_dimension_id]
 
         ids = self.__con_i.data_create(ts)
         return ids[0]

@@ -61,13 +61,9 @@ class ModelCache:
             relation = relations[key]
             if relation_base_name.casefold() == relation.base_name.casefold():
                 return relation
-        raise ValueError(
-            f"Entity {entity.name} does not have relation derived from {relation_base_name}"
-        )
+        raise ValueError(f"Entity {entity.name} does not have relation derived from {relation_base_name}")
 
-    def relation_name_by_base_name(
-        self, entity_or_name: str | ods.Model.Entity, relation_base_name: str
-    ) -> str:
+    def relation_name_by_base_name(self, entity_or_name: str | ods.Model.Entity, relation_base_name: str) -> str:
         """
         Get the relation application name by base name.
 
@@ -93,13 +89,9 @@ class ModelCache:
             attribute = attributes[key]
             if attribute_base_name.casefold() == attribute.base_name.casefold():
                 return attribute
-        raise ValueError(
-            f"Entity {entity.name} does not have attribute derived from {attribute_base_name}"
-        )
+        raise ValueError(f"Entity {entity.name} does not have attribute derived from {attribute_base_name}")
 
-    def attribute_name_by_base_name(
-        self, entity_or_name: str | ods.Model.Entity, attribute_base_name: str
-    ) -> str:
+    def attribute_name_by_base_name(self, entity_or_name: str | ods.Model.Entity, attribute_base_name: str) -> str:
         """
         Get the attribute by base name.
 
@@ -110,11 +102,7 @@ class ModelCache:
         return self.attribute_by_base_name(entity_or_name, attribute_base_name).name
 
     def __entity(self, entity_or_name: str | ods.Model.Entity) -> ods.Model.Entity:
-        rv = (
-            entity_or_name
-            if isinstance(entity_or_name, ods.Model.Entity)
-            else self.__model.entities[entity_or_name]
-        )
+        rv = entity_or_name if isinstance(entity_or_name, ods.Model.Entity) else self.__model.entities[entity_or_name]
         if rv is None:
             raise ValueError(f"No entity named {entity_or_name} found")
         return rv
