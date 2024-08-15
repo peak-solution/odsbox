@@ -163,7 +163,7 @@ def __parse_path_and_add_joins(
     entity: ods.Model.Entity,
     attribute_path: str,
     joins: List[ods.SelectStatement.JoinItem],
-) -> Tuple[ods.DataTypeEnum, str, ods.Model.Entity]:
+) -> Tuple["ods.DataTypeEnum", str, ods.Model.Entity]:
     attribute_type = ods.DataTypeEnum.DT_UNKNOWN
     attribute_name = ""
     attribute_entity = entity

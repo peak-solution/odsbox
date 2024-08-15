@@ -81,7 +81,10 @@ def __convert_bulk_to_pandas_data_frame(
     for local_column_id, local_column_values in zip(id_array, values_array):
         local_column_meta = local_column_id_lookup[local_column_id]
         local_column_name = local_column_meta["name"]
-        column_dict[local_column_name] = list(__get_unknown_column_values(local_column_values))
+        local_column_values = list(__get_unknown_column_values(local_column_values))
+        local_column_len = len(local_column_values)
+        number_of_rows = local_column_len if local_column_len > number_of_rows else number_of_rows
+        column_dict[local_column_name] = local_column_values
         if local_column_meta["independent"]:
             independent_local_column_name = local_column_name
 
