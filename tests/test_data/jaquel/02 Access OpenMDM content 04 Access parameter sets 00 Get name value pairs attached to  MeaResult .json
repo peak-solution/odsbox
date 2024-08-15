@@ -1,0 +1,19 @@
+{
+    "ResultParameter": {
+        "parameter_set.MeaResult.Name": {
+            "$like": "APS*"
+        }
+    },
+    "$attributes": {
+        "Name": 1,
+        "Value": 1,
+        "DataType": 1,
+        "parameter_set": {
+            "name": 1,
+            "MeaResult.id": 1
+        }
+    },
+    "$options": {
+        "$rowlimit": 20
+    }
+}

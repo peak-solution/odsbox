@@ -1,0 +1,12 @@
+{
+    "AoMeasurement": 153,
+    "$attributes": {
+        "measurement_quantities": {
+            "name": 1,
+            "id": 1
+        }
+    },
+    "$options": {
+        "$rowlimit": 5
+    }
+}

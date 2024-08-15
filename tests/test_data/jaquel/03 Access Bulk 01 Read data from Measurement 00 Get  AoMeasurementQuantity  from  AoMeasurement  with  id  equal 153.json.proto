@@ -1,0 +1,33 @@
+{
+  "columns": [
+    {
+      "aid": "80",
+      "attribute": "Name"
+    },
+    {
+      "aid": "80",
+      "attribute": "Id"
+    }
+  ],
+  "where": [
+    {
+      "condition": {
+        "aid": "79",
+        "attribute": "Id",
+        "longlongArray": {
+          "values": [
+            "153"
+          ]
+        }
+      }
+    }
+  ],
+  "joins": [
+    {
+      "aidFrom": "80",
+      "aidTo": "79",
+      "relation": "MeaResult"
+    }
+  ],
+  "rowLimit": "5"
+}

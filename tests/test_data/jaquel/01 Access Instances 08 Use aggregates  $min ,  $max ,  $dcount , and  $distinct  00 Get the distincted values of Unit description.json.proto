@@ -1,0 +1,9 @@
+{
+  "columns": [
+    {
+      "aid": "54",
+      "attribute": "Description",
+      "aggregate": "AG_DISTINCT"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+    "AoMeasurement": {
+        "measurement_begin": {
+            "$between": [
+                "20001223000000",
+                "20241224000000"
+            ]
+        }
+    },
+    "$options": {
+        "$rowlimit": 5
+    }
+}

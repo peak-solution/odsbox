@@ -1,0 +1,41 @@
+{
+  "columns": [
+    {
+      "aid": "82",
+      "attribute": "Id"
+    },
+    {
+      "aid": "82",
+      "attribute": "Flags"
+    },
+    {
+      "aid": "82",
+      "attribute": "GenerationParameters"
+    },
+    {
+      "aid": "82",
+      "attribute": "Values"
+    }
+  ],
+  "where": [
+    {
+      "condition": {
+        "aid": "81",
+        "attribute": "MeaResult",
+        "longlongArray": {
+          "values": [
+            "153"
+          ]
+        }
+      }
+    }
+  ],
+  "joins": [
+    {
+      "aidFrom": "82",
+      "aidTo": "81",
+      "relation": "SubMatrix"
+    }
+  ],
+  "rowLimit": "5"
+}

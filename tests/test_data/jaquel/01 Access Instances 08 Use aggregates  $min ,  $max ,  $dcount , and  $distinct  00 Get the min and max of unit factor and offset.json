@@ -1,0 +1,13 @@
+{
+    "AoUnit": {},
+    "$attributes": {
+        "factor": {
+            "$max": 1,
+            "$min": 1
+        },
+        "offset": {
+            "$max": 1,
+            "$min": 1
+        }
+    }
+}

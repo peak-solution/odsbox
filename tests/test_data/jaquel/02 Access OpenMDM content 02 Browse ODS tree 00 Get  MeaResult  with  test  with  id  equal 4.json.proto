@@ -1,0 +1,26 @@
+{
+  "columns": [
+    {
+      "aid": "79",
+      "attribute": "Name"
+    },
+    {
+      "aid": "79",
+      "attribute": "Id"
+    }
+  ],
+  "where": [
+    {
+      "condition": {
+        "aid": "79",
+        "attribute": "TestStep",
+        "longlongArray": {
+          "values": [
+            "4"
+          ]
+        }
+      }
+    }
+  ],
+  "rowLimit": "5"
+}

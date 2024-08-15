@@ -1,0 +1,24 @@
+{
+  "columns": [
+    {
+      "aid": "79",
+      "attribute": "*"
+    }
+  ],
+  "where": [
+    {
+      "condition": {
+        "aid": "79",
+        "attribute": "MeasurementBegin",
+        "operator": "OP_BETWEEN",
+        "stringArray": {
+          "values": [
+            "20001223000000",
+            "20241224000000"
+          ]
+        }
+      }
+    }
+  ],
+  "rowLimit": "5"
+}

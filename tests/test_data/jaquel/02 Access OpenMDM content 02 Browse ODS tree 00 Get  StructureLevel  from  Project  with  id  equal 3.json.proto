@@ -1,0 +1,33 @@
+{
+  "columns": [
+    {
+      "aid": "67",
+      "attribute": "Name"
+    },
+    {
+      "aid": "67",
+      "attribute": "Id"
+    }
+  ],
+  "where": [
+    {
+      "condition": {
+        "aid": "48",
+        "attribute": "Id",
+        "longlongArray": {
+          "values": [
+            "3"
+          ]
+        }
+      }
+    }
+  ],
+  "joins": [
+    {
+      "aidFrom": "67",
+      "aidTo": "48",
+      "relation": "Project"
+    }
+  ],
+  "rowLimit": "5"
+}

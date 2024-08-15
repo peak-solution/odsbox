@@ -1,0 +1,30 @@
+{
+  "columns": [
+    {
+      "aid": "81",
+      "attribute": "Name"
+    },
+    {
+      "aid": "81",
+      "attribute": "Id"
+    },
+    {
+      "aid": "81",
+      "attribute": "SubMatrixNoRows"
+    }
+  ],
+  "where": [
+    {
+      "condition": {
+        "aid": "81",
+        "attribute": "MeaResult",
+        "longlongArray": {
+          "values": [
+            "153"
+          ]
+        }
+      }
+    }
+  ],
+  "rowLimit": "5"
+}

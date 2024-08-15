@@ -1,0 +1,15 @@
+{
+    "AoLocalColumn": {
+        "submatrix.measurement": 153
+    },
+    "$attributes": {
+        "name": 1,
+        "id": 1,
+        "sequence_representation": 1,
+        "independent": 1,
+        "global_flag": 1
+    },
+    "$options": {
+        "$rowlimit": 5
+    }
+}

@@ -1,0 +1,21 @@
+{
+  "columns": [
+    {
+      "aid": "54",
+      "attribute": "*"
+    }
+  ],
+  "where": [
+    {
+      "condition": {
+        "aid": "54",
+        "attribute": "Name",
+        "stringArray": {
+          "values": [
+            "s"
+          ]
+        }
+      }
+    }
+  ]
+}

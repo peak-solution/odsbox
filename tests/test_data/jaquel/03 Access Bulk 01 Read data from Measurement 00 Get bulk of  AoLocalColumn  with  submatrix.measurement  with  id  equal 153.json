@@ -1,0 +1,14 @@
+{
+    "AoLocalColumn": {
+        "submatrix.measurement": 153
+    },
+    "$attributes": {
+        "id": 1,
+        "flags": 1,
+        "generation_parameters": 1,
+        "values": 1
+    },
+    "$options": {
+        "$rowlimit": 5
+    }
+}

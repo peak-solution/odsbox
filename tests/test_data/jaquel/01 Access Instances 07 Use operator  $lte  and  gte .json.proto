@@ -1,0 +1,38 @@
+{
+  "columns": [
+    {
+      "aid": "80",
+      "attribute": "*"
+    }
+  ],
+  "where": [
+    {
+      "condition": {
+        "aid": "80",
+        "attribute": "Maximum",
+        "operator": "OP_GTE",
+        "doubleArray": {
+          "values": [
+            0.0
+          ]
+        }
+      }
+    },
+    {
+      "conjunction": "CO_AND"
+    },
+    {
+      "condition": {
+        "aid": "80",
+        "attribute": "Maximum",
+        "operator": "OP_LTE",
+        "doubleArray": {
+          "values": [
+            12000.0
+          ]
+        }
+      }
+    }
+  ],
+  "rowLimit": "5"
+}

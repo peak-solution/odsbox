@@ -1,0 +1,45 @@
+{
+  "columns": [
+    {
+      "aid": "82",
+      "attribute": "Name"
+    },
+    {
+      "aid": "82",
+      "attribute": "Id"
+    },
+    {
+      "aid": "82",
+      "attribute": "SequenceRepresentation"
+    },
+    {
+      "aid": "82",
+      "attribute": "IndependentFlag"
+    },
+    {
+      "aid": "82",
+      "attribute": "GlobalFlag"
+    }
+  ],
+  "where": [
+    {
+      "condition": {
+        "aid": "81",
+        "attribute": "MeaResult",
+        "longlongArray": {
+          "values": [
+            "153"
+          ]
+        }
+      }
+    }
+  ],
+  "joins": [
+    {
+      "aidFrom": "82",
+      "aidTo": "81",
+      "relation": "SubMatrix"
+    }
+  ],
+  "rowLimit": "5"
+}

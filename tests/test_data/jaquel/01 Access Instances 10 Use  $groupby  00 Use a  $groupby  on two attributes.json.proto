@@ -1,0 +1,28 @@
+{
+  "columns": [
+    {
+      "aid": "79",
+      "attribute": "Name"
+    },
+    {
+      "aid": "79",
+      "attribute": "Description"
+    }
+  ],
+  "orderBy": [
+    {
+      "aid": "79",
+      "attribute": "Name"
+    }
+  ],
+  "groupBy": [
+    {
+      "aid": "79",
+      "attribute": "Name"
+    },
+    {
+      "aid": "79",
+      "attribute": "Description"
+    }
+  ]
+}

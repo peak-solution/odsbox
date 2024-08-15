@@ -1,0 +1,9 @@
+{
+    "AoUnit": {},
+    "$attributes": {
+        "factor": {
+            "$max": 1,
+            "$min": 1
+        }
+    }
+}

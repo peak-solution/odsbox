@@ -1,0 +1,11 @@
+{
+    "AoMeasurementQuantity": {
+        "maximum": {
+            "$gt": 0.0,
+            "$lt": 12000.0
+        }
+    },
+    "$options": {
+        "$rowlimit": 5
+    }
+}

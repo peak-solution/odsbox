@@ -1,0 +1,13 @@
+{
+    "AoMeasurement": {
+        "measurement_begin": {
+            "$between": [
+                "2000-04-22T00:00:00.001Z",
+                "2024-04-23T00:00:00.002Z"
+            ]
+        }
+    },
+    "$options": {
+        "$rowlimit": 5
+    }
+}

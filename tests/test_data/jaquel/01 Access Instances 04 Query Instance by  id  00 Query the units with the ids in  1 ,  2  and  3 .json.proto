@@ -1,0 +1,24 @@
+{
+  "columns": [
+    {
+      "aid": "54",
+      "attribute": "*"
+    }
+  ],
+  "where": [
+    {
+      "condition": {
+        "aid": "54",
+        "attribute": "Id",
+        "operator": "OP_INSET",
+        "longlongArray": {
+          "values": [
+            "1",
+            "2",
+            "3"
+          ]
+        }
+      }
+    }
+  ]
+}
