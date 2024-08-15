@@ -68,7 +68,7 @@ targets = "src"
 [tool.black]
 line-length = 120
 fast = true
-exclude = "*_pb2.py*"
+exclude = ".+.*(_pb2\.py).*i?"
 
 [tool.coverage.run]
 branch = true
