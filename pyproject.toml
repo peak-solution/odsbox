@@ -68,10 +68,7 @@ targets = "src"
 [tool.black]
 line-length = 120
 fast = true
-exclude = [
-    "*_pb2.py",
-    "*_pb2.pyi"
-]
+exclude = "*_pb2.py*"
 
 [tool.coverage.run]
 branch = true
@@ -93,8 +90,7 @@ exclude = [
     "pywin32",
     "tests",
     "swagger_client",
-    "*_pb2.py",
-    "*_pb2.pyi"
+    "*_pb2.py*"
 ]
 ignore = [
     "E722",
@@ -179,7 +175,7 @@ extension-pkg-whitelist= [
     "scipy"
 ]
 ignore="CVS"
-ignore-patterns="test.*?py,conftest.py,*_pb2.py,*_pb2.pyi"
+ignore-patterns="test.*?py,conftest.py,*_pb2.py*"
 init-hook='import sys; sys.setrecursionlimit(8 * sys.getrecursionlimit())'
 jobs=0
 limit-inference-results=100
