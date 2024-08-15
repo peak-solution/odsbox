@@ -47,7 +47,6 @@ def __get_unknown_column_values(
 def __convert_bulk_to_pandas_data_frame(
     con_i: ConI, local_column_id_lookup: dict, data_matrices: ods.DataMatrices
 ) -> pd.DataFrame:
-
     if 1 != len(data_matrices.matrices):
         raise ValueError("Only allowed to have one matrix")
 

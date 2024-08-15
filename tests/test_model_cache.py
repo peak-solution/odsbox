@@ -19,7 +19,6 @@ def __get_model(model_file_name):
 
 
 def test_model_cache():
-
     model = __get_model("mdm_nvh_model.json")
 
     mc = ModelCache(model)
