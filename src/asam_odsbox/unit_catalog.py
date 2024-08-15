@@ -31,7 +31,7 @@ class UnitCatalog:
         if unit_name is None or "" == unit_name:
             return self.get_unit_id("-")
         rv = self.__unit_map.get(unit_name)
-        if not rv is None:
+        if rv is not None:
             return rv
         if not create_if_missing:
             raise ValueError(f"Unit with name '{unit_name}' does not exist.")

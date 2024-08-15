@@ -7,7 +7,9 @@ from typing import Tuple, List, Any
 
 import asam_odsbox.proto.ods_pb2 as ods
 
-# pylint: disable=E1101, C0301
+# pylint: disable=E1101
+
+OperatorEnum = ods.SelectStatement.ConditionItem.Condition.OperatorEnum
 
 _jo_aggregates = {
     "$none": ods.AggregateEnum.AG_NONE,
@@ -22,31 +24,31 @@ _jo_aggregates = {
     "$ia": ods.AggregateEnum.AG_INSTANCE_ATTRIBUTE,
 }
 _jo_operators = {
-    "$eq": ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_EQ,
-    "$neq": ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_NEQ,
-    "$lt": ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_LT,
-    "$gt": ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_GT,
-    "$lte": ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_LTE,
-    "$gte": ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_GTE,
-    "$in": ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_INSET,
-    "$notinset": ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_NOTINSET,
-    "$like": ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_LIKE,
-    "$null": ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_IS_NULL,
-    "$notnull": ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_IS_NOT_NULL,
-    "$notlike": ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_NOTLIKE,
-    "$between": ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_BETWEEN,
+    "$eq": OperatorEnum.OP_EQ,
+    "$neq": OperatorEnum.OP_NEQ,
+    "$lt": OperatorEnum.OP_LT,
+    "$gt": OperatorEnum.OP_GT,
+    "$lte": OperatorEnum.OP_LTE,
+    "$gte": OperatorEnum.OP_GTE,
+    "$in": OperatorEnum.OP_INSET,
+    "$notinset": OperatorEnum.OP_NOTINSET,
+    "$like": OperatorEnum.OP_LIKE,
+    "$null": OperatorEnum.OP_IS_NULL,
+    "$notnull": OperatorEnum.OP_IS_NOT_NULL,
+    "$notlike": OperatorEnum.OP_NOTLIKE,
+    "$between": OperatorEnum.OP_BETWEEN,
 }
 _jo_operators_ci_map = {
-    ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_EQ: ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_CI_EQ,
-    ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_NEQ: ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_CI_NEQ,
-    ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_LT: ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_CI_LT,
-    ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_GT: ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_CI_GT,
-    ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_LTE: ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_CI_LTE,
-    ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_GTE: ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_CI_GTE,
-    ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_INSET: ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_CI_INSET,
-    ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_NOTINSET: ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_CI_NOTINSET,
-    ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_LIKE: ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_CI_LIKE,
-    ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_NOTLIKE: ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_CI_NOTLIKE,
+    OperatorEnum.OP_EQ: OperatorEnum.OP_CI_EQ,
+    OperatorEnum.OP_NEQ: OperatorEnum.OP_CI_NEQ,
+    OperatorEnum.OP_LT: OperatorEnum.OP_CI_LT,
+    OperatorEnum.OP_GT: OperatorEnum.OP_CI_GT,
+    OperatorEnum.OP_LTE: OperatorEnum.OP_CI_LTE,
+    OperatorEnum.OP_GTE: OperatorEnum.OP_CI_GTE,
+    OperatorEnum.OP_INSET: OperatorEnum.OP_CI_INSET,
+    OperatorEnum.OP_NOTINSET: OperatorEnum.OP_CI_NOTINSET,
+    OperatorEnum.OP_LIKE: OperatorEnum.OP_CI_LIKE,
+    OperatorEnum.OP_NOTLIKE: OperatorEnum.OP_CI_NOTLIKE,
 }
 
 
@@ -75,7 +77,7 @@ def __model_get_relation(model: ods.Model, entity_name: str, relation_name: str)
     rv = __model_get_relation_by_application_name(model, entity_name, relation_name)
     if rv is None:
         rv = __model_get_relation_by_base_name(model, entity_name, relation_name)
-    if not rv is None:
+    if rv is not None:
         return rv
 
     return None
@@ -106,7 +108,7 @@ def __model_get_attribute(model: ods.Model, entity_name: str, attribute_name: st
     rv = __model_get_attribute_by_application_name(model, entity_name, attribute_name)
     if rv is None:
         rv = __model_get_attribute_by_base_name(model, entity_name, attribute_name)
-    if not rv is None:
+    if rv is not None:
         return rv
 
     return None
@@ -198,7 +200,7 @@ def __parse_path_and_add_joins(
             else:
                 # maybe relation or attribute
                 attribute = __model_get_attribute(model, attribute_entity.name, path_part)
-                if not attribute is None:
+                if attribute is not None:
                     attribute_name = attribute.name
                     attribute_type = attribute.data_type
                 else:
@@ -522,9 +524,9 @@ def __set_condition_value(
 
 def __get_ods_operator(
     attribute_type: ods.DataTypeEnum,
-    condition_operator: ods.SelectStatement.ConditionItem.Condition.OperatorEnum,
+    condition_operator: OperatorEnum,
     condition_options: str,
-) -> ods.SelectStatement.ConditionItem.Condition.OperatorEnum:
+) -> OperatorEnum:
     if attribute_type in (ods.DataTypeEnum.DT_STRING, ods.DataTypeEnum.DS_STRING):
         if -1 != condition_options.find("i"):
             # check if there is an CI operator
@@ -539,7 +541,7 @@ def __add_condition(
     entity: ods.Model.Entity,
     target: ods.SelectStatement,
     condition_path: str,
-    condition_operator: ods.SelectStatement.ConditionItem.Condition.OperatorEnum,
+    condition_operator: OperatorEnum,
     condition_operand_value: List[Any] | Any,
     condition_unit_id: int,
     condition_options: str,
@@ -659,7 +661,7 @@ def jaquel_to_ods(model: ods.Model, jaquel_query: str | dict) -> Tuple[ods.Model
     # first parse conditions to get entity
     for elem in query:
         if not elem.startswith("$"):
-            if not entity is None:
+            if entity is not None:
                 raise SyntaxError('Only one start point allowed "' + elem + '"')
 
             entity = __model_get_entity_ex(model, elem)
@@ -674,7 +676,7 @@ def jaquel_to_ods(model: ods.Model, jaquel_query: str | dict) -> Tuple[ods.Model
                         "conjuction": ods.SelectStatement.ConditionItem.ConjuctionEnum.CO_AND,
                         "conjuction_count": 0,
                         "path": "",
-                        "operator": ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_EQ,
+                        "operator": OperatorEnum.OP_EQ,
                         "options": "",
                         "unit": 0,
                     },
@@ -686,7 +688,7 @@ def jaquel_to_ods(model: ods.Model, jaquel_query: str | dict) -> Tuple[ods.Model
                     entity,
                     qse,
                     "id",
-                    ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_EQ,
+                    OperatorEnum.OP_EQ,
                     int(query[elem]),
                     0,
                     "",
