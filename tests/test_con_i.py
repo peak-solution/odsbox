@@ -5,7 +5,7 @@ from asam_odsbox.con_i import ConI
 import pytest
 
 
-@pytest.mark.integtest
+@pytest.mark.integration
 def test_con_i():
     con_i = ConI("http://79.140.180.128:10032/api", ("sa", "sa"))
     model = con_i.model_read()
