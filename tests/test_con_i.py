@@ -19,7 +19,6 @@ def test_con_i():
 
 @pytest.mark.integration
 def test_submatrix_load():
-
     with ConI("http://79.140.180.128:10032/api", ("sa", "sa")) as con_i:
         sm_s = con_i.data_read_jaquel(
             {
