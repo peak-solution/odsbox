@@ -32,7 +32,6 @@ class ConI:
         context_variables: ods.ContextVariables | dict | None = None,
         verify_certificate: bool = True,
     ):
-
         session = requests.Session()
         session.auth = auth
         session.headers.update(

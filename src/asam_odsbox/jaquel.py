@@ -153,11 +153,8 @@ def _jo_enum_get_numeric_value(
 
 def __jo_date(date_string: str) -> str:
     if date_string.endswith("Z"):
-
         tv = datetime.datetime.strptime(date_string, "%Y-%m-%dT%H:%M:%S.%fZ")
-
         return re.sub(r"(?<=[^\s]{14})0+$", "", tv.strftime("%Y%m%d%H%M%S%f"))
-
     return date_string
 
 
@@ -255,9 +252,7 @@ def __parse_attributes(
     element_dict: dict,
     attribute_dict: dict,
 ):
-
     for element in element_dict:
-
         element_attribute = attribute_dict.copy()
 
         if element.startswith("$"):
@@ -303,14 +298,10 @@ def __parse_orderby(
     element_dict: dict,
     attribute_dict: dict,
 ) -> None:
-
     for elem in element_dict:
-
-        elem_attribute = attribute_dict.copy()
-
         if elem.startswith("$"):
             raise SyntaxError(f"no predefined element '{elem}' defined in orderby")
-
+        elem_attribute = attribute_dict.copy()
         if elem_attribute["path"]:
             elem_attribute["path"] += "."
         elem_attribute["path"] += elem
@@ -340,18 +331,13 @@ def __parse_groupby(
     element_dict: dict,
     attribute_dict: dict,
 ) -> None:
-
     for elem in element_dict:
-
-        elem_attribute = attribute_dict.copy()
-
         if elem.startswith("$"):
             raise SyntaxError(f"no predefined element '{elem}' defined in orderby")
-
+        elem_attribute = attribute_dict.copy()
         if elem_attribute["path"]:
             elem_attribute["path"] += "."
         elem_attribute["path"] += elem
-
         if isinstance(element_dict[elem], dict):
             __parse_groupby(model, entity, target, element_dict[elem], elem_attribute)
         elif isinstance(element_dict[elem], list):
@@ -435,7 +421,6 @@ def __set_condition_value(
     src_values: List[Any] | Any,
     condition_item: ods.SelectStatement.ConditionItem,
 ) -> None:
-
     if isinstance(src_values, list):
         if attribute_type in (ods.DataTypeEnum.DT_BYTE, ods.DataTypeEnum.DS_BYTE):
             for src_value in src_values:
@@ -571,9 +556,7 @@ def __parse_conditions(
     element_dict: dict,
     attribute_dict: dict,
 ) -> None:
-
     for elem in element_dict:
-
         elem_attribute = attribute_dict.copy()
         if "$options" in element_dict:
             elem_attribute["options"] = element_dict["$options"]
