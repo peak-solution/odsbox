@@ -61,7 +61,7 @@ class UnitCatalog:
             {"AoPhysicalDimension": {"name": name}, "$attributes": {"id": 1}}
         )
         if existing_physical_dimension.shape[0] > 0:
-            physical_dimension_id = existing_physical_dimension.iloc[0][0]
+            physical_dimension_id = existing_physical_dimension.iloc[0, 0]
             self.__log.debug(
                 "Physical dimension '%s' already exists. Using existing ID: %s",
                 name,
