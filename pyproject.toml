@@ -48,10 +48,10 @@ test = [
     "shellcheck-py==0.10.0.1"
 ]
 
-#[project.urls]
-#Documentation = "https://github.com/peak-solution/asam-odsbox/tree/main#readme"
-#Source = "https://github.com/peak-solution/asam-odsbox"
-#Tracker = "https://github.com/peak-solution/asam-odsbox/issues"
+[project.urls]
+Documentation = "https://github.com/peak-solution/asam-odsbox/tree/main#readme"
+Source = "https://github.com/peak-solution/asam-odsbox"
+Tracker = "https://github.com/peak-solution/asam-odsbox/issues"
 
 [tool.flit.module]
 name = "asam_odsbox"
