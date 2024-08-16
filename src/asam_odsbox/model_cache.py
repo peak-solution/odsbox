@@ -4,8 +4,6 @@ import logging
 
 import asam_odsbox.proto.ods_pb2 as ods
 
-# pylint: disable=E1101
-
 
 class ModelCache:
     """The model object returned from ods server needs some utilities to work with it."""

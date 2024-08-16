@@ -7,8 +7,6 @@ import pandas as pd
 import asam_odsbox.proto.ods_pb2 as ods
 from asam_odsbox.con_i import ConI
 
-# pylint: disable=E1101
-
 
 def __get_column_from_dms(dms: ods.DataMatrices, entity: ods.Model.Entity, name: str) -> ods.DataMatrix.Column:
     for matrix in dms.matrices:

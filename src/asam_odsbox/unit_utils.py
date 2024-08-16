@@ -6,8 +6,6 @@ import asam_odsbox.proto.ods_pb2 as ods
 from asam_odsbox.con_i import ConI
 from asam_odsbox.datamatrices_to_pandas import to_pandas
 
-# pylint: disable=C0116
-
 
 def query_physical_dimensions(
     con_i: ConI,
@@ -19,9 +17,10 @@ def query_physical_dimensions(
     molar_amount: int = 0,
     luminous_intensity: int = 0,
 ) -> DataFrame:
+    """Search for a physical dimension by its SI exponents"""
     physical_dimension_entity = con_i.mc.entity_by_base_name("AoPhysicalDimension")
 
-    select = ods.SelectStatement()  # pylint: disable=E1101
+    select = ods.SelectStatement()
     select.columns.add(aid=physical_dimension_entity.aid, attribute="*")
     ci = select.where.add()
     ci.condition.aid = physical_dimension_entity.aid
@@ -64,6 +63,7 @@ def query_units(
     molar_amount: int = 0,
     luminous_intensity: int = 0,
 ) -> DataFrame:
+    """Search for a unit by its SI exponents"""
     unit_entity = con_i.mc.entity_by_base_name("AoUnit")
     physical_dimension_entity = con_i.mc.entity_by_base_name("AoPhysicalDimension")
 
@@ -116,11 +116,12 @@ def query_quantity(
     molar_amount: int = 0,
     luminous_intensity: int = 0,
 ) -> DataFrame:
+    """Search for a quantity by its SI exponents"""
     unit_entity = con_i.mc.entity_by_base_name("AoUnit")
     physical_dimension_entity = con_i.mc.entity_by_base_name("AoPhysicalDimension")
     quantity_entity = con_i.mc.entity_by_base_name("AoQuantity")
 
-    select = ods.SelectStatement()  # pylint: disable=E1101
+    select = ods.SelectStatement()
     select.columns.add(aid=quantity_entity.aid, attribute="*")
     select.columns.add(aid=unit_entity.aid, attribute="Name")
     select.columns.add(aid=physical_dimension_entity.aid, attribute="Name")

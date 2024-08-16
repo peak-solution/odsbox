@@ -14,8 +14,6 @@ from asam_odsbox.datamatrices_to_pandas import to_pandas
 from asam_odsbox.jaquel import jaquel_to_ods
 from asam_odsbox.model_cache import ModelCache
 
-# pylint: disable=E1101
-
 
 class ConI:
     """This is a helper to hold an ASAM ODS HTTP API ConI session"""
@@ -242,7 +240,11 @@ class ConI:
 
     def __check_result(self, response: requests.Response):
         if response.status_code not in (200, 201):
-            if "application/x-asamods+protobuf" == response.headers["Content-Type"]:
+            response.headers
+            if (
+                "Content-Type" in response.headers
+                and "application/x-asamods+protobuf" == response.headers["Content-Type"]
+            ):
                 error_info = ods.ErrorInfo()
                 error_info.ParseFromString(response.content)
                 raise requests.HTTPError(

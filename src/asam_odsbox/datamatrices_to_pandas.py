@@ -5,8 +5,6 @@ import pandas as pd
 
 import asam_odsbox.proto.ods_pb2 as ods
 
-# pylint: disable=E1101, C0116
-
 
 def __get_datamatrix_column_values(column: ods.DataMatrix.Column):
     if column.WhichOneof("ValuesOneOf") is None:

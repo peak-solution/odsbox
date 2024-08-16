@@ -7,8 +7,6 @@ from typing import Tuple, List, Any
 
 import asam_odsbox.proto.ods_pb2 as ods
 
-# pylint: disable=E1101
-
 OperatorEnum = ods.SelectStatement.ConditionItem.Condition.OperatorEnum
 
 _jo_aggregates = {
