@@ -18,7 +18,7 @@ class UnitCatalog:
 
     def __init__(self, con_i: ConI):
         self.__con_i = con_i
-        units_df = con_i.data_read_jaquel({"AoUnit": {}, "$attributes": {"name": 1, "id": 1}})
+        units_df = con_i.query_data({"AoUnit": {}, "$attributes": {"name": 1, "id": 1}})
         self.__unit_map = {}
         for _, row in units_df.iterrows():
             unit_name = row.iloc[0]
@@ -52,7 +52,7 @@ class UnitCatalog:
 
     def __get_or_create_unknown_phys_dim(self, name):
         physical_dimension_entity = self.__con_i.getEntityByBaseName("AoPhysicalDimension")
-        existing_physical_dimension = self.__con_i.data_read_jaquel(
+        existing_physical_dimension = self.__con_i.query_data(
             {"AoPhysicalDimension": {"name": name}, "$attributes": {"id": 1}}
         )
         if existing_physical_dimension.shape[0] > 0:

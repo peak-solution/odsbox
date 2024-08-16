@@ -8,7 +8,7 @@ data in Python more fun.
 from asam_odsbox.con_i import ConI
 
 with ConI("https://MY_SERVER/api", ("sa", "sa")) as con_i:
-    measurements = con_i.data_read_jaquel(
+    measurements = con_i.query_data(
         {
             "AoMeasurement": {"name": {"$like": "*"}},
             "$attributes": {"name": 1, "id": 1},

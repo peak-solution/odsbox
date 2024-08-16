@@ -87,18 +87,21 @@ class ConI:
             self.__con_i = None
             self.__check_result(response)
 
-    def data_read_jaquel(self, jaquel: str | dict) -> DataFrame:
-        """Query ODS server using JAQueL syntax."""
-        return to_pandas(self.data_read_jaquel_base(jaquel))
-
-    def data_read_jaquel_base(self, jaquel: str | dict) -> ods.DataMatrices:
-        """Query ODS server using JAQueL syntax and return result as pandas DataFrame."""
-        _ods_entity, ods_query = jaquel_to_ods(self.model(), jaquel)
-        return self.data_read(ods_query)
+    def query_data(self, query: str | dict | ods.SelectStatement) -> DataFrame:
+        """Query ods server for content"""
+        if isinstance(query, ods.SelectStatement):
+            return to_pandas(self.data_read(self.data_read_jaquel(query)))
+        else:
+            return to_pandas(self.data_read_jaquel(query))
 
     def model(self) -> ods.Model:
         """Get the cache ODS server model."""
         return self.mc.model()
+
+    def data_read_jaquel(self, jaquel: str | dict) -> ods.DataMatrices:
+        """Query ODS server using JAQueL syntax and return result as pandas DataFrame."""
+        _ods_entity, ods_query = jaquel_to_ods(self.model(), jaquel)
+        return self.data_read(ods_query)
 
     def data_read(self, data: ods.SelectStatement) -> ods.DataMatrices:
         """Query ASAM ODS server."""

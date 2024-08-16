@@ -328,7 +328,7 @@ contextmanager-decorators=contextlib.contextmanager
 # List of members which are set dynamically and missed by pylint inference
 # system, and so shouldn't trigger E1101 when accessed. Python regular
 # expressions are accepted.
-generated-members=numpy.*,np.*,pyspark.sql.functions,collect_list
+generated-members=numpy.*,np.*,ods_pb.*,collect_list
 
 # Tells whether missing members accessed in mixin class should be ignored. A
 # mixin class is detected if its name ends with "mixin" (case insensitive).

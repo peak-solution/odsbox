@@ -7,20 +7,28 @@ import logging
 import pytest
 
 
-@pytest.mark.integration
+def __create_con_i():
+    """Create a connection session for an ASAM ODS server"""
+    return ConI("http://79.140.180.128:10032/api", ("sa", "sa"))
+
+
 def test_con_i():
-    with ConI("http://79.140.180.128:10032/api", ("sa", "sa")) as con_i:
+    with __create_con_i() as con_i:
         model = con_i.model_read()
         assert len(model.entities) > 0
 
         entity = con_i.mc.entity_by_base_name("AoUnit")
         assert entity.base_name.lower() == "aounit"
 
+        con_i.query_data({"AoEnvironment": {}, "$options": {"$rowlimit": 1}})
+        con_i.query_data({"AoUnit": {}, "$options": {"$rowlimit": 1}})
+        con_i.query_data({"AoMeasurement": {}, "$options": {"$rowlimit": 1}})
+
 
 @pytest.mark.integration
 def test_submatrix_load():
-    with ConI("http://79.140.180.128:10032/api", ("sa", "sa")) as con_i:
-        sm_s = con_i.data_read_jaquel(
+    with __create_con_i() as con_i:
+        sm_s = con_i.query_data(
             {
                 "AoSubmatrix": {},
                 "$options": {"$rowlimit": 1},
