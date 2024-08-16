@@ -1,6 +1,9 @@
 """helper for handling transactions"""
 
-from .con_i import ConI
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .con_i import ConI
 
 
 class Transaction:
@@ -9,10 +12,12 @@ class Transaction:
     If no commit is called it will abort the transaction if with sections is left.
     """
 
-    def __init__(self, con_i: ConI):
-        self.con_i = None
+    __con_i: "ConI" = None
+
+    def __init__(self, con_i: "ConI"):
+        self.__con_i = None
         con_i.transaction_create()
-        self.con_i = con_i
+        self.__con_i = con_i
 
     def __del__(self):
         self.abort()
@@ -25,12 +30,12 @@ class Transaction:
 
     def commit(self) -> None:
         """Commit the transaction."""
-        if None is not self.con_i:
-            self.con_i.transaction_commit()
-            self.con_i = None
+        if None is not self.__con_i:
+            self.__con_i.transaction_commit()
+            self.__con_i = None
 
     def abort(self) -> None:
         """Aborts the transaction."""
-        if None is not self.con_i:
-            self.con_i.transaction_abort()
-            self.con_i = None
+        if None is not self.__con_i:
+            self.__con_i.transaction_abort()
+            self.__con_i = None

@@ -13,6 +13,7 @@ import asam_odsbox.proto.ods_pb2 as ods
 from asam_odsbox.datamatrices_to_pandas import to_pandas
 from asam_odsbox.jaquel import jaquel_to_ods
 from asam_odsbox.model_cache import ModelCache
+from asam_odsbox.transaction import Transaction
 
 
 class ConI:
@@ -140,6 +141,10 @@ class ConI:
     def n_m_relation_write(self, data: ods.NtoMWriteRelatedInstances) -> None:
         """Update, delete or create n-m relations for given instance pairs."""
         self.ods_post_request("n-m-relation-write", data)
+
+    def transaction(self) -> Transaction:
+        """Open a transaction object to be used in a with clause"""
+        return Transaction(self)
 
     def transaction_create(self) -> None:
         """Open a transaction for writing."""

@@ -25,6 +25,18 @@ def test_con_i():
         con_i.query_data({"AoMeasurement": {}, "$options": {"$rowlimit": 1}})
 
 
+def test_transaction():
+    with __create_con_i() as con_i:
+        with con_i.transaction() as transaction:
+            transaction.abort()
+
+        with con_i.transaction() as transaction:
+            transaction.commit()
+
+        with con_i.transaction() as transaction:
+            pass  # automatically abort
+
+
 @pytest.mark.integration
 def test_submatrix_load():
     with __create_con_i() as con_i:
