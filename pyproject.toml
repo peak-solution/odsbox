@@ -68,7 +68,7 @@ targets = "src"
 [tool.black]
 line-length = 120
 fast = true
-exclude = ".+.*(_pb2\\.py).*i?"
+exclude = ".+(_pb2\.py|_pb2\.pyi|_pb2_grpc\.py)$"
 
 [tool.coverage.run]
 branch = true
@@ -90,7 +90,7 @@ exclude = [
     "pywin32",
     "tests",
     "swagger_client",
-    "*_pb2.py*"
+    "*_pb2*.py*"
 ]
 ignore = [
     "E722",
@@ -163,7 +163,7 @@ extension-pkg-whitelist= [
     "scipy"
 ]
 ignore="CVS"
-ignore-patterns="test.*?py,conftest.py,*_pb2.py*"
+ignore-patterns="test.*?py,conftest.py,*_pb2*.py*"
 init-hook='import sys; sys.setrecursionlimit(8 * sys.getrecursionlimit())'
 jobs=0
 limit-inference-results=100
@@ -247,7 +247,7 @@ check-str-concat-over-line-jumps="no"
 
 [tool.pylint.'TYPECHECK']
 contextmanager-decorators="contextlib.contextmanager"
-generated-members="numpy.*,np.*,ods_pb2.*,collect_list"
+generated-members="numpy.*,np.*,ods*_pb2.*,collect_list"
 ignore-mixin-members="yes"
 ignore-none="yes"
 ignore-on-opaque-inference="yes"
