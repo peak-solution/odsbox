@@ -28,6 +28,9 @@ dependencies=[
 ]
 
 [project.optional-dependencies]
+exd_data = [
+    "grpcio>=1.65.1"
+]
 test = [
     "bandit[toml]==1.7.9",
     "black==24.8.0",
