@@ -2,8 +2,11 @@
 
 import logging
 
-from asam_odsbox.con_i import ConI
-import asam_odsbox.proto.ods_pb2 as ods
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .con_i import ConI
+import asam_odsbox.proto.ods_pb2 as _ods
 
 
 class UnitCatalog:
@@ -14,7 +17,7 @@ class UnitCatalog:
 
     __log: logging.Logger = logging.getLogger(__name__)
 
-    def __init__(self, con_i: ConI):
+    def __init__(self, con_i: "ConI"):
         self.__con_i = con_i
         units_df = con_i.query_data({"AoUnit": {}, "$attributes": {"name": 1, "id": 1}})
         self.__unit_map = {}
@@ -68,7 +71,7 @@ class UnitCatalog:
                 physical_dimension_id,
             )
         else:
-            ts = ods.DataMatrices()
+            ts = _ods.DataMatrices()
             dm = ts.matrices.add(aid=physical_dimension_entity.aid)
             dm.columns.add(
                 name=self.__con_i.mc.attribute_by_base_name(physical_dimension_entity, "name").name
@@ -112,7 +115,7 @@ class UnitCatalog:
 
     def __create_auto_unit(self, name: str, physical_dimension_id: int):
         unit = self.__con_i.mc.entity_by_base_name("AoUnit")
-        ts = ods.DataMatrices()
+        ts = _ods.DataMatrices()
         dm = ts.matrices.add(aid=unit.aid)
         dm.columns.add(name=self.__con_i.mc.attribute_by_base_name(unit, "name").name).string_array.values[:] = [name]
         dm.columns.add(name=self.__con_i.mc.attribute_by_base_name(unit, "mime_type").name).string_array.values[:] = [

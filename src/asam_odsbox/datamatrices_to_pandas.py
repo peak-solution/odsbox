@@ -3,10 +3,10 @@ them to an pandas dataframe for ease of use."""
 
 import pandas as pd
 
-import asam_odsbox.proto.ods_pb2 as ods
+import asam_odsbox.proto.ods_pb2 as _ods
 
 
-def __get_datamatrix_column_values(column: ods.DataMatrix.Column):
+def __get_datamatrix_column_values(column: _ods.DataMatrix.Column):
     if column.WhichOneof("ValuesOneOf") is None:
         return None
 
@@ -43,7 +43,7 @@ def __get_datamatrix_column_values(column: ods.DataMatrix.Column):
     raise ValueError(f"DataType {column.WhichOneof('ValuesOneOf')} not handled!")
 
 
-def to_pandas(data_matrices: ods.DataMatrices) -> pd.DataFrame:
+def to_pandas(data_matrices: _ods.DataMatrices) -> pd.DataFrame:
     """Converts data in an ASAM ODS DataMatrices into a pandas DataFrame."""
     if 0 == len(data_matrices.matrices):
         return pd.DataFrame()

@@ -5,21 +5,21 @@ import json
 import re
 from typing import Tuple, List, Any
 
-import asam_odsbox.proto.ods_pb2 as ods
+import asam_odsbox.proto.ods_pb2 as _ods
 
-OperatorEnum = ods.SelectStatement.ConditionItem.Condition.OperatorEnum
+OperatorEnum = _ods.SelectStatement.ConditionItem.Condition.OperatorEnum
 
 _jo_aggregates = {
-    "$none": ods.AggregateEnum.AG_NONE,
-    "$count": ods.AggregateEnum.AG_COUNT,
-    "$dcount": ods.AggregateEnum.AG_DCOUNT,
-    "$min": ods.AggregateEnum.AG_MIN,
-    "$max": ods.AggregateEnum.AG_MAX,
-    "$avg": ods.AggregateEnum.AG_AVG,
-    "$sum": ods.AggregateEnum.AG_SUM,
-    "$distinct": ods.AggregateEnum.AG_DISTINCT,
-    "$point": ods.AggregateEnum.AG_VALUES_POINT,
-    "$ia": ods.AggregateEnum.AG_INSTANCE_ATTRIBUTE,
+    "$none": _ods.AggregateEnum.AG_NONE,
+    "$count": _ods.AggregateEnum.AG_COUNT,
+    "$dcount": _ods.AggregateEnum.AG_DCOUNT,
+    "$min": _ods.AggregateEnum.AG_MIN,
+    "$max": _ods.AggregateEnum.AG_MAX,
+    "$avg": _ods.AggregateEnum.AG_AVG,
+    "$sum": _ods.AggregateEnum.AG_SUM,
+    "$distinct": _ods.AggregateEnum.AG_DISTINCT,
+    "$point": _ods.AggregateEnum.AG_VALUES_POINT,
+    "$ia": _ods.AggregateEnum.AG_INSTANCE_ATTRIBUTE,
 }
 _jo_operators = {
     "$eq": OperatorEnum.OP_EQ,
@@ -51,8 +51,8 @@ _jo_operators_ci_map = {
 
 
 def __model_get_relation_by_base_name(
-    model: ods.Model, entity_name: str, relation_base_name: str
-) -> ods.Model.Relation | None:
+    model: _ods.Model, entity_name: str, relation_base_name: str
+) -> _ods.Model.Relation | None:
     entity = model.entities[entity_name]
     for rel in entity.relations:
         if entity.relations[rel].base_name.lower() == relation_base_name.lower():
@@ -61,8 +61,8 @@ def __model_get_relation_by_base_name(
 
 
 def __model_get_relation_by_application_name(
-    model: ods.Model, entity_name: str, relation_application_name: str
-) -> ods.Model.Relation | None:
+    model: _ods.Model, entity_name: str, relation_application_name: str
+) -> _ods.Model.Relation | None:
     entity = model.entities[entity_name]
     for rel in entity.relations:
         if entity.relations[rel].name.lower() == relation_application_name.lower():
@@ -70,7 +70,7 @@ def __model_get_relation_by_application_name(
     return None
 
 
-def __model_get_relation(model: ods.Model, entity_name: str, relation_name: str) -> ods.Model.Relation | None:
+def __model_get_relation(model: _ods.Model, entity_name: str, relation_name: str) -> _ods.Model.Relation | None:
     """Get an relation by name. First try application name, then base name."""
     rv = __model_get_relation_by_application_name(model, entity_name, relation_name)
     if rv is None:
@@ -82,8 +82,8 @@ def __model_get_relation(model: ods.Model, entity_name: str, relation_name: str)
 
 
 def __model_get_attribute_by_base_name(
-    model: ods.Model, entity_name: str, attribute_base_name: str
-) -> ods.Model.Attribute | None:
+    model: _ods.Model, entity_name: str, attribute_base_name: str
+) -> _ods.Model.Attribute | None:
     entity = model.entities[entity_name]
     for attr in entity.attributes:
         if entity.attributes[attr].base_name.lower() == attribute_base_name.lower():
@@ -92,8 +92,8 @@ def __model_get_attribute_by_base_name(
 
 
 def __model_get_attribute_by_application_name(
-    model: ods.Model, entity_name: str, attribute_name: str
-) -> ods.Model.Attribute | None:
+    model: _ods.Model, entity_name: str, attribute_name: str
+) -> _ods.Model.Attribute | None:
     entity = model.entities[entity_name]
     for attr in entity.attributes:
         if entity.attributes[attr].name.lower() == attribute_name.lower():
@@ -101,7 +101,7 @@ def __model_get_attribute_by_application_name(
     return None
 
 
-def __model_get_attribute(model: ods.Model, entity_name: str, attribute_name: str) -> ods.Model.Attribute | None:
+def __model_get_attribute(model: _ods.Model, entity_name: str, attribute_name: str) -> _ods.Model.Attribute | None:
     """Get an attribute by name. First try application name, then base name."""
     rv = __model_get_attribute_by_application_name(model, entity_name, attribute_name)
     if rv is None:
@@ -112,7 +112,7 @@ def __model_get_attribute(model: ods.Model, entity_name: str, attribute_name: st
     return None
 
 
-def __model_get_entity_ex(model: ods.Model, entity_name_or_aid: str | int) -> ods.Model.Entity | None:
+def __model_get_entity_ex(model: _ods.Model, entity_name_or_aid: str | int) -> _ods.Model.Entity | None:
     for key in model.entities:
         entity = model.entities[key]
         if entity.name.lower() == entity_name_or_aid.lower() or entity.base_name.lower() == entity_name_or_aid.lower():
@@ -127,7 +127,9 @@ def __model_get_entity_ex(model: ods.Model, entity_name_or_aid: str | int) -> od
     return None
 
 
-def __model_get_enum_index(model: ods.Model, entity: ods.Model.Entity, attribute_name: str, str_val: str) -> int | None:
+def __model_get_enum_index(
+    model: _ods.Model, entity: _ods.Model.Entity, attribute_name: str, str_val: str
+) -> int | None:
     attr = entity.attributes[attribute_name]
     enum = model.enumerations[attr.enumeration]
     for key in enum.items:
@@ -138,8 +140,8 @@ def __model_get_enum_index(model: ods.Model, entity: ods.Model.Entity, attribute
 
 
 def _jo_enum_get_numeric_value(
-    model: ods.Model,
-    attribute_entity: ods.Model.Entity,
+    model: _ods.Model,
+    attribute_entity: _ods.Model.Entity,
     attribute_name: str,
     name_or_number: str | int,
 ) -> int:
@@ -157,22 +159,22 @@ def __jo_date(date_string: str) -> str:
 
 
 def __parse_path_and_add_joins(
-    model: ods.Model,
-    entity: ods.Model.Entity,
+    model: _ods.Model,
+    entity: _ods.Model.Entity,
     attribute_path: str,
-    joins: List[ods.SelectStatement.JoinItem],
-) -> Tuple["ods.DataTypeEnum", str, ods.Model.Entity]:
-    attribute_type = ods.DataTypeEnum.DT_UNKNOWN
+    joins: List[_ods.SelectStatement.JoinItem],
+) -> Tuple["_ods.DataTypeEnum", str, _ods.Model.Entity]:
+    attribute_type = _ods.DataTypeEnum.DT_UNKNOWN
     attribute_name = ""
     attribute_entity = entity
     path_parts = attribute_path.split(".")
     path_part_length = len(path_parts)
     for i in range(path_part_length):
         path_part = path_parts[i]
-        join_type = ods.SelectStatement.JoinItem.JoinTypeEnum.JT_DEFAULT
+        join_type = _ods.SelectStatement.JoinItem.JoinTypeEnum.JT_DEFAULT
         if path_part.endswith(":OUTER"):
             path_part = path_part[:-6]
-            join_type = ods.SelectStatement.JoinItem.JoinTypeEnum.JT_OUTER
+            join_type = _ods.SelectStatement.JoinItem.JoinTypeEnum.JT_OUTER
 
         if i != path_part_length - 1:
             # Must be a relation
@@ -191,7 +193,7 @@ def __parse_path_and_add_joins(
         else:
             if "*" == path_part:
                 attribute_name = "*"
-                attribute_type = ods.DataTypeEnum.DT_UNKNOWN
+                attribute_type = _ods.DataTypeEnum.DT_UNKNOWN
             else:
                 # maybe relation or attribute
                 attribute = __model_get_attribute(model, attribute_entity.name, path_part)
@@ -201,16 +203,16 @@ def __parse_path_and_add_joins(
                 else:
                     relation = __model_get_relation(model, attribute_entity.name, path_part)
                     attribute_name = relation.name
-                    attribute_type = ods.DataTypeEnum.DT_LONGLONG  # its an id
+                    attribute_type = _ods.DataTypeEnum.DT_LONGLONG  # its an id
     return attribute_type, attribute_name, attribute_entity
 
 
 def __add_join_to_seq(
-    model: ods.Model,
-    entity_from: ods.Model.Entity,
-    relation: ods.Model.Relation,
-    join_sequence: List[ods.SelectStatement.JoinItem],
-    join_type: ods.SelectStatement.JoinItem.JoinTypeEnum,
+    model: _ods.Model,
+    entity_from: _ods.Model.Entity,
+    relation: _ods.Model.Relation,
+    join_sequence: List[_ods.SelectStatement.JoinItem],
+    join_type: _ods.SelectStatement.JoinItem.JoinTypeEnum,
 ) -> None:
     entity_to = model.entities[relation.entity_name]
     for join in join_sequence:
@@ -226,7 +228,7 @@ def __add_join_to_seq(
     )
 
 
-def __parse_global_options(elem_dict: dict, target: ods.SelectStatement) -> None:
+def __parse_global_options(elem_dict: dict, target: _ods.SelectStatement) -> None:
     for elem in elem_dict:
         if elem.startswith("$"):
             if "$rowlimit" == elem:
@@ -244,9 +246,9 @@ def __parse_global_options(elem_dict: dict, target: ods.SelectStatement) -> None
 
 
 def __parse_attributes(
-    model: ods.Model,
-    entity: ods.Model.Entity,
-    target: ods.SelectStatement,
+    model: _ods.Model,
+    entity: _ods.Model.Entity,
+    target: _ods.SelectStatement,
     element_dict: dict,
     attribute_dict: dict,
 ):
@@ -290,9 +292,9 @@ def __parse_attributes(
 
 
 def __parse_orderby(
-    model: ods.Model,
-    entity: ods.Model.Entity,
-    target: ods.SelectStatement,
+    model: _ods.Model,
+    entity: _ods.Model.Entity,
+    target: _ods.SelectStatement,
     element_dict: dict,
     attribute_dict: dict,
 ) -> None:
@@ -312,20 +314,20 @@ def __parse_orderby(
             _attribute_type, attribute_name, attribute_entity = __parse_path_and_add_joins(
                 model, entity, elem_attribute["path"], target.joins
             )
-            order = ods.SelectStatement.OrderByItem.OD_ASCENDING
+            order = _ods.SelectStatement.OrderByItem.OD_ASCENDING
             if 0 == element_dict[elem]:
-                order = ods.SelectStatement.OrderByItem.OD_DESCENDING
+                order = _ods.SelectStatement.OrderByItem.OD_DESCENDING
             elif 1 == element_dict[elem]:
-                order = ods.SelectStatement.OrderByItem.OD_ASCENDING
+                order = _ods.SelectStatement.OrderByItem.OD_ASCENDING
             else:
                 raise SyntaxError(str(element_dict[elem]) + " not supported for orderby")
             target.order_by.add(aid=attribute_entity.aid, attribute=attribute_name, order=order)
 
 
 def __parse_groupby(
-    model: ods.Model,
-    entity: ods.Model.Entity,
-    target: ods.SelectStatement,
+    model: _ods.Model,
+    entity: _ods.Model.Entity,
+    target: _ods.SelectStatement,
     element_dict: dict,
     attribute_dict: dict,
 ) -> None:
@@ -350,10 +352,10 @@ def __parse_groupby(
 
 
 def __parse_conditions_conjunction(
-    model: ods.Model,
-    entity: ods.Model.Entity,
-    conjunction: ods.SelectStatement.ConditionItem.ConjuctionEnum,
-    target: ods.SelectStatement,
+    model: _ods.Model,
+    entity: _ods.Model.Entity,
+    conjunction: _ods.SelectStatement.ConditionItem.ConjuctionEnum,
+    target: _ods.SelectStatement,
     element_dict: dict,
     attribute_dict: dict,
 ) -> None:
@@ -364,7 +366,7 @@ def __parse_conditions_conjunction(
         target.where.add().conjunction = attribute_dict["conjuction"]
 
     if len(element_dict) > 1:
-        target.where.add().conjunction = ods.SelectStatement.ConditionItem.ConjuctionEnum.CO_OPEN
+        target.where.add().conjunction = _ods.SelectStatement.ConditionItem.ConjuctionEnum.CO_OPEN
 
     first_time = True
     for elem in element_dict:
@@ -374,23 +376,23 @@ def __parse_conditions_conjunction(
         if not first_time:
             target.where.add().conjunction = conjunction
 
-        target.where.add().conjunction = ods.SelectStatement.ConditionItem.ConjuctionEnum.CO_OPEN
+        target.where.add().conjunction = _ods.SelectStatement.ConditionItem.ConjuctionEnum.CO_OPEN
         elem_attribute = attribute_dict.copy()
         elem_attribute["conjuction_count"] = 0
-        elem_attribute["conjuction"] = ods.SelectStatement.ConditionItem.ConjuctionEnum.CO_AND
+        elem_attribute["conjuction"] = _ods.SelectStatement.ConditionItem.ConjuctionEnum.CO_AND
         elem_attribute["options"] = ""
         __parse_conditions(model, entity, target, elem, elem_attribute)
-        target.where.add().conjunction = ods.SelectStatement.ConditionItem.ConjuctionEnum.CO_CLOSE
+        target.where.add().conjunction = _ods.SelectStatement.ConditionItem.ConjuctionEnum.CO_CLOSE
         first_time = False
 
     if len(element_dict) > 1:
-        target.where.add().conjunction = ods.SelectStatement.ConditionItem.ConjuctionEnum.CO_CLOSE
+        target.where.add().conjunction = _ods.SelectStatement.ConditionItem.ConjuctionEnum.CO_CLOSE
 
 
 def __parse_conditions_not(
-    model: ods.Model,
-    entity: ods.Model.Entity,
-    target: ods.SelectStatement,
+    model: _ods.Model,
+    entity: _ods.Model.Entity,
+    target: _ods.SelectStatement,
     element_dict: dict,
     attribute_dict: dict,
 ) -> None:
@@ -402,102 +404,102 @@ def __parse_conditions_not(
 
     elem_attribute = attribute_dict.copy()
     elem_attribute["conjuction_count"] = 0
-    elem_attribute["conjuction"] = ods.SelectStatement.ConditionItem.ConjuctionEnum.CO_AND
+    elem_attribute["conjuction"] = _ods.SelectStatement.ConditionItem.ConjuctionEnum.CO_AND
     elem_attribute["options"] = ""
 
-    target.where.add().conjunction = ods.SelectStatement.ConditionItem.ConjuctionEnum.CO_NOT
-    target.where.add().conjunction = ods.SelectStatement.ConditionItem.ConjuctionEnum.CO_OPEN
+    target.where.add().conjunction = _ods.SelectStatement.ConditionItem.ConjuctionEnum.CO_NOT
+    target.where.add().conjunction = _ods.SelectStatement.ConditionItem.ConjuctionEnum.CO_OPEN
     __parse_conditions(model, entity, target, element_dict, elem_attribute)
-    target.where.add().conjunction = ods.SelectStatement.ConditionItem.ConjuctionEnum.CO_CLOSE
+    target.where.add().conjunction = _ods.SelectStatement.ConditionItem.ConjuctionEnum.CO_CLOSE
 
 
 def __set_condition_value(
-    model: ods.Model,
-    attribute_entity: ods.Model.Entity,
+    model: _ods.Model,
+    attribute_entity: _ods.Model.Entity,
     attribute_name: str,
-    attribute_type: ods.DataTypeEnum,
+    attribute_type: _ods.DataTypeEnum,
     src_values: List[Any] | Any,
-    condition_item: ods.SelectStatement.ConditionItem,
+    condition_item: _ods.SelectStatement.ConditionItem,
 ) -> None:
     if isinstance(src_values, list):
-        if attribute_type in (ods.DataTypeEnum.DT_BYTE, ods.DataTypeEnum.DS_BYTE):
+        if attribute_type in (_ods.DataTypeEnum.DT_BYTE, _ods.DataTypeEnum.DS_BYTE):
             for src_value in src_values:
                 condition_item.byte_array.values.append(int(src_value))
         elif attribute_type in (
-            ods.DataTypeEnum.DT_BOOLEAN,
-            ods.DataTypeEnum.DS_BOOLEAN,
+            _ods.DataTypeEnum.DT_BOOLEAN,
+            _ods.DataTypeEnum.DS_BOOLEAN,
         ):
             for src_value in src_values:
                 condition_item.boolean_array.values.append(int(src_value))
-        elif attribute_type in (ods.DataTypeEnum.DT_SHORT, ods.DataTypeEnum.DS_SHORT):
+        elif attribute_type in (_ods.DataTypeEnum.DT_SHORT, _ods.DataTypeEnum.DS_SHORT):
             for src_value in src_values:
                 condition_item.long_array.values.append(int(src_value))
-        elif attribute_type in (ods.DataTypeEnum.DT_LONG, ods.DataTypeEnum.DS_LONG):
+        elif attribute_type in (_ods.DataTypeEnum.DT_LONG, _ods.DataTypeEnum.DS_LONG):
             for src_value in src_values:
                 condition_item.long_array.values.append(int(src_value))
         elif attribute_type in (
-            ods.DataTypeEnum.DT_LONGLONG,
-            ods.DataTypeEnum.DS_LONGLONG,
+            _ods.DataTypeEnum.DT_LONGLONG,
+            _ods.DataTypeEnum.DS_LONGLONG,
         ):
             for src_value in src_values:
                 condition_item.longlong_array.values.append(int(src_value))
-        elif attribute_type in (ods.DataTypeEnum.DT_FLOAT, ods.DataTypeEnum.DS_FLOAT):
+        elif attribute_type in (_ods.DataTypeEnum.DT_FLOAT, _ods.DataTypeEnum.DS_FLOAT):
             for src_value in src_values:
                 condition_item.float_array.values.append(float(src_value))
-        elif attribute_type in (ods.DataTypeEnum.DT_DOUBLE, ods.DataTypeEnum.DS_DOUBLE):
+        elif attribute_type in (_ods.DataTypeEnum.DT_DOUBLE, _ods.DataTypeEnum.DS_DOUBLE):
             for src_value in src_values:
                 condition_item.double_array.values.append(float(src_value))
-        elif attribute_type in (ods.DataTypeEnum.DT_DATE, ods.DataTypeEnum.DS_DATE):
+        elif attribute_type in (_ods.DataTypeEnum.DT_DATE, _ods.DataTypeEnum.DS_DATE):
             for src_value in src_values:
                 condition_item.string_array.values.append(__jo_date(src_value))
-        elif attribute_type in (ods.DataTypeEnum.DT_STRING, ods.DataTypeEnum.DS_STRING):
+        elif attribute_type in (_ods.DataTypeEnum.DT_STRING, _ods.DataTypeEnum.DS_STRING):
             for src_value in src_values:
                 condition_item.string_array.values.append(str(src_value))
-        elif attribute_type in (ods.DataTypeEnum.DT_ENUM, ods.DataTypeEnum.DS_ENUM):
+        elif attribute_type in (_ods.DataTypeEnum.DT_ENUM, _ods.DataTypeEnum.DS_ENUM):
             for src_value in src_values:
                 condition_item.long_array.values.append(
                     _jo_enum_get_numeric_value(model, attribute_entity, attribute_name, src_value)
                 )
         elif attribute_type in (
-            ods.DataTypeEnum.DT_COMPLEX,
-            ods.DataTypeEnum.DS_COMPLEX,
+            _ods.DataTypeEnum.DT_COMPLEX,
+            _ods.DataTypeEnum.DS_COMPLEX,
         ):
             for src_value in src_values:
                 condition_item.float_array.values.append(float(src_value))
         elif attribute_type in (
-            ods.DataTypeEnum.DT_DCOMPLEX,
-            ods.DataTypeEnum.DS_DCOMPLEX,
+            _ods.DataTypeEnum.DT_DCOMPLEX,
+            _ods.DataTypeEnum.DS_DCOMPLEX,
         ):
             for src_value in src_values:
                 condition_item.double_array.values.append(float(src_value))
         elif attribute_type in (
-            ods.DataTypeEnum.DT_EXTERNALREFERENCE,
-            ods.DataTypeEnum.DS_EXTERNALREFERENCE,
+            _ods.DataTypeEnum.DT_EXTERNALREFERENCE,
+            _ods.DataTypeEnum.DS_EXTERNALREFERENCE,
         ):
             for src_value in src_values:
                 condition_item.string_array.values.append(str(src_value))
         else:
             raise ValueError(f"Unknown how to attach array, does not exist as {attribute_type} union.")
     else:
-        if attribute_type == ods.DataTypeEnum.DT_BYTE:
+        if attribute_type == _ods.DataTypeEnum.DT_BYTE:
             condition_item.byte_array.values.append(int(src_values))
-        elif attribute_type == ods.DataTypeEnum.DT_BOOLEAN:
+        elif attribute_type == _ods.DataTypeEnum.DT_BOOLEAN:
             condition_item.boolean_array.values.append(int(src_values))
-        elif attribute_type == ods.DataTypeEnum.DT_SHORT:
+        elif attribute_type == _ods.DataTypeEnum.DT_SHORT:
             condition_item.long_array.values.append(int(src_values))
-        elif attribute_type == ods.DataTypeEnum.DT_LONG:
+        elif attribute_type == _ods.DataTypeEnum.DT_LONG:
             condition_item.long_array.values.append(int(src_values))
-        elif attribute_type == ods.DataTypeEnum.DT_LONGLONG:
+        elif attribute_type == _ods.DataTypeEnum.DT_LONGLONG:
             condition_item.longlong_array.values.append(int(src_values))
-        elif attribute_type == ods.DataTypeEnum.DT_FLOAT:
+        elif attribute_type == _ods.DataTypeEnum.DT_FLOAT:
             condition_item.float_array.values.append(float(src_values))
-        elif attribute_type == ods.DataTypeEnum.DT_DOUBLE:
+        elif attribute_type == _ods.DataTypeEnum.DT_DOUBLE:
             condition_item.double_array.values.append(float(src_values))
-        elif attribute_type == ods.DataTypeEnum.DT_DATE:
+        elif attribute_type == _ods.DataTypeEnum.DT_DATE:
             condition_item.string_array.values.append(__jo_date(src_values))
-        elif attribute_type == ods.DataTypeEnum.DT_STRING:
+        elif attribute_type == _ods.DataTypeEnum.DT_STRING:
             condition_item.string_array.values.append(str(src_values))
-        elif attribute_type == ods.DataTypeEnum.DT_ENUM:
+        elif attribute_type == _ods.DataTypeEnum.DT_ENUM:
             condition_item.long_array.values.append(
                 _jo_enum_get_numeric_value(model, attribute_entity, attribute_name, src_values)
             )
@@ -506,11 +508,11 @@ def __set_condition_value(
 
 
 def __get_ods_operator(
-    attribute_type: ods.DataTypeEnum,
+    attribute_type: _ods.DataTypeEnum,
     condition_operator: OperatorEnum,
     condition_options: str,
 ) -> OperatorEnum:
-    if attribute_type in (ods.DataTypeEnum.DT_STRING, ods.DataTypeEnum.DS_STRING):
+    if attribute_type in (_ods.DataTypeEnum.DT_STRING, _ods.DataTypeEnum.DS_STRING):
         if -1 != condition_options.find("i"):
             # check if there is an CI operator
             if condition_operator in _jo_operators_ci_map:
@@ -520,9 +522,9 @@ def __get_ods_operator(
 
 
 def __add_condition(
-    model: ods.Model,
-    entity: ods.Model.Entity,
-    target: ods.SelectStatement,
+    model: _ods.Model,
+    entity: _ods.Model.Entity,
+    target: _ods.SelectStatement,
     condition_path: str,
     condition_operator: OperatorEnum,
     condition_operand_value: List[Any] | Any,
@@ -548,9 +550,9 @@ def __add_condition(
 
 
 def __parse_conditions(
-    model: ods.Model,
-    entity: ods.Model.Entity,
-    target: ods.SelectStatement,
+    model: _ods.Model,
+    entity: _ods.Model.Entity,
+    target: _ods.SelectStatement,
     element_dict: dict,
     attribute_dict: dict,
 ) -> None:
@@ -568,7 +570,7 @@ def __parse_conditions(
                 __parse_conditions_conjunction(
                     model,
                     entity,
-                    ods.SelectStatement.ConditionItem.ConjuctionEnum.CO_AND,
+                    _ods.SelectStatement.ConditionItem.ConjuctionEnum.CO_AND,
                     target,
                     element_dict[elem],
                     attribute_dict,
@@ -579,7 +581,7 @@ def __parse_conditions(
                 __parse_conditions_conjunction(
                     model,
                     entity,
-                    ods.SelectStatement.ConditionItem.ConjuctionEnum.CO_OR,
+                    _ods.SelectStatement.ConditionItem.ConjuctionEnum.CO_OR,
                     target,
                     element_dict[elem],
                     attribute_dict,
@@ -627,7 +629,7 @@ def __parse_conditions(
             attribute_dict["conjuction_count"] = attribute_dict["conjuction_count"] + 1
 
 
-def jaquel_to_ods(model: ods.Model, jaquel_query: str | dict) -> Tuple[ods.Model.Entity, ods.SelectStatement]:
+def jaquel_to_ods(model: _ods.Model, jaquel_query: str | dict) -> Tuple[_ods.Model.Entity, _ods.SelectStatement]:
     """Convert a given JAQueL query into an ASAM ODS SelectStatement."""
     if isinstance(jaquel_query, dict):
         query = jaquel_query
@@ -637,7 +639,7 @@ def jaquel_to_ods(model: ods.Model, jaquel_query: str | dict) -> Tuple[ods.Model
     entity = None
     aid = None
 
-    qse = ods.SelectStatement()
+    qse = _ods.SelectStatement()
 
     # first parse conditions to get entity
     for elem in query:
@@ -654,7 +656,7 @@ def jaquel_to_ods(model: ods.Model, jaquel_query: str | dict) -> Tuple[ods.Model
                     qse,
                     query[elem],
                     {
-                        "conjuction": ods.SelectStatement.ConditionItem.ConjuctionEnum.CO_AND,
+                        "conjuction": _ods.SelectStatement.ConditionItem.ConjuctionEnum.CO_AND,
                         "conjuction_count": 0,
                         "path": "",
                         "operator": OperatorEnum.OP_EQ,
@@ -684,7 +686,7 @@ def jaquel_to_ods(model: ods.Model, jaquel_query: str | dict) -> Tuple[ods.Model
                     entity,
                     qse,
                     query[elem],
-                    {"path": "", "aggr": ods.AggregateEnum.AG_NONE, "unit": 0},
+                    {"path": "", "aggr": _ods.AggregateEnum.AG_NONE, "unit": 0},
                 )
             elif "$orderby" == elem:
                 __parse_orderby(model, entity, qse, query[elem], {"path": ""})
