@@ -28,7 +28,7 @@ dependencies=[
 ]
 
 [project.optional-dependencies]
-exd-api = [
+exd-data = [
     "grpcio>=1.65.1"
 ]
 test = [
