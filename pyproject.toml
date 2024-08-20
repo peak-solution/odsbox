@@ -3,14 +3,14 @@ requires = ["flit_core >=2,<4"]
 build-backend = "flit_core.buildapi"
 
 [project]
-name =  "asam-odsbox"
+name =  "odsbox"
 authors = [
     {name = "Andreas Krantz", email = "a.krantz@peak-solution.de"},
 ]
 description = "Toolbox for accessing ASAM ODS servers using the HTTP API"
 readme = "README.md"
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3 :: Only",
@@ -51,12 +51,12 @@ test = [
 ]
 
 [project.urls]
-Documentation = "https://github.com/peak-solution/asam-odsbox/tree/main#readme"
-Source = "https://github.com/peak-solution/asam-odsbox"
-Tracker = "https://github.com/peak-solution/asam-odsbox/issues"
+Documentation = "https://github.com/peak-solution/odsbox/tree/main#readme"
+Source = "https://github.com/peak-solution/odsbox"
+Tracker = "https://github.com/peak-solution/odsbox/issues"
 
 [tool.flit.module]
-name = "asam_odsbox"
+name = "odsbox"
 
 [tool.bandit]
 exclude_dirs = ["build","dist","tests","scripts"]

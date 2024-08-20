@@ -1,6 +1,6 @@
 """Check if import of ext data works"""
 
-import asam_odsbox.proto.ods_external_data_pb2 as exd_data
+import odsbox.proto.ods_external_data_pb2 as exd_data
 
 
 def test_strcuture_creation():

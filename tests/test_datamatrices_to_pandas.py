@@ -1,7 +1,7 @@
 import logging
 
-import asam_odsbox.proto.ods_pb2 as ods
-from asam_odsbox.datamatrices_to_pandas import to_pandas
+import odsbox.proto.ods_pb2 as ods
+from odsbox.datamatrices_to_pandas import to_pandas
 
 
 def test_conversion1():

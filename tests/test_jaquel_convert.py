@@ -6,8 +6,8 @@ import logging
 
 from google.protobuf.json_format import MessageToJson, Parse
 
-from asam_odsbox.jaquel import jaquel_to_ods
-import asam_odsbox.proto.ods_pb2 as ods
+from odsbox.jaquel import jaquel_to_ods
+import odsbox.proto.ods_pb2 as ods
 
 
 def __get_model(model_file_name):

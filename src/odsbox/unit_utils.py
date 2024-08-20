@@ -2,12 +2,12 @@
 
 from pandas import DataFrame
 
-import asam_odsbox.proto.ods_pb2 as _ods
+import odsbox.proto.ods_pb2 as _ods
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .con_i import ConI
-from asam_odsbox.datamatrices_to_pandas import to_pandas
+from odsbox.datamatrices_to_pandas import to_pandas
 
 
 def query_physical_dimensions(

@@ -3,7 +3,7 @@
 import grpc
 import warnings
 
-from asam_odsbox.proto import ods_external_data_pb2 as asam__odsbox_dot_proto_dot_ods__external__data__pb2
+from odsbox.proto import ods_external_data_pb2 as odsbox_dot_proto_dot_ods__external__data__pb2
 
 GRPC_GENERATED_VERSION = '1.65.4'
 GRPC_VERSION = grpc.__version__
@@ -20,7 +20,7 @@ except ImportError:
 if _version_not_supported:
     warnings.warn(
         f'The grpc package installed is at version {GRPC_VERSION},'
-        + f' but the generated code in asam_odsbox/proto/ods_external_data_pb2_grpc.py depends on'
+        + f' but the generated code in odsbox/proto/ods_external_data_pb2_grpc.py depends on'
         + f' grpcio>={GRPC_GENERATED_VERSION}.'
         + f' Please upgrade your grpc module to grpcio>={GRPC_GENERATED_VERSION}'
         + f' or downgrade your generated code using grpcio-tools<={GRPC_VERSION}.'
@@ -43,28 +43,28 @@ class ExternalDataReaderStub(object):
         """
         self.Open = channel.unary_unary(
                 '/ods.external_data.ExternalDataReader/Open',
-                request_serializer=asam__odsbox_dot_proto_dot_ods__external__data__pb2.Identifier.SerializeToString,
-                response_deserializer=asam__odsbox_dot_proto_dot_ods__external__data__pb2.Handle.FromString,
+                request_serializer=odsbox_dot_proto_dot_ods__external__data__pb2.Identifier.SerializeToString,
+                response_deserializer=odsbox_dot_proto_dot_ods__external__data__pb2.Handle.FromString,
                 _registered_method=True)
         self.GetStructure = channel.unary_unary(
                 '/ods.external_data.ExternalDataReader/GetStructure',
-                request_serializer=asam__odsbox_dot_proto_dot_ods__external__data__pb2.StructureRequest.SerializeToString,
-                response_deserializer=asam__odsbox_dot_proto_dot_ods__external__data__pb2.StructureResult.FromString,
+                request_serializer=odsbox_dot_proto_dot_ods__external__data__pb2.StructureRequest.SerializeToString,
+                response_deserializer=odsbox_dot_proto_dot_ods__external__data__pb2.StructureResult.FromString,
                 _registered_method=True)
         self.GetValues = channel.unary_unary(
                 '/ods.external_data.ExternalDataReader/GetValues',
-                request_serializer=asam__odsbox_dot_proto_dot_ods__external__data__pb2.ValuesRequest.SerializeToString,
-                response_deserializer=asam__odsbox_dot_proto_dot_ods__external__data__pb2.ValuesResult.FromString,
+                request_serializer=odsbox_dot_proto_dot_ods__external__data__pb2.ValuesRequest.SerializeToString,
+                response_deserializer=odsbox_dot_proto_dot_ods__external__data__pb2.ValuesResult.FromString,
                 _registered_method=True)
         self.GetValuesEx = channel.unary_unary(
                 '/ods.external_data.ExternalDataReader/GetValuesEx',
-                request_serializer=asam__odsbox_dot_proto_dot_ods__external__data__pb2.ValuesExRequest.SerializeToString,
-                response_deserializer=asam__odsbox_dot_proto_dot_ods__external__data__pb2.ValuesExResult.FromString,
+                request_serializer=odsbox_dot_proto_dot_ods__external__data__pb2.ValuesExRequest.SerializeToString,
+                response_deserializer=odsbox_dot_proto_dot_ods__external__data__pb2.ValuesExResult.FromString,
                 _registered_method=True)
         self.Close = channel.unary_unary(
                 '/ods.external_data.ExternalDataReader/Close',
-                request_serializer=asam__odsbox_dot_proto_dot_ods__external__data__pb2.Handle.SerializeToString,
-                response_deserializer=asam__odsbox_dot_proto_dot_ods__external__data__pb2.Empty.FromString,
+                request_serializer=odsbox_dot_proto_dot_ods__external__data__pb2.Handle.SerializeToString,
+                response_deserializer=odsbox_dot_proto_dot_ods__external__data__pb2.Empty.FromString,
                 _registered_method=True)
 
 
@@ -126,28 +126,28 @@ def add_ExternalDataReaderServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'Open': grpc.unary_unary_rpc_method_handler(
                     servicer.Open,
-                    request_deserializer=asam__odsbox_dot_proto_dot_ods__external__data__pb2.Identifier.FromString,
-                    response_serializer=asam__odsbox_dot_proto_dot_ods__external__data__pb2.Handle.SerializeToString,
+                    request_deserializer=odsbox_dot_proto_dot_ods__external__data__pb2.Identifier.FromString,
+                    response_serializer=odsbox_dot_proto_dot_ods__external__data__pb2.Handle.SerializeToString,
             ),
             'GetStructure': grpc.unary_unary_rpc_method_handler(
                     servicer.GetStructure,
-                    request_deserializer=asam__odsbox_dot_proto_dot_ods__external__data__pb2.StructureRequest.FromString,
-                    response_serializer=asam__odsbox_dot_proto_dot_ods__external__data__pb2.StructureResult.SerializeToString,
+                    request_deserializer=odsbox_dot_proto_dot_ods__external__data__pb2.StructureRequest.FromString,
+                    response_serializer=odsbox_dot_proto_dot_ods__external__data__pb2.StructureResult.SerializeToString,
             ),
             'GetValues': grpc.unary_unary_rpc_method_handler(
                     servicer.GetValues,
-                    request_deserializer=asam__odsbox_dot_proto_dot_ods__external__data__pb2.ValuesRequest.FromString,
-                    response_serializer=asam__odsbox_dot_proto_dot_ods__external__data__pb2.ValuesResult.SerializeToString,
+                    request_deserializer=odsbox_dot_proto_dot_ods__external__data__pb2.ValuesRequest.FromString,
+                    response_serializer=odsbox_dot_proto_dot_ods__external__data__pb2.ValuesResult.SerializeToString,
             ),
             'GetValuesEx': grpc.unary_unary_rpc_method_handler(
                     servicer.GetValuesEx,
-                    request_deserializer=asam__odsbox_dot_proto_dot_ods__external__data__pb2.ValuesExRequest.FromString,
-                    response_serializer=asam__odsbox_dot_proto_dot_ods__external__data__pb2.ValuesExResult.SerializeToString,
+                    request_deserializer=odsbox_dot_proto_dot_ods__external__data__pb2.ValuesExRequest.FromString,
+                    response_serializer=odsbox_dot_proto_dot_ods__external__data__pb2.ValuesExResult.SerializeToString,
             ),
             'Close': grpc.unary_unary_rpc_method_handler(
                     servicer.Close,
-                    request_deserializer=asam__odsbox_dot_proto_dot_ods__external__data__pb2.Handle.FromString,
-                    response_serializer=asam__odsbox_dot_proto_dot_ods__external__data__pb2.Empty.SerializeToString,
+                    request_deserializer=odsbox_dot_proto_dot_ods__external__data__pb2.Handle.FromString,
+                    response_serializer=odsbox_dot_proto_dot_ods__external__data__pb2.Empty.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -177,8 +177,8 @@ class ExternalDataReader(object):
             request,
             target,
             '/ods.external_data.ExternalDataReader/Open',
-            asam__odsbox_dot_proto_dot_ods__external__data__pb2.Identifier.SerializeToString,
-            asam__odsbox_dot_proto_dot_ods__external__data__pb2.Handle.FromString,
+            odsbox_dot_proto_dot_ods__external__data__pb2.Identifier.SerializeToString,
+            odsbox_dot_proto_dot_ods__external__data__pb2.Handle.FromString,
             options,
             channel_credentials,
             insecure,
@@ -204,8 +204,8 @@ class ExternalDataReader(object):
             request,
             target,
             '/ods.external_data.ExternalDataReader/GetStructure',
-            asam__odsbox_dot_proto_dot_ods__external__data__pb2.StructureRequest.SerializeToString,
-            asam__odsbox_dot_proto_dot_ods__external__data__pb2.StructureResult.FromString,
+            odsbox_dot_proto_dot_ods__external__data__pb2.StructureRequest.SerializeToString,
+            odsbox_dot_proto_dot_ods__external__data__pb2.StructureResult.FromString,
             options,
             channel_credentials,
             insecure,
@@ -231,8 +231,8 @@ class ExternalDataReader(object):
             request,
             target,
             '/ods.external_data.ExternalDataReader/GetValues',
-            asam__odsbox_dot_proto_dot_ods__external__data__pb2.ValuesRequest.SerializeToString,
-            asam__odsbox_dot_proto_dot_ods__external__data__pb2.ValuesResult.FromString,
+            odsbox_dot_proto_dot_ods__external__data__pb2.ValuesRequest.SerializeToString,
+            odsbox_dot_proto_dot_ods__external__data__pb2.ValuesResult.FromString,
             options,
             channel_credentials,
             insecure,
@@ -258,8 +258,8 @@ class ExternalDataReader(object):
             request,
             target,
             '/ods.external_data.ExternalDataReader/GetValuesEx',
-            asam__odsbox_dot_proto_dot_ods__external__data__pb2.ValuesExRequest.SerializeToString,
-            asam__odsbox_dot_proto_dot_ods__external__data__pb2.ValuesExResult.FromString,
+            odsbox_dot_proto_dot_ods__external__data__pb2.ValuesExRequest.SerializeToString,
+            odsbox_dot_proto_dot_ods__external__data__pb2.ValuesExResult.FromString,
             options,
             channel_credentials,
             insecure,
@@ -285,8 +285,8 @@ class ExternalDataReader(object):
             request,
             target,
             '/ods.external_data.ExternalDataReader/Close',
-            asam__odsbox_dot_proto_dot_ods__external__data__pb2.Handle.SerializeToString,
-            asam__odsbox_dot_proto_dot_ods__external__data__pb2.Empty.FromString,
+            odsbox_dot_proto_dot_ods__external__data__pb2.Handle.SerializeToString,
+            odsbox_dot_proto_dot_ods__external__data__pb2.Empty.FromString,
             options,
             channel_credentials,
             insecure,

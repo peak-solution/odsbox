@@ -5,7 +5,7 @@ import json
 import re
 from typing import Tuple, List, Any
 
-import asam_odsbox.proto.ods_pb2 as _ods
+import odsbox.proto.ods_pb2 as _ods
 
 OperatorEnum = _ods.SelectStatement.ConditionItem.Condition.OperatorEnum
 

@@ -1,4 +1,4 @@
-from asam_odsbox.proto import ods_pb2 as _ods_pb2
+from odsbox.proto import ods_pb2 as _ods_pb2
 from google.protobuf.internal import containers as _containers
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message

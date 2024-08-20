@@ -7,7 +7,7 @@ Submodules
 python\_package.setup module
 ----------------------------
 
-.. automodule:: asam_odsbox.setup
+.. automodule:: odsbox.setup
    :members:
    :undoc-members:
    :show-inheritance:
@@ -15,7 +15,7 @@ python\_package.setup module
 Module contents
 ---------------
 
-.. automodule:: asam_odsbox
+.. automodule:: odsbox
    :members:
    :undoc-members:
    :show-inheritance:
