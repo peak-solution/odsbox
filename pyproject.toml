@@ -14,22 +14,21 @@ classifiers = [
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11"
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12"
 ]
-requires-python = ">=3.8.1"
+requires-python = ">=3.10.14"
 dynamic = ["version"]
 dependencies=[
-    "protobuf>=5.26.0",
-    "requests>=2.32.2",
-    "pandas>=2.2.0"
+    "protobuf",
+    "requests",
+    "pandas"
 ]
 
 [project.optional-dependencies]
-spark = [
-    "pyspark>=3.0.0"
+exd-data = [
+    "grpcio"
 ]
 test = [
     "bandit[toml]==1.7.9",
@@ -51,10 +50,10 @@ test = [
     "shellcheck-py==0.10.0.1"
 ]
 
-#[project.urls]
-#Documentation = "https://github.com/peak-solution/asam-odsbox/tree/main#readme"
-#Source = "https://github.com/peak-solution/asam-odsbox"
-#Tracker = "https://github.com/peak-solution/asam-odsbox/issues"
+[project.urls]
+Documentation = "https://github.com/peak-solution/asam-odsbox/tree/main#readme"
+Source = "https://github.com/peak-solution/asam-odsbox"
+Tracker = "https://github.com/peak-solution/asam-odsbox/issues"
 
 [tool.flit.module]
 name = "asam_odsbox"
@@ -68,7 +67,7 @@ targets = "src"
 [tool.black]
 line-length = 120
 fast = true
-exclude = ".+.*(_pb2\\.py).*i?"
+exclude = ".+(_pb2\\.py|_pb2\\.pyi|_pb2_grpc\\.py)$"
 
 [tool.coverage.run]
 branch = true
@@ -90,7 +89,7 @@ exclude = [
     "pywin32",
     "tests",
     "swagger_client",
-    "*_pb2.py*"
+    "*_pb2*.py*"
 ]
 ignore = [
     "E722",
@@ -128,7 +127,6 @@ markers = [
     "integration: marks as integration test",
     "notebooks: marks as notebook test",
     "gpu: marks as gpu test",
-    "spark: marks tests which need Spark",
     "slow: marks tests as slow",
     "unit: fast offline tests",
 ]
@@ -136,29 +134,18 @@ markers = [
 [tool.tox]
 legacy_tox_ini = """
 [tox]
-envlist = py, integration, spark, all
+envlist = py, integration, all
 
 [testenv]
 commands =
-    pytest -m "not integration and not spark" {posargs}
+    pytest -m "not integration" {posargs}
 
 [testenv:integration]
 commands =
     pytest -m "integration" {posargs}
 
-[testenv:spark]
-extras = spark
-setenv =
-       PYSPARK_DRIVER_PYTHON = {envpython}
-       PYSPARK_PYTHON = {envpython}
-commands =
-    pytest -m "spark" {posargs}
-
 [testenv:all]
 extras = all
-setenv =
-       PYSPARK_DRIVER_PYTHON = {envpython}
-       PYSPARK_PYTHON = {envpython}
 commands =
     pytest {posargs}
 """
@@ -175,7 +162,7 @@ extension-pkg-whitelist= [
     "scipy"
 ]
 ignore="CVS"
-ignore-patterns="test.*?py,conftest.py,*_pb2.py*"
+ignore-patterns="test.*?py,conftest.py,*_pb2*.py*"
 init-hook='import sys; sys.setrecursionlimit(8 * sys.getrecursionlimit())'
 jobs=0
 limit-inference-results=100
@@ -259,7 +246,7 @@ check-str-concat-over-line-jumps="no"
 
 [tool.pylint.'TYPECHECK']
 contextmanager-decorators="contextlib.contextmanager"
-generated-members="numpy.*,np.*,pyspark.sql.functions,collect_list"
+generated-members="numpy.*,np.*,ods*_pb2.*,collect_list"
 ignore-mixin-members="yes"
 ignore-none="yes"
 ignore-on-opaque-inference="yes"

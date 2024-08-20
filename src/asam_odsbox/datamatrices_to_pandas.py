@@ -3,12 +3,10 @@ them to an pandas dataframe for ease of use."""
 
 import pandas as pd
 
-import asam_odsbox.proto.ods_pb2 as ods
-
-# pylint: disable=E1101, C0116
+import asam_odsbox.proto.ods_pb2 as _ods
 
 
-def __get_datamatrix_column_values(column: ods.DataMatrix.Column):
+def __get_datamatrix_column_values(column: _ods.DataMatrix.Column):
     if column.WhichOneof("ValuesOneOf") is None:
         return None
 
@@ -27,13 +25,25 @@ def __get_datamatrix_column_values(column: ods.DataMatrix.Column):
     if column.HasField("longlong_array"):
         return column.longlong_array.values
     # vector attributes. Look for the additional 's'
+    if column.HasField("string_arrays"):
+        return column.string_arrays.values
     if column.HasField("long_arrays"):
         return column.long_arrays.values
+    if column.HasField("float_arrays"):
+        return column.float_arrays.values
+    if column.HasField("boolean_arrays"):
+        return column.boolean_arrays.values
+    if column.HasField("byte_arrays"):
+        return column.byte_arrays.values
+    if column.HasField("double_arrays"):
+        return column.double_arrays.values
+    if column.HasField("longlong_arrays"):
+        return column.longlong_arrays.values
 
     raise ValueError(f"DataType {column.WhichOneof('ValuesOneOf')} not handled!")
 
 
-def to_pandas(data_matrices: ods.DataMatrices) -> pd.DataFrame:
+def to_pandas(data_matrices: _ods.DataMatrices) -> pd.DataFrame:
     """Converts data in an ASAM ODS DataMatrices into a pandas DataFrame."""
     if 0 == len(data_matrices.matrices):
         return pd.DataFrame()

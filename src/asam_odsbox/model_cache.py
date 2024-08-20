@@ -2,21 +2,19 @@
 
 import logging
 
-import asam_odsbox.proto.ods_pb2 as ods
-
-# pylint: disable=E1101
+import asam_odsbox.proto.ods_pb2 as _ods
 
 
 class ModelCache:
     """The model object returned from ods server needs some utilities to work with it."""
 
-    __model: ods.Model = None
+    __model: _ods.Model = None
     __log: logging.Logger = logging.getLogger(__name__)
 
-    def __init__(self, model: ods.Model):
+    def __init__(self, model: _ods.Model):
         self.__model = model
 
-    def model(self) -> ods.Model:
+    def model(self) -> _ods.Model:
         """Get the attached ASAM ODS model"""
         return self.__model
 
@@ -31,7 +29,7 @@ class ModelCache:
             return self.__model.entities[entity_name].aid
         raise ValueError(f"Entity {entity_name} does not exist in model")
 
-    def entity_by_base_name(self, entity_base_name: str) -> ods.Model.Entity:
+    def entity_by_base_name(self, entity_base_name: str) -> _ods.Model.Entity:
         """
         Get the entity by its base name.
 
@@ -46,8 +44,8 @@ class ModelCache:
         raise ValueError(f"No entity derived from {entity_base_name}")
 
     def relation_by_base_name(
-        self, entity_or_name: str | ods.Model.Entity, relation_base_name: str
-    ) -> ods.Model.Relation:
+        self, entity_or_name: str | _ods.Model.Entity, relation_base_name: str
+    ) -> _ods.Model.Relation:
         """
         Get the relation by base name.
 
@@ -63,7 +61,7 @@ class ModelCache:
                 return relation
         raise ValueError(f"Entity {entity.name} does not have relation derived from {relation_base_name}")
 
-    def relation_name_by_base_name(self, entity_or_name: str | ods.Model.Entity, relation_base_name: str) -> str:
+    def relation_name_by_base_name(self, entity_or_name: str | _ods.Model.Entity, relation_base_name: str) -> str:
         """
         Get the relation application name by base name.
 
@@ -74,8 +72,8 @@ class ModelCache:
         return self.relation_by_base_name(entity_or_name, relation_base_name).name
 
     def attribute_by_base_name(
-        self, entity_or_name: str | ods.Model.Entity, attribute_base_name: str
-    ) -> ods.Model.Attribute:
+        self, entity_or_name: str | _ods.Model.Entity, attribute_base_name: str
+    ) -> _ods.Model.Attribute:
         """
         Get the attribute by base name.
 
@@ -91,7 +89,7 @@ class ModelCache:
                 return attribute
         raise ValueError(f"Entity {entity.name} does not have attribute derived from {attribute_base_name}")
 
-    def attribute_name_by_base_name(self, entity_or_name: str | ods.Model.Entity, attribute_base_name: str) -> str:
+    def attribute_name_by_base_name(self, entity_or_name: str | _ods.Model.Entity, attribute_base_name: str) -> str:
         """
         Get the attribute by base name.
 
@@ -101,8 +99,8 @@ class ModelCache:
         """
         return self.attribute_by_base_name(entity_or_name, attribute_base_name).name
 
-    def __entity(self, entity_or_name: str | ods.Model.Entity) -> ods.Model.Entity:
-        rv = entity_or_name if isinstance(entity_or_name, ods.Model.Entity) else self.__model.entities[entity_or_name]
+    def __entity(self, entity_or_name: str | _ods.Model.Entity) -> _ods.Model.Entity:
+        rv = entity_or_name if isinstance(entity_or_name, _ods.Model.Entity) else self.__model.entities[entity_or_name]
         if rv is None:
             raise ValueError(f"No entity named {entity_or_name} found")
         return rv
