@@ -2,7 +2,7 @@
 
 import logging
 
-import asam_odsbox.proto.ods_pb2 as _ods
+import odsbox.proto.ods_pb2 as _ods
 
 
 class ModelCache:

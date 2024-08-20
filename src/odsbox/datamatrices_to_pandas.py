@@ -3,7 +3,7 @@ them to an pandas dataframe for ease of use."""
 
 import pandas as pd
 
-import asam_odsbox.proto.ods_pb2 as _ods
+import odsbox.proto.ods_pb2 as _ods
 
 
 def __get_datamatrix_column_values(column: _ods.DataMatrix.Column):

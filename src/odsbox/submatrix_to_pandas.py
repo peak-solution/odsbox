@@ -4,7 +4,7 @@ from typing import Any, TYPE_CHECKING
 
 import pandas as pd
 
-import asam_odsbox.proto.ods_pb2 as _ods
+import odsbox.proto.ods_pb2 as _ods
 
 if TYPE_CHECKING:
     from .con_i import ConI

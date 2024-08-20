@@ -1,7 +1,7 @@
 """Integration test for ASAM ODS session"""
 
-from asam_odsbox.con_i import ConI
-from asam_odsbox.submatrix_to_pandas import submatrix_to_pandas
+from odsbox.con_i import ConI
+from odsbox.submatrix_to_pandas import submatrix_to_pandas
 
 import logging
 import pytest

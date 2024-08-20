@@ -1,11 +1,11 @@
-# asam-odsbox
+# ASAM ODSBox
 
-The asam-odsbox is a lightweight Python wrapper on the standardized [ASAM ODS REST API](https://www.asam.net/standards/detail/ods/wiki/).
-Using intuitive JAQuel Queries and [pandas.DataFrames](https://pandas.pydata.org/) the `asam-odsbox` makes dealing with ASAM ODS
+The odsbox is a lightweight Python wrapper on the standardized [ASAM ODS REST API](https://www.asam.net/standards/detail/ods/wiki/).
+Using intuitive JAQuel Queries and [pandas.DataFrames](https://pandas.pydata.org/) the `odsbox` makes dealing with ASAM ODS
 data in Python more fun.
 
 ``` python
-from asam_odsbox.con_i import ConI
+from odsbox.con_i import ConI
 
 with ConI("https://MY_SERVER/api", ("sa", "sa")) as con_i:
     measurements = con_i.query_data(

@@ -1,7 +1,7 @@
 """Integration test for ASAM ODS session"""
 
-from asam_odsbox.con_i import ConI
-from asam_odsbox.unit_catalog import UnitCatalog
+from odsbox.con_i import ConI
+from odsbox.unit_catalog import UnitCatalog
 
 import pytest
 

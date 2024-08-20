@@ -9,11 +9,11 @@ from google.protobuf.json_format import MessageToJson
 from google.protobuf.message import Message
 from pandas import DataFrame
 
-import asam_odsbox.proto.ods_pb2 as _ods
-from asam_odsbox.datamatrices_to_pandas import to_pandas
-from asam_odsbox.jaquel import jaquel_to_ods
-from asam_odsbox.model_cache import ModelCache
-from asam_odsbox.transaction import Transaction
+import odsbox.proto.ods_pb2 as _ods
+from odsbox.datamatrices_to_pandas import to_pandas
+from odsbox.jaquel import jaquel_to_ods
+from odsbox.model_cache import ModelCache
+from odsbox.transaction import Transaction
 
 
 class ConI:

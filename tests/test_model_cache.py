@@ -7,8 +7,8 @@ from pathlib import Path
 
 from google.protobuf.json_format import Parse
 
-from asam_odsbox.model_cache import ModelCache
-from asam_odsbox.proto.ods_pb2 import Model
+from odsbox.model_cache import ModelCache
+from odsbox.proto.ods_pb2 import Model
 
 
 def __get_model(model_file_name):

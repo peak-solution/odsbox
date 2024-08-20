@@ -1,7 +1,7 @@
 """Integration test for ASAM ODS session"""
 
-from asam_odsbox.con_i import ConI
-from asam_odsbox import unit_utils
+from odsbox.con_i import ConI
+from odsbox import unit_utils
 
 import logging
 
