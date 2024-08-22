@@ -99,6 +99,61 @@ class ModelCache:
         """
         return self.attribute_by_base_name(entity_or_name, attribute_base_name).name
 
+    def enumeration(self, enumeration_name: str) -> _ods.Model.Enumeration:
+        """
+        Get enumeration by its name.
+
+        :enumeration_name: case insensitive name of the application model enumeration.
+        :raises ValueError: If the enumeration does not exist.
+        """
+        if enumeration_name in self.__model.enumerations:
+            return self.__model.enumerations[enumeration_name]
+
+        for key in self.__model.enumerations:
+            if key.casefold() == enumeration_name.casefold():
+                return self.__model.enumerations[key]
+        raise ValueError(f"Enumeration {enumeration_name} does not exist in datamodel")
+
+    def enumeration_value_to_key(self, enumeration_or_name: str | _ods.Model.Enumeration, lookup_value: int):
+        """
+        Convert an enumeration value into its string representation.
+
+        :enumeration_or_name: ods enumeration or its case insensitive name
+        :lookup_value: integer value to check
+        :raises ValueError: If the enumeration does not exist or does not contain value.
+        """
+        enumeration = (
+            enumeration_or_name
+            if isinstance(enumeration_or_name, _ods.Model.Enumeration)
+            else self.enumeration(enumeration_or_name)
+        )
+        for key, value in enumeration.items.items():
+            if value == lookup_value:
+                return key
+        raise ValueError(f"Enumeration {enumeration.name} does not contain the int value {lookup_value}")
+
+    def enumeration_key_to_value(self, enumeration_or_name: str | _ods.Model.Enumeration, lookup_key: str):
+        """
+        Convert an enumeration integer value into its string representation.
+
+        :enumeration_or_name: ods enumeration or its case insensitive name
+        :lookup_key: case insensitive string key value to check
+        :raises ValueError: If the enumeration does not exist or does not contain the key.
+        """
+        enumeration = (
+            enumeration_or_name
+            if isinstance(enumeration_or_name, _ods.Model.Enumeration)
+            else self.enumeration(enumeration_or_name)
+        )
+
+        if lookup_key in enumeration.items:
+            return enumeration.items[lookup_key]
+
+        for key, value in enumeration.items.items():
+            if key.casefold() == lookup_key.casefold():
+                return value
+        raise ValueError(f"Enumeration {enumeration.name} does not contain the key {lookup_key}")
+
     def __entity(self, entity_or_name: str | _ods.Model.Entity) -> _ods.Model.Entity:
         rv = entity_or_name if isinstance(entity_or_name, _ods.Model.Entity) else self.__model.entities[entity_or_name]
         if rv is None:
