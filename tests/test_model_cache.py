@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+import pytest
 
 from google.protobuf.json_format import Parse
 
@@ -42,3 +43,38 @@ def test_model_cache():
     assert "submatrix" == mc.relation_by_base_name(local_column_entity, "SUBMATRIX").base_name
     assert "submatrix" == mc.relation_by_base_name("LocalColumn", "submatrix").base_name
     assert "submatrix" == mc.relation_by_base_name("LocalColumn", "SUBMATRIX").base_name
+
+
+def test_enumeration_access():
+    mc = ModelCache(__get_model("mdm_nvh_model.json"))
+    assert mc.enumeration("datatype_enum") is not None
+    assert mc.enumeration("DataType_Enum") is not None
+    with pytest.raises(ValueError):
+        mc.enumeration("DoesNotExist")
+
+
+def test_enumeration_values():
+    mc = ModelCache(__get_model("mdm_nvh_model.json"))
+    datatpype_enum = mc.enumeration("datatype_enum")
+    assert datatpype_enum is not None
+
+    assert 3 == mc.enumeration_key_to_value(datatpype_enum, "DT_FLOAT")
+    assert 3 == mc.enumeration_key_to_value(datatpype_enum, "dt_float")
+    assert "DT_FLOAT" == mc.enumeration_value_to_key(datatpype_enum, 3)
+
+    assert 3 == mc.enumeration_key_to_value("datatype_enum", "DT_FLOAT")
+    assert 3 == mc.enumeration_key_to_value("datatype_enum", "dt_float")
+    assert "DT_FLOAT" == mc.enumeration_value_to_key("datatype_enum", 3)
+
+    assert 3 == mc.enumeration_key_to_value("DATATYPE_ENUM", "DT_FLOAT")
+    assert 3 == mc.enumeration_key_to_value("DATATYPE_ENUM", "dt_float")
+    assert "DT_FLOAT" == mc.enumeration_value_to_key("DATATYPE_ENUM", 3)
+
+    with pytest.raises(ValueError):
+        assert 3 == mc.enumeration_key_to_value("DOESNOTEXIST", "DT_FLOAT")
+    with pytest.raises(ValueError):
+        assert 3 == mc.enumeration_key_to_value("DATATYPE_ENUM", "DOESNOTEXIST")
+    with pytest.raises(ValueError):
+        assert "DT_FLOAT" == mc.enumeration_value_to_key("DOESNOTEXIST", 3)
+    with pytest.raises(ValueError):
+        assert "DT_FLOAT" == mc.enumeration_value_to_key("DATATYPE_ENUM", 501)
