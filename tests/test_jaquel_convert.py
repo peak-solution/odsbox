@@ -3,6 +3,7 @@ import os
 import json
 from pathlib import Path
 import logging
+import pytest
 
 from google.protobuf.json_format import MessageToJson, Parse
 
@@ -86,3 +87,63 @@ def test_predefined():
             select_statement_ref,
         )
         assert select_statement_ref == select_statement
+
+
+def test_syntax_errors():
+    model = __get_model("mdm_nvh_model.json")
+
+    with pytest.raises(SyntaxError, match="Does not define a target entity."):
+        jaquel_to_ods(model, {"$attributes": {"factor": {"$min": 1}}})
+
+    with pytest.raises(SyntaxError, match='Unknown aggregate "\\$mi"'):
+        jaquel_to_ods(model, {"AoUnit": {}, "$attributes": {"factor": {"$mi": 1}}})
+
+    with pytest.raises(SyntaxError, match='Unknown operator "\\$lik"'):
+        jaquel_to_ods(model, {"AoLocalColumn": {"name": {"$lik": "abc"}}})
+
+    with pytest.raises(SyntaxError, match="'name' is no relation of entity 'LocalColumn'"):
+        jaquel_to_ods(model, {"AoLocalColumn": {"name": {"like": "abc"}}})
+
+    with pytest.raises(json.decoder.JSONDecodeError):
+        jaquel_to_ods(model, "{")
+
+    with pytest.raises(SyntaxError, match="'nr_of_rows' is neither attribute nor relation of entity 'SubMatrix'"):
+        jaquel_to_ods(
+            model, {"AoLocalColumn": {}, "$attributes": {"Id": 1, "name": 1, "submatrix": {"nr_of_rows": 1, "name": 1}}}
+        )
+
+    with pytest.raises(SyntaxError, match="'nr_of_rows' is neither attribute nor relation of entity 'SubMatrix'"):
+        jaquel_to_ods(model, {"AoLocalColumn": {}, "$attributes": {"Id": 1, "name": 1, "submatrix.nr_of_rows": 1}})
+
+    with pytest.raises(SyntaxError, match="'nr_of_rows' is neither attribute nor relation of entity 'SubMatrix'"):
+        jaquel_to_ods(model, {"AoSubmatrix": {}, "$attributes": {"Id": 1, "nr_of_rows": 1}})
+
+    with pytest.raises(SyntaxError, match="'DoesNotExist' is neither attribute nor relation of entity 'Unit'"):
+        jaquel_to_ods(model, {"AoUnit": {}, "$attributes": {"DoesNotExist": 1}})
+
+    with pytest.raises(SyntaxError, match="'doesnotexist' is neither attribute nor relation of entity 'PhysDimension'"):
+        jaquel_to_ods(model, {"AoUnit": {"phys_dimension.doesnotexist": "abc"}})
+
+    with pytest.raises(SyntaxError, match="'physical_dimension' is no relation of entity 'Unit'"):
+        jaquel_to_ods(model, {"AoUnit": {"physical_dimension.doesnotexist": "abc"}})
+
+    with pytest.raises(SyntaxError, match="'doesnotexist' is neither attribute nor relation of entity 'Unit'"):
+        jaquel_to_ods(model, {"AoUnit": {"doesnotexist": "abc"}})
+
+    with pytest.raises(SyntaxError, match="Entity 'DoesNotExist' is unknown in model."):
+        jaquel_to_ods(model, {"DoesNotExist": 1})
+
+    with pytest.raises(SyntaxError, match="47567 is no valid entity aid."):
+        jaquel_to_ods(model, {"47567": 1})
+
+    with pytest.raises(SyntaxError, match="Only id value can be assigned directly. But 'abc' was assigned."):
+        jaquel_to_ods(model, {26: "abc"})
+
+    with pytest.raises(SyntaxError, match="47567 is no valid entity aid."):
+        jaquel_to_ods(model, {47567: 1})
+
+    with pytest.raises(SyntaxError, match=r"Does not define a target entity."):
+        jaquel_to_ods(model, "{}")
+
+    with pytest.raises(SyntaxError, match=r"Does not define a target entity."):
+        jaquel_to_ods(model, {})

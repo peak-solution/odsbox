@@ -51,9 +51,8 @@ _jo_operators_ci_map = {
 
 
 def __model_get_relation_by_base_name(
-    model: _ods.Model, entity_name: str, relation_base_name: str
+    model: _ods.Model, entity: _ods.Model.Entity, relation_base_name: str
 ) -> _ods.Model.Relation | None:
-    entity = model.entities[entity_name]
     for rel in entity.relations:
         if entity.relations[rel].base_name.lower() == relation_base_name.lower():
             return entity.relations[rel]
@@ -61,20 +60,21 @@ def __model_get_relation_by_base_name(
 
 
 def __model_get_relation_by_application_name(
-    model: _ods.Model, entity_name: str, relation_application_name: str
+    model: _ods.Model, entity: _ods.Model.Entity, relation_application_name: str
 ) -> _ods.Model.Relation | None:
-    entity = model.entities[entity_name]
     for rel in entity.relations:
         if entity.relations[rel].name.lower() == relation_application_name.lower():
             return entity.relations[rel]
     return None
 
 
-def __model_get_relation(model: _ods.Model, entity_name: str, relation_name: str) -> _ods.Model.Relation | None:
+def __model_get_relation(
+    model: _ods.Model, entity: _ods.Model.Entity, relation_name: str
+) -> _ods.Model.Relation | None:
     """Get an relation by name. First try application name, then base name."""
-    rv = __model_get_relation_by_application_name(model, entity_name, relation_name)
+    rv = __model_get_relation_by_application_name(model, entity, relation_name)
     if rv is None:
-        rv = __model_get_relation_by_base_name(model, entity_name, relation_name)
+        rv = __model_get_relation_by_base_name(model, entity, relation_name)
     if rv is not None:
         return rv
 
@@ -82,9 +82,8 @@ def __model_get_relation(model: _ods.Model, entity_name: str, relation_name: str
 
 
 def __model_get_attribute_by_base_name(
-    model: _ods.Model, entity_name: str, attribute_base_name: str
+    model: _ods.Model, entity: _ods.Model.Entity, attribute_base_name: str
 ) -> _ods.Model.Attribute | None:
-    entity = model.entities[entity_name]
     for attr in entity.attributes:
         if entity.attributes[attr].base_name.lower() == attribute_base_name.lower():
             return entity.attributes[attr]
@@ -92,20 +91,21 @@ def __model_get_attribute_by_base_name(
 
 
 def __model_get_attribute_by_application_name(
-    model: _ods.Model, entity_name: str, attribute_name: str
+    model: _ods.Model, entity: _ods.Model.Entity, attribute_name: str
 ) -> _ods.Model.Attribute | None:
-    entity = model.entities[entity_name]
     for attr in entity.attributes:
         if entity.attributes[attr].name.lower() == attribute_name.lower():
             return entity.attributes[attr]
     return None
 
 
-def __model_get_attribute(model: _ods.Model, entity_name: str, attribute_name: str) -> _ods.Model.Attribute | None:
+def __model_get_attribute(
+    model: _ods.Model, entity: _ods.Model.Entity, attribute_name: str
+) -> _ods.Model.Attribute | None:
     """Get an attribute by name. First try application name, then base name."""
-    rv = __model_get_attribute_by_application_name(model, entity_name, attribute_name)
+    rv = __model_get_attribute_by_application_name(model, entity, attribute_name)
     if rv is None:
-        rv = __model_get_attribute_by_base_name(model, entity_name, attribute_name)
+        rv = __model_get_attribute_by_base_name(model, entity, attribute_name)
     if rv is not None:
         return rv
 
@@ -113,18 +113,20 @@ def __model_get_attribute(model: _ods.Model, entity_name: str, attribute_name: s
 
 
 def __model_get_entity_ex(model: _ods.Model, entity_name_or_aid: str | int) -> _ods.Model.Entity | None:
+    if isinstance(entity_name_or_aid, int) or entity_name_or_aid.isdigit():
+        entity_aid = int(entity_name_or_aid)
+        for key in model.entities:
+            entity = model.entities[key]
+            if entity.aid == entity_aid:
+                return entity
+        raise SyntaxError(f"{entity_aid} is no valid entity aid.")
+
     for key in model.entities:
         entity = model.entities[key]
         if entity.name.lower() == entity_name_or_aid.lower() or entity.base_name.lower() == entity_name_or_aid.lower():
             return entity
 
-    entity_aid = int(entity_name_or_aid)
-    for key in model.entities:
-        entity = model.entities[key]
-        if entity.aid == entity_aid:
-            return entity
-
-    return None
+    raise SyntaxError(f"Entity '{entity_name_or_aid}' is unknown in model.")
 
 
 def __model_get_enum_index(
@@ -178,7 +180,9 @@ def __parse_path_and_add_joins(
 
         if i != path_part_length - 1:
             # Must be a relation
-            relation = __model_get_relation(model, attribute_entity.name, path_part)
+            relation = __model_get_relation(model, attribute_entity, path_part)
+            if relation is None:
+                raise SyntaxError(f"'{path_part}' is no relation of entity '{attribute_entity.name}'")
             attribute_name = relation.name
 
             # add join
@@ -196,12 +200,16 @@ def __parse_path_and_add_joins(
                 attribute_type = _ods.DataTypeEnum.DT_UNKNOWN
             else:
                 # maybe relation or attribute
-                attribute = __model_get_attribute(model, attribute_entity.name, path_part)
+                attribute = __model_get_attribute(model, attribute_entity, path_part)
                 if attribute is not None:
                     attribute_name = attribute.name
                     attribute_type = attribute.data_type
                 else:
-                    relation = __model_get_relation(model, attribute_entity.name, path_part)
+                    relation = __model_get_relation(model, attribute_entity, path_part)
+                    if relation is None:
+                        raise SyntaxError(
+                            f"'{path_part}' is neither attribute nor relation of entity '{attribute_entity.name}'"
+                        )
                     attribute_name = relation.name
                     attribute_type = _ods.DataTypeEnum.DT_LONGLONG  # its an id
     return attribute_type, attribute_name, attribute_entity
@@ -595,7 +603,7 @@ def __parse_conditions(
             elif "$options" == elem:
                 continue
             else:
-                raise SyntaxError('Unknown aggregate "' + elem + '"')
+                raise SyntaxError('Unknown operator "' + elem + '"')
         else:
             if elem_attribute["path"]:
                 elem_attribute["path"] += "."
@@ -630,7 +638,17 @@ def __parse_conditions(
 
 
 def jaquel_to_ods(model: _ods.Model, jaquel_query: str | dict) -> Tuple[_ods.Model.Entity, _ods.SelectStatement]:
-    """Convert a given JAQueL query into an ASAM ODS SelectStatement."""
+    """
+    Convert a given JAQueL query into an ASAM ODS SelectStatement.
+
+    :param _ods.Model model: application model to be used for conversion.
+    :param str | dict jaquel_query: JAQueL query as dict or json string.
+    :raises SyntaxError: If contains syntactical errors.
+    :raises ValueError: If conversion fail.
+    :raises json.decoder.JSONDecodeError: If JSON string contains syntax errors.
+    :return Tuple[_ods.Model.Entity, _ods.SelectStatement]: A tuple defining the target entity
+        and the ASAM ODS SelectStatement
+    """
     if isinstance(jaquel_query, dict):
         query = jaquel_query
     else:
@@ -643,7 +661,7 @@ def jaquel_to_ods(model: _ods.Model, jaquel_query: str | dict) -> Tuple[_ods.Mod
 
     # first parse conditions to get entity
     for elem in query:
-        if not elem.startswith("$"):
+        if not (isinstance(elem, str) and elem.startswith("$")):
             if entity is not None:
                 raise SyntaxError('Only one start point allowed "' + elem + '"')
 
@@ -665,6 +683,9 @@ def jaquel_to_ods(model: _ods.Model, jaquel_query: str | dict) -> Tuple[_ods.Mod
                     },
                 )
             else:
+                _id_value = query[elem]
+                if isinstance(_id_value, str) and not _id_value.isdigit():
+                    raise SyntaxError(f"Only id value can be assigned directly. But '{_id_value}' was assigned.")
                 # id given
                 __add_condition(
                     model,
@@ -672,10 +693,13 @@ def jaquel_to_ods(model: _ods.Model, jaquel_query: str | dict) -> Tuple[_ods.Mod
                     qse,
                     "id",
                     OperatorEnum.OP_EQ,
-                    int(query[elem]),
+                    int(_id_value),
                     0,
                     "",
                 )
+
+    if entity is None:
+        raise SyntaxError("Does not define a target entity.")
 
     # parse the others
     for elem in query:
