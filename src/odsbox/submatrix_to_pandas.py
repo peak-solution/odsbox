@@ -54,8 +54,8 @@ def __convert_bulk_to_pandas_data_frame(
     start_index = values_matrix.row_start
 
     local_column_entity = con_i.mc.entity_by_base_name("AoLocalColumn")
-    local_column_id_name = con_i.mc.attribute_name_by_base_name(local_column_entity.name, "id")
-    local_column_values_name = con_i.mc.attribute_name_by_base_name(local_column_entity.name, "values")
+    local_column_id_name = con_i.mc.attribute_by_base_name(local_column_entity.name, "id").name
+    local_column_values_name = con_i.mc.attribute_by_base_name(local_column_entity.name, "values").name
 
     id_column = None
     values_column = None
@@ -113,20 +113,20 @@ def submatrix_to_pandas(con_i: "ConI", submatrix_iid: int) -> pd.DataFrame:
     lc_meta_select_statement = _ods.SelectStatement()
     column = lc_meta_select_statement.columns.add()
     column.aid = local_column_entity.aid
-    column.attribute = con_i.mc.attribute_name_by_base_name(local_column_entity, "id")
+    column.attribute = con_i.mc.attribute_by_base_name(local_column_entity, "id").name
     column = lc_meta_select_statement.columns.add()
     column.aid = local_column_entity.aid
-    column.attribute = con_i.mc.attribute_name_by_base_name(local_column_entity, "name")
+    column.attribute = con_i.mc.attribute_by_base_name(local_column_entity, "name").name
     column = lc_meta_select_statement.columns.add()
     column.aid = local_column_entity.aid
-    column.attribute = con_i.mc.attribute_name_by_base_name(local_column_entity, "independent")
+    column.attribute = con_i.mc.attribute_by_base_name(local_column_entity, "independent").name
     column = lc_meta_select_statement.columns.add()
     column.aid = local_column_entity.aid
-    column.attribute = con_i.mc.attribute_name_by_base_name(local_column_entity, "sequence_representation")
+    column.attribute = con_i.mc.attribute_by_base_name(local_column_entity, "sequence_representation").name
 
     condition_item = lc_meta_select_statement.where.add()
     condition_item.condition.aid = local_column_entity.aid
-    condition_item.condition.attribute = con_i.mc.relation_name_by_base_name(local_column_entity, "submatrix")
+    condition_item.condition.attribute = con_i.mc.relation_by_base_name(local_column_entity, "submatrix").name
     condition_item.condition.operator = _ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_EQ
     condition_item.condition.longlong_array.values.append(submatrix_iid)
 
@@ -135,22 +135,22 @@ def submatrix_to_pandas(con_i: "ConI", submatrix_iid: int) -> pd.DataFrame:
     id_column = __get_column_from_dms(
         lc_meta_dms,
         local_column_entity,
-        con_i.mc.attribute_name_by_base_name(local_column_entity, "id"),
+        con_i.mc.attribute_by_base_name(local_column_entity, "id").name,
     )
     name_column = __get_column_from_dms(
         lc_meta_dms,
         local_column_entity,
-        con_i.mc.attribute_name_by_base_name(local_column_entity, "name"),
+        con_i.mc.attribute_by_base_name(local_column_entity, "name").name,
     )
     independent_column = __get_column_from_dms(
         lc_meta_dms,
         local_column_entity,
-        con_i.mc.attribute_name_by_base_name(local_column_entity, "independent"),
+        con_i.mc.attribute_by_base_name(local_column_entity, "independent").name,
     )
     sequence_representation_column = __get_column_from_dms(
         lc_meta_dms,
         local_column_entity,
-        con_i.mc.attribute_name_by_base_name(local_column_entity, "sequence_representation"),
+        con_i.mc.attribute_by_base_name(local_column_entity, "sequence_representation").name,
     )
 
     lc_id_lookup = {}
@@ -171,16 +171,16 @@ def submatrix_to_pandas(con_i: "ConI", submatrix_iid: int) -> pd.DataFrame:
     lc_bulk_select_statement = _ods.SelectStatement()
     column = lc_bulk_select_statement.columns.add()
     column.aid = local_column_entity.aid
-    column.attribute = con_i.mc.attribute_name_by_base_name(local_column_entity, "id")
+    column.attribute = con_i.mc.attribute_by_base_name(local_column_entity, "id").name
     column = lc_bulk_select_statement.columns.add()
     column.aid = local_column_entity.aid
-    column.attribute = con_i.mc.attribute_name_by_base_name(local_column_entity, "values")
+    column.attribute = con_i.mc.attribute_by_base_name(local_column_entity, "values").name
     column = lc_bulk_select_statement.columns.add()
     column.aid = local_column_entity.aid
-    column.attribute = con_i.mc.attribute_name_by_base_name(local_column_entity, "flags")
+    column.attribute = con_i.mc.attribute_by_base_name(local_column_entity, "flags").name
     condition_item = lc_bulk_select_statement.where.add()
     condition_item.condition.aid = local_column_entity.aid
-    condition_item.condition.attribute = con_i.mc.relation_name_by_base_name(local_column_entity, "submatrix")
+    condition_item.condition.attribute = con_i.mc.relation_by_base_name(local_column_entity, "submatrix").name
     condition_item.condition.operator = _ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_EQ
     condition_item.condition.longlong_array.values.append(submatrix_iid)
 

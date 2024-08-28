@@ -35,7 +35,7 @@ class UnitCatalog:
         return self.__unit_map.get(unit_name) if unit_name in self.__unit_map else None
 
     def get_or_create(self, unit_name: str) -> int:
-        """Get a unit by its case sensitive name or create one using an unknown pyhiscal dimension."""
+        """Get a unit by its case sensitive name or create one using an unknown physical dimension."""
         if unit_name is None or "" == unit_name:
             # Unit is obligatory
             return self.get_or_create("-")
@@ -47,7 +47,7 @@ class UnitCatalog:
         return new_unit_id
 
     def create(self, unit_name: str) -> int:
-        """Create a unit by its case sensitive name using an unknown pyhiscal dimension."""
+        """Create a unit by its case sensitive name using an unknown physical dimension."""
         physical_dimension_id = self.__get_or_create_unknown_physical_dimension()
         unit_id = self.__create_auto_unit(unit_name, physical_dimension_id)
         return unit_id

@@ -25,4 +25,4 @@ The API makes use of the ASAM ODS protobuf message definitions provided at
 
 ## JAQuel Queries
 
-JAQuel allows you to query your data in a simple and intuitive way following the concepts of the [MongoDB Query Language (MQL)](https://www.mongodb.com/docs/manual/tutorial/query-documents/). The definition of query expression as JSON easyly integrates with the Python language – a win-win situation.
+JAQuel allows you to query your data in a simple and intuitive way following the concepts of the [MongoDB Query Language (MQL)](https://www.mongodb.com/docs/manual/tutorial/query-documents/). The definition of query expression as JSON easily integrates with the Python language – a win-win situation.
