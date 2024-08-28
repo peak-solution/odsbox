@@ -2,160 +2,255 @@
 
 import logging
 
-import odsbox.proto.ods_pb2 as _ods
+import odsbox.proto.ods_pb2 as ods
 
 
 class ModelCache:
     """The model object returned from ods server needs some utilities to work with it."""
 
-    __model: _ods.Model = None
+    __model: ods.Model = None
     __log: logging.Logger = logging.getLogger(__name__)
 
-    def __init__(self, model: _ods.Model):
+    def __init__(self, model: ods.Model):
         self.__model = model
 
-    def model(self) -> _ods.Model:
-        """Get the attached ASAM ODS model"""
+    def model(self) -> ods.Model:
+        """
+        Get the attached ASAM ODS model
+
+        :return ods.Model: The used model.
+        """
         return self.__model
 
-    def aid_by_entity_name(self, entity_name: str) -> int:
+    def aid(self, entity_or_name: str | ods.Model.Entity) -> int:
         """
         Determine the application element id of an entity by its name.
 
-        :entity_name: Case sensitive name to look for
+        :entity_or_name: entity object or case sensitive application name to lookup
+        :raises ValueError: If the entity does not exist.
+        :return int: The ApplicationElementId of the entity.
+        """
+        return self.__entity(entity_or_name).aid
+
+    def entity(self, entity_name: str) -> ods.Model.Entity:
+        """
+        Get the entity name.
+
+        :entity_name: case insensitive name of an entity.
         :raises ValueError: If the entity does not exist.
         """
-        if entity_name in self.__model.entities:
-            return self.__model.entities[entity_name].aid
-        raise ValueError(f"Entity {entity_name} does not exist in model")
+        entity = self.__model.entities.get(entity_name)
+        if entity is not None:
+            return entity
+        name_casefold = entity_name.casefold()
+        for key, entity in self.__model.entities.items():
+            if key.casefold() == name_casefold:
+                return entity
+        raise ValueError(f"No entity named '{entity_name}' found.")
 
-    def entity_by_base_name(self, entity_base_name: str) -> _ods.Model.Entity:
+    def entity_by_base_name(self, entity_base_name: str) -> ods.Model.Entity:
         """
         Get the entity by its base name.
 
         :entity_base_name: case insensitive name of the base model element.
         :raises ValueError: If the entity does not exist.
         """
-        entities = self.__model.entities
-        for key in entities:
-            entity = entities[key]
-            if entity_base_name.casefold() == entity.base_name.casefold():
+        name_casefold = entity_base_name.casefold()
+        for _, entity in self.__model.entities.items():
+            if name_casefold == entity.base_name.casefold():
                 return entity
-        raise ValueError(f"No entity derived from {entity_base_name}")
+        raise ValueError(f"No entity derived from base type '{entity_base_name}' found.")
+
+    def entity_by_aid(self, aid: int) -> ods.Model.Entity:
+        """
+        Get the entity by its ApplicationElementId(aid).
+
+        :aid: ApplicationElementId of an entity to lookup.
+        :raises ValueError: If the entity does not exist.
+        :return ods.Model.Entity: Entity corresponding to given aid.
+        """
+        for _, entity in self.__model.entities.items():
+            if aid == entity.aid:
+                return entity
+        raise ValueError(f"No entity found with aid '{aid}'.")
+
+    def attribute_no_throw(
+        self, entity_or_name: str | ods.Model.Entity, application_or_base_name: str
+    ) -> ods.Model.Attribute | None:
+        """
+        This is a convenience method to find an attribute. It will first check for
+        an attribute with the given application name and afterwards check for an
+        attribute with the given base name.
+
+        :param str | ods.Model.Entity entity_or_name: entity or case insensitive name of an entity
+        :param str application_or_base_name: case insensitive name to lookup
+        :raises ValueError: If entity does not exist.
+        :return ods.Model.Attribute | None: The found attribute or None.
+        """
+        entity = self.__entity(entity_or_name)
+        attribute = entity.attributes.get(application_or_base_name)
+        if attribute is not None:
+            return attribute
+        name_casefold = application_or_base_name.casefold()
+        for _, attribute in entity.attributes.items():
+            if attribute.name.casefold() == name_casefold or attribute.base_name.casefold() == name_casefold:
+                return attribute
+        return None
+
+    def attribute(self, entity_or_name: str | ods.Model.Entity, application_or_base_name: str) -> ods.Model.Attribute:
+        """
+        This is a convenience method to find an attribute. It will first check for
+        an attribute with the given application name and afterwards check for an
+        attribute with the given base name.
+
+        :param str | ods.Model.Entity entity_or_name: entity or case insensitive name of an entity
+        :param str application_or_base_name: case insensitive name to lookup
+        :raises ValueError: If attribute does not.
+        :return ods.Model.Attribute: The found attribute.
+        """
+        entity = self.__entity(entity_or_name)
+        attribute = self.attribute_no_throw(entity, application_or_base_name)
+        if attribute is not None:
+            return attribute
+        raise ValueError(
+            f"'{entity.name}' has no attribute named '{application_or_base_name}' as base or application name."
+        )
+
+    def attribute_by_base_name(
+        self, entity_or_name: str | ods.Model.Entity, attribute_base_name: str
+    ) -> ods.Model.Attribute:
+        """
+        Get the attribute by base name.
+
+        :entity_or_name: entity object or case sensitive application name to lookup
+        :attribute_base_name: case insensitive name of the base model element.
+        :raises ValueError: If the attribute does not exist.
+        :return ods.Model.Attribute: Corresponding attribute.
+        """
+        entity = self.__entity(entity_or_name)
+        attributes = entity.attributes
+        for _, attribute in attributes.items():
+            if attribute_base_name.casefold() == attribute.base_name.casefold():
+                return attribute
+        raise ValueError(f"Entity '{entity.name}' does not have attribute derived from '{attribute_base_name}'.")
+
+    def relation_no_throw(
+        self, entity_or_name: str | ods.Model.Entity, application_or_base_name: str
+    ) -> ods.Model.Relation | None:
+        """
+        This is a convenience method to find a relation. It will first check for
+        a relation with the given application name and afterwards check for a
+        relation with the given base name.
+
+        :param str | ods.Model.Entity entity_or_name: entity or case insensitive name of an entity
+        :param str application_or_base_name: case insensitive name to lookup
+        :raises ValueError: If entity does not exist.
+        :return ods.Model.Relation | None: The relation or None if it does not exist.
+        """
+        entity = self.__entity(entity_or_name)
+        relation = entity.relations.get(application_or_base_name)
+        if relation is not None:
+            return relation
+        # retry case insensitive
+        name_casefold = application_or_base_name.casefold()
+        for _, relation in entity.relations.items():
+            if relation.name.casefold() == name_casefold or relation.base_name.casefold() == name_casefold:
+                return relation
+        return None
+
+    def relation(self, entity_or_name: str | ods.Model.Entity, application_or_base_name: str) -> ods.Model.Relation:
+        """
+        This is a convenience method to find a relation. It will first check for
+        a relation with the given application name and afterwards check for a
+        relation with the given base name.
+
+        :param str | ods.Model.Entity entity_or_name: entity or case insensitive name of an entity
+        :param str application_or_base_name: case insensitive name to lookup
+        :raises ValueError: If relation does not exist.
+        :return ods.Model.Relation: The found relation.
+        """
+        entity = self.__entity(entity_or_name)
+        relation = self.relation_no_throw(entity, application_or_base_name)
+        if relation is not None:
+            return relation
+        raise ValueError(
+            f"'{entity.name}' has no relation named '{application_or_base_name}' as base or application name."
+        )
 
     def relation_by_base_name(
-        self, entity_or_name: str | _ods.Model.Entity, relation_base_name: str
-    ) -> _ods.Model.Relation:
+        self, entity_or_name: str | ods.Model.Entity, relation_base_name: str
+    ) -> ods.Model.Relation:
         """
         Get the relation by base name.
 
         :entity_or_name: entity object or case sensitive application name to lookup
         :relation_base_name: case insensitive name of the base model element.
         :raises ValueError: If the relation does not exist.
+        :return ods.Model.Relation: Corresponding relation.
         """
         entity = self.__entity(entity_or_name)
         relations = entity.relations
-        for key in relations:
-            relation = relations[key]
+        for _, relation in relations.items():
             if relation_base_name.casefold() == relation.base_name.casefold():
                 return relation
-        raise ValueError(f"Entity {entity.name} does not have relation derived from {relation_base_name}")
+        raise ValueError(f"Entity '{entity.name}' does not have relation derived from '{relation_base_name}'.")
 
-    def relation_name_by_base_name(self, entity_or_name: str | _ods.Model.Entity, relation_base_name: str) -> str:
-        """
-        Get the relation application name by base name.
-
-        :entity_or_name: entity object or case sensitive application name to lookup
-        :relation_base_name: case insensitive name of the base model element.
-        :raises ValueError: If the relation does not exist.
-        """
-        return self.relation_by_base_name(entity_or_name, relation_base_name).name
-
-    def attribute_by_base_name(
-        self, entity_or_name: str | _ods.Model.Entity, attribute_base_name: str
-    ) -> _ods.Model.Attribute:
-        """
-        Get the attribute by base name.
-
-        :entity_or_name: entity object or case sensitive application name to lookup
-        :attribute_base_name: case insensitive name of the base model element.
-        :raises ValueError: If the attribute does not exist.
-        """
-        entity = self.__entity(entity_or_name)
-        attributes = entity.attributes
-        for key in attributes:
-            attribute = attributes[key]
-            if attribute_base_name.casefold() == attribute.base_name.casefold():
-                return attribute
-        raise ValueError(f"Entity {entity.name} does not have attribute derived from {attribute_base_name}")
-
-    def attribute_name_by_base_name(self, entity_or_name: str | _ods.Model.Entity, attribute_base_name: str) -> str:
-        """
-        Get the attribute by base name.
-
-        :entity_or_name: entity object or case sensitive application name to lookup
-        :attribute_base_name: case insensitive name of the base model element.
-        :raises ValueError: If the attribute does not exist.
-        """
-        return self.attribute_by_base_name(entity_or_name, attribute_base_name).name
-
-    def enumeration(self, enumeration_name: str) -> _ods.Model.Enumeration:
+    def enumeration(self, enumeration_name: str) -> ods.Model.Enumeration:
         """
         Get enumeration by its name.
 
         :enumeration_name: case insensitive name of the application model enumeration.
         :raises ValueError: If the enumeration does not exist.
+        :return ods.Model.Enumeration: Corresponding enumeration.
         """
-        if enumeration_name in self.__model.enumerations:
-            return self.__model.enumerations[enumeration_name]
+        enumeration = self.__model.enumerations.get(enumeration_name)
+        if enumeration is not None:
+            return enumeration
+        name_casefold = enumeration_name.casefold()
+        for key, enumeration in self.__model.enumerations.items():
+            if key.casefold() == name_casefold:
+                return enumeration
+        raise ValueError(f"Enumeration '{enumeration_name}' does not exist in data model.")
 
-        for key in self.__model.enumerations:
-            if key.casefold() == enumeration_name.casefold():
-                return self.__model.enumerations[key]
-        raise ValueError(f"Enumeration {enumeration_name} does not exist in datamodel")
-
-    def enumeration_value_to_key(self, enumeration_or_name: str | _ods.Model.Enumeration, lookup_value: int):
+    def enumeration_value_to_key(self, enumeration_or_name: str | ods.Model.Enumeration, lookup_value: int) -> str:
         """
         Convert an enumeration value into its string representation.
 
         :enumeration_or_name: ods enumeration or its case insensitive name
         :lookup_value: integer value to check
         :raises ValueError: If the enumeration does not exist or does not contain value.
+        :return String representation of int value.
         """
-        enumeration = (
-            enumeration_or_name
-            if isinstance(enumeration_or_name, _ods.Model.Enumeration)
-            else self.enumeration(enumeration_or_name)
-        )
+        enumeration = self.__enumeration(enumeration_or_name)
         for key, value in enumeration.items.items():
             if value == lookup_value:
                 return key
-        raise ValueError(f"Enumeration {enumeration.name} does not contain the int value {lookup_value}")
+        raise ValueError(f"Enumeration '{enumeration.name}' does not contain the int value '{lookup_value}'.")
 
-    def enumeration_key_to_value(self, enumeration_or_name: str | _ods.Model.Enumeration, lookup_key: str):
+    def enumeration_key_to_value(self, enumeration_or_name: str | ods.Model.Enumeration, lookup_key: str) -> int:
         """
         Convert an enumeration integer value into its string representation.
 
         :enumeration_or_name: ods enumeration or its case insensitive name
         :lookup_key: case insensitive string key value to check
         :raises ValueError: If the enumeration does not exist or does not contain the key.
+        :return str: Int representation of string value.
         """
-        enumeration = (
-            enumeration_or_name
-            if isinstance(enumeration_or_name, _ods.Model.Enumeration)
-            else self.enumeration(enumeration_or_name)
-        )
-
+        enumeration = self.__enumeration(enumeration_or_name)
         if lookup_key in enumeration.items:
             return enumeration.items[lookup_key]
-
+        name_casefold = lookup_key.casefold()
         for key, value in enumeration.items.items():
-            if key.casefold() == lookup_key.casefold():
+            if key.casefold() == name_casefold:
                 return value
-        raise ValueError(f"Enumeration {enumeration.name} does not contain the key {lookup_key}")
+        raise ValueError(f"Enumeration '{enumeration.name}' does not contain the key '{lookup_key}'.")
 
-    def __entity(self, entity_or_name: str | _ods.Model.Entity) -> _ods.Model.Entity:
-        rv = entity_or_name if isinstance(entity_or_name, _ods.Model.Entity) else self.__model.entities[entity_or_name]
-        if rv is None:
-            raise ValueError(f"No entity named {entity_or_name} found")
-        return rv
+    def __entity(self, entity_or_name: str | ods.Model.Entity) -> ods.Model.Entity:
+        if isinstance(entity_or_name, ods.Model.Entity):
+            return entity_or_name
+        return self.entity(entity_or_name)
+
+    def __enumeration(self, enumeration_or_name: str | ods.Model.Enumeration) -> ods.Model.Enumeration:
+        if isinstance(enumeration_or_name, ods.Model.Enumeration):
+            return enumeration_or_name
+        return self.enumeration(enumeration_or_name)

@@ -71,7 +71,7 @@ class ConI:
         :param str url: base url of the ASAM ODS API of a given server. An example is "http://localhost:8080/api".
         :param requests.auth.AuthBase auth: An auth object to be used for the used requests package.
             For basic auth `("USER", "PASSWORD")` can be used.
-        :param ods.ContextVariables | dict | None context_variables: If context variables are neccessary for the
+        :param ods.ContextVariables | dict | None context_variables: If context variables are necessary for the
             connection they are passed here. It defaults to None.
         :param bool verify_certificate: If no certificate is provided for https insecure access can be enabled.
             It defaults to True.
@@ -130,7 +130,7 @@ class ConI:
         Close the attached session at the ODS server by calling delete on the session URL
         and closing the requests session.
 
-        :raises requests.HTTPError: If delte the ASAM ODS session fails.
+        :raises requests.HTTPError: If delete the ASAM ODS session fails.
         """
         if None is not self.__session:
             response = self.__session.delete(
@@ -148,7 +148,7 @@ class ConI:
         :param str | dict | ods.SelectStatement query: Query given as JAQueL query (dict or str)
             or as an ASAM ODS SelectStatement.
         :raises requests.HTTPError: If query fails.
-        :return DataFrame: The DataMatrices as Pandas.Dataframe. The columns are named as `ENITY_NAME.ATTRIBUTE_NAME`.
+        :return DataFrame: The DataMatrices as Pandas.Dataframe. The columns are named as `ENTITY_NAME.ATTRIBUTE_NAME`.
             `IsNull` values are not marked invalid.
         """
         if isinstance(query, ods.SelectStatement):
@@ -161,7 +161,7 @@ class ConI:
         Get the cache ODS server model. This model will return the cached
         application model related to your session.
 
-        :return ods.Model: The application modle of the ASAM ODS server.
+        :return ods.Model: The application model of the ASAM ODS server.
         """
         return self.mc.model()
 
@@ -256,7 +256,7 @@ class ConI:
 
         :raises requests.HTTPError: If write fails.
         :param ods.NtoMWriteRelatedInstances related_instances: related instances to be
-            updated, delted or created.
+            updated, deleted or created.
         """
         self.ods_post_request("n-m-relation-write", related_instances)
 
@@ -272,7 +272,7 @@ class ConI:
         ```
 
         :raises requests.HTTPError: If creation of transaction fails.
-        :return Transaction: transaction object that will abort automatically if not commited.
+        :return Transaction: transaction object that will abort automatically if commit is not called.
         """
         return Transaction(self)
 
@@ -302,9 +302,9 @@ class ConI:
         Read bulk data from a submatrix or measurement.
         Submatrix access can also be done using data-read.
 
-        :param ods.ValueMatrixRequestStruct request: Define measurment or submatrix to
+        :param ods.ValueMatrixRequestStruct request: Define measurement or submatrix to
             create ASAM ODS ValueMatrix for.
-        :raises requests.HTTPError: If ValueMatrix access failes.
+        :raises requests.HTTPError: If ValueMatrix access fails.
         :return ods.DataMatrices: DataMatrices containing the bulk data for the request.
         """
         response = self.ods_post_request("valuematrix-read", request)
@@ -327,7 +327,7 @@ class ConI:
 
     def model_update(self, model_parts: ods.Model, update_model: bool = True) -> None:
         """
-        Update application model content. This method is used to modify existsing items or
+        Update application model content. This method is used to modify existing items or
         create new ones.
 
         :param ods.Model model_parts: parts of the model to be updated or created.
