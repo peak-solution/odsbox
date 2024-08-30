@@ -1,8 +1,8 @@
 import logging
-import pytest
+import numpy as np
 
 import odsbox.proto.ods_pb2 as ods
-from odsbox.datamatrices_to_pandas import to_pandas
+from odsbox.datamatrices_to_pandas import to_pandas, unknown_array_values
 
 
 def test_conversion1():
@@ -115,16 +115,6 @@ def test_empty_datamatrix():
     assert pdf.shape == (0, 0)
 
 
-def test_unsupported_types():
-    dms = ods.DataMatrices()
-    dm = dms.matrices.add(aid=4711, name="Unsupported")
-    dm.columns.add(name="DS_UNKNOWN", data_type=ods.DT_UNKNOWN).unknown_arrays.values.add(
-        data_type=ods.DT_DOUBLE, unit_id=12
-    )
-    with pytest.raises(ValueError, match="DataType 'unknown_arrays' not handled!"):
-        to_pandas(dms)
-
-
 def test_bytestr_type():
     dms = ods.DataMatrices()
     dm = dms.matrices.add(aid=4711, name="ByteStr")
@@ -135,10 +125,205 @@ def test_bytestr_type():
 
     pdf = to_pandas(dms)
     logging.getLogger().info(pdf)
-    # assert pdf.shape == (2, 2)
+    assert pdf.shape == (2, 2)
 
     assert pdf.to_dict() == {
         "ByteStr.DS_BYTESTR": {0: [b"abc", b"abc", b"abc"], 1: [b"def", b"def"]},
         "ByteStr.DT_BYTESTR": {0: b"abc", 1: b"def"},
     }
     assert len(pdf.to_json()) > 0
+
+
+def test_unknown_arrays():
+    dms = ods.DataMatrices()
+    dm = dms.matrices.add(aid=4711, name="UnknownTypes")
+    column = dm.columns.add(name="Values", base_name="values", data_type=ods.DT_UNKNOWN)
+
+    column.unknown_arrays.values.add(data_type=ods.DT_STRING).string_array.values.extend(["a", "b", "c"])
+    column.unknown_arrays.values.add(data_type=ods.DT_SHORT).long_array.values.extend([1, 2, -1])
+    column.unknown_arrays.values.add(data_type=ods.DT_FLOAT).float_array.values.extend([1.1, 2.1, -1.1])
+    column.unknown_arrays.values.add(data_type=ods.DT_BOOLEAN).boolean_array.values.extend([True, False, True])
+    column.unknown_arrays.values.add(data_type=ods.DT_BYTE).byte_array.values = b"abc"
+    column.unknown_arrays.values.add(data_type=ods.DT_LONG).long_array.values.extend([1, 2, -1])
+    column.unknown_arrays.values.add(data_type=ods.DT_DOUBLE).double_array.values.extend([1.1, 2.1, -1.1])
+    column.unknown_arrays.values.add(data_type=ods.DT_LONGLONG).longlong_array.values.extend([123, 345, 789])
+    column.unknown_arrays.values.add(data_type=ods.DT_DATE).string_array.values.extend(
+        ["20241224231035002", "20241224231035003", "20241224231035004"]
+    )
+    column.unknown_arrays.values.add(data_type=ods.DT_BYTESTR).bytestr_array.values.extend([b"abc", b"def", b"hij"])
+
+    pdf = to_pandas(dms)
+    logging.getLogger().info(pdf)
+    assert pdf.shape == (10, 1)
+    assert len(pdf.to_json()) > 0
+    assert pdf.to_dict() == {
+        "UnknownTypes.Values": {
+            0: ["a", "b", "c"],
+            1: [1, 2, -1],
+            2: [1.100000023841858, 2.0999999046325684, -1.100000023841858],
+            3: [True, False, True],
+            4: [97, 98, 99],
+            5: [1, 2, -1],
+            6: [1.1, 2.1, -1.1],
+            7: [123, 345, 789],
+            8: ["20241224231035002", "20241224231035003", "20241224231035004"],
+            9: [b"abc", b"def", b"hij"],
+        }
+    }
+
+
+def test_unknown_arrays_complex():
+    dms = ods.DataMatrices()
+    dm = dms.matrices.add(aid=4711, name="UnknownTypes")
+    column = dm.columns.add(name="Values", base_name="values", data_type=ods.DT_UNKNOWN)
+
+    column.unknown_arrays.values.add(data_type=ods.DT_COMPLEX).float_array.values.extend(
+        np.array([1.1, 0.1, 2.1, 0.2, -1.1, 0.3], dtype=np.float32)
+    )
+    column.unknown_arrays.values.add(data_type=ods.DT_DCOMPLEX).double_array.values.extend(
+        [1.1, 0.1, 2.1, 0.2, -1.1, 0.3]
+    )
+
+    pdf = to_pandas(dms)
+    logging.getLogger().info(pdf)
+    assert pdf.shape == (2, 1)
+    assert len(pdf.to_json()) > 0
+    assert pdf.to_dict() != {}
+
+    assert (
+        unknown_array_values(dm.columns[0].unknown_arrays.values[0])
+        == np.array([1.1 + 0.1j, 2.1 + 0.2j, -1.1 + 0.3j], dtype=np.complex64)
+    ).all()
+    assert (
+        unknown_array_values(dm.columns[0].unknown_arrays.values[1])
+        == np.array([1.1 + 0.1j, 2.1 + 0.2j, -1.1 + 0.3j], dtype=np.complex128)
+    ).all()
+
+
+def test_dt_complex():
+    dms = ods.DataMatrices()
+    dm = dms.matrices.add(aid=4711, name="ComplexTypes")
+    dm.columns.add(name="DT_FLOAT", data_type=ods.DT_FLOAT).float_array.values.extend([1.1, 2.1, -1.1])
+    dm.columns.add(name="DT_COMPLEX", data_type=ods.DT_COMPLEX).float_array.values.extend(
+        [1.1, 0.1, 2.1, 0.2, -1.1, 0.3]
+    )
+    dm.columns.add(name="DT_DCOMPLEX", data_type=ods.DT_DCOMPLEX).double_array.values.extend(
+        [1.1, 0.1, 2.1, 0.2, -1.1, 0.3]
+    )
+
+    pdf = to_pandas(dms)
+    logging.getLogger().info(pdf)
+    assert pdf.shape == (3, 3)
+    assert len(pdf.to_json()) > 0
+
+    assert (pdf["ComplexTypes.DT_COMPLEX"] == np.array([1.1 + 0.1j, 2.1 + 0.2j, -1.1 + 0.3j], dtype=np.complex64)).all()
+    assert (
+        pdf["ComplexTypes.DT_DCOMPLEX"] == np.array([1.1 + 0.1j, 2.1 + 0.2j, -1.1 + 0.3j], dtype=np.complex128)
+    ).all()
+
+
+def test_ds_complex():
+    dms = ods.DataMatrices()
+    dm = dms.matrices.add(aid=4711, name="ComplexTypes")
+    dm.columns.add(name="DT_FLOAT", data_type=ods.DT_FLOAT).float_array.values.extend([1.1, 2.1])
+    values = dm.columns.add(name="DS_COMPLEX", data_type=ods.DS_COMPLEX).float_arrays.values
+    values.add().values.extend([1.1, 0.1, 2.1, 0.2, -1.1, 0.3])
+    values.add().values.extend([1.1, 0.1, 2.1, 0.2, -1.1, 0.3])
+    values = dm.columns.add(name="DS_DCOMPLEX", data_type=ods.DS_DCOMPLEX).double_arrays.values
+    values.add().values.extend([1.1, 0.1, 2.1, 0.2, -1.1, 0.3])
+    values.add().values.extend([1.1, 0.1, 2.1, 0.2, -1.1, 0.3])
+
+    pdf = to_pandas(dms)
+    logging.getLogger().info(pdf)
+    assert pdf.shape == (2, 3)
+    assert len(pdf.to_json()) > 0
+
+    assert (
+        pdf["ComplexTypes.DS_COMPLEX"][0] == np.array([1.1 + 0.1j, 2.1 + 0.2j, -1.1 + 0.3j], dtype=np.complex64)
+    ).all()
+    assert (
+        pdf["ComplexTypes.DS_DCOMPLEX"][0] == np.array([1.1 + 0.1j, 2.1 + 0.2j, -1.1 + 0.3j], dtype=np.complex128)
+    ).all()
+
+
+def test_dt_external_reference():
+    dms = ods.DataMatrices()
+    dm = dms.matrices.add(aid=4711, name="ExtRefTypes")
+    dm.columns.add(name="DT_LONG", data_type=ods.DT_LONG).long_array.values.extend([1, 2, -1])
+    dm.columns.add(name="DT_EXTERNALREFERENCE", data_type=ods.DT_EXTERNALREFERENCE).string_array.values.extend(
+        [
+            "first picture",
+            "image/jpg",
+            "data/firstPic.jpg",
+            "second picture",
+            "image/jpg",
+            "data/secondPic.jpg",
+            "third picture",
+            "image/jpg",
+            "data/thirdPic.jpg",
+        ]
+    )
+
+    pdf = to_pandas(dms)
+    logging.getLogger().info(pdf)
+    assert pdf.shape == (3, 2)
+    assert len(pdf.to_json()) > 0
+
+    assert pdf.to_dict() == {
+        "ExtRefTypes.DT_LONG": {0: 1, 1: 2, 2: -1},
+        "ExtRefTypes.DT_EXTERNALREFERENCE": {
+            0: ("first picture", "image/jpg", "data/firstPic.jpg"),
+            1: ("second picture", "image/jpg", "data/secondPic.jpg"),
+            2: ("third picture", "image/jpg", "data/thirdPic.jpg"),
+        },
+    }
+
+
+def test_ds_external_reference():
+    dms = ods.DataMatrices()
+    dm = dms.matrices.add(aid=4711, name="ExtRefTypes")
+    dm.columns.add(name="DT_LONG", data_type=ods.DT_LONG).long_array.values.extend([1, -1])
+    values = dm.columns.add(name="DS_EXTERNALREFERENCE", data_type=ods.DS_EXTERNALREFERENCE).string_arrays.values
+    values.add().values.extend(
+        [
+            "first picture",
+            "image/jpg",
+            "data/firstPic.jpg",
+            "second picture",
+            "image/jpg",
+            "data/secondPic.jpg",
+            "third picture",
+            "image/jpg",
+            "data/thirdPic.jpg",
+        ]
+    )
+    values.add().values.extend(
+        [
+            "first picture",
+            "image/jpg",
+            "data/firstPic.jpg",
+            "second picture",
+            "image/jpg",
+            "data/secondPic.jpg",
+        ]
+    )
+
+    pdf = to_pandas(dms)
+    logging.getLogger().info(pdf)
+    assert pdf.shape == (2, 2)
+    assert len(pdf.to_json()) > 0
+
+    assert pdf.to_dict() == {
+        "ExtRefTypes.DT_LONG": {0: 1, 1: -1},
+        "ExtRefTypes.DS_EXTERNALREFERENCE": {
+            0: [
+                ("first picture", "image/jpg", "data/firstPic.jpg"),
+                ("second picture", "image/jpg", "data/secondPic.jpg"),
+                ("third picture", "image/jpg", "data/thirdPic.jpg"),
+            ],
+            1: [
+                ("first picture", "image/jpg", "data/firstPic.jpg"),
+                ("second picture", "image/jpg", "data/secondPic.jpg"),
+            ],
+        },
+    }

@@ -1,16 +1,17 @@
 """converts a submatrix delivered as a datamatrix protobuf object into a pandas dataframe."""
 
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 import pandas as pd
 
-import odsbox.proto.ods_pb2 as _ods
+import odsbox.proto.ods_pb2 as ods
+from odsbox.datamatrices_to_pandas import unknown_array_values
 
 if TYPE_CHECKING:
     from .con_i import ConI
 
 
-def __get_column_from_dms(dms: _ods.DataMatrices, entity: _ods.Model.Entity, name: str) -> _ods.DataMatrix.Column:
+def __get_column_from_dms(dms: ods.DataMatrices, entity: ods.Model.Entity, name: str) -> ods.DataMatrix.Column:
     for matrix in dms.matrices:
         if entity.aid == matrix.aid:
             for column in matrix.columns:
@@ -20,32 +21,8 @@ def __get_column_from_dms(dms: _ods.DataMatrices, entity: _ods.Model.Entity, nam
     raise ValueError(f"Matrices do not contain column for {entity.name}.{name}")
 
 
-def __get_unknown_column_values(
-    unknown_array: _ods.DataMatrix.Column.UnknownArray,
-) -> Any:
-    if unknown_array.WhichOneof("UnknownOneOf") is None:
-        return 0
-
-    if unknown_array.HasField("boolean_array"):
-        return unknown_array.boolean_array.values
-    elif unknown_array.HasField("byte_array"):
-        return unknown_array.byte_array.values
-    elif unknown_array.HasField("long_array"):
-        return unknown_array.long_array.values
-    elif unknown_array.HasField("longlong_array"):
-        return unknown_array.longlong_array.values
-    elif unknown_array.HasField("float_array"):
-        return unknown_array.float_array.values
-    elif unknown_array.HasField("double_array"):
-        return unknown_array.double_array.values
-    elif unknown_array.HasField("string_array"):
-        return unknown_array.string_array.values
-    else:
-        raise ValueError(f"DataType {unknown_array.WhichOneof('UnknownOneOf')} not handled in python code!")
-
-
 def __convert_bulk_to_pandas_data_frame(
-    con_i: "ConI", local_column_id_lookup: dict, data_matrices: _ods.DataMatrices
+    con_i: "ConI", local_column_id_lookup: dict, data_matrices: ods.DataMatrices
 ) -> pd.DataFrame:
     if 1 != len(data_matrices.matrices):
         raise ValueError("Only allowed to have one matrix")
@@ -81,7 +58,7 @@ def __convert_bulk_to_pandas_data_frame(
     for local_column_id, local_column_values in zip(id_array, values_array):
         local_column_meta = local_column_id_lookup[local_column_id]
         local_column_name = local_column_meta["name"]
-        local_column_values = list(__get_unknown_column_values(local_column_values))
+        local_column_values = unknown_array_values(local_column_values)
         local_column_len = len(local_column_values)
         number_of_rows = local_column_len if local_column_len > number_of_rows else number_of_rows
         column_dict[local_column_name] = local_column_values
@@ -110,7 +87,7 @@ def submatrix_to_pandas(con_i: "ConI", submatrix_iid: int) -> pd.DataFrame:
     """Loads an ASAM ODS SubMatrix and returns it as a pandas DataFrame."""
     local_column_entity = con_i.mc.entity_by_base_name("AoLocalColumn")
 
-    lc_meta_select_statement = _ods.SelectStatement()
+    lc_meta_select_statement = ods.SelectStatement()
     column = lc_meta_select_statement.columns.add()
     column.aid = local_column_entity.aid
     column.attribute = con_i.mc.attribute_by_base_name(local_column_entity, "id").name
@@ -127,7 +104,7 @@ def submatrix_to_pandas(con_i: "ConI", submatrix_iid: int) -> pd.DataFrame:
     condition_item = lc_meta_select_statement.where.add()
     condition_item.condition.aid = local_column_entity.aid
     condition_item.condition.attribute = con_i.mc.relation_by_base_name(local_column_entity, "submatrix").name
-    condition_item.condition.operator = _ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_EQ
+    condition_item.condition.operator = ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_EQ
     condition_item.condition.longlong_array.values.append(submatrix_iid)
 
     lc_meta_dms = con_i.data_read(lc_meta_select_statement)
@@ -168,7 +145,7 @@ def submatrix_to_pandas(con_i: "ConI", submatrix_iid: int) -> pd.DataFrame:
             "sequence_representation": sequence_representation_value,
         }
 
-    lc_bulk_select_statement = _ods.SelectStatement()
+    lc_bulk_select_statement = ods.SelectStatement()
     column = lc_bulk_select_statement.columns.add()
     column.aid = local_column_entity.aid
     column.attribute = con_i.mc.attribute_by_base_name(local_column_entity, "id").name
@@ -181,7 +158,7 @@ def submatrix_to_pandas(con_i: "ConI", submatrix_iid: int) -> pd.DataFrame:
     condition_item = lc_bulk_select_statement.where.add()
     condition_item.condition.aid = local_column_entity.aid
     condition_item.condition.attribute = con_i.mc.relation_by_base_name(local_column_entity, "submatrix").name
-    condition_item.condition.operator = _ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_EQ
+    condition_item.condition.operator = ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_EQ
     condition_item.condition.longlong_array.values.append(submatrix_iid)
 
     lc_bulk_dms = con_i.data_read(lc_bulk_select_statement)
