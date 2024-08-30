@@ -24,6 +24,8 @@ def __get_datamatrix_column_values(column: _ods.DataMatrix.Column):
         return column.double_array.values
     if column.HasField("longlong_array"):
         return column.longlong_array.values
+    if column.HasField("bytestr_array"):
+        return column.bytestr_array.values
     # vector attributes. Look for the additional 's'
     if column.HasField("string_arrays"):
         return [list(item.values) for item in column.string_arrays.values]
@@ -39,6 +41,8 @@ def __get_datamatrix_column_values(column: _ods.DataMatrix.Column):
         return [list(item.values) for item in column.double_arrays.values]
     if column.HasField("longlong_arrays"):
         return [list(item.values) for item in column.longlong_arrays.values]
+    if column.HasField("bytestr_arrays"):
+        return [list(item.values) for item in column.bytestr_arrays.values]
 
     raise ValueError(f"DataType '{column.WhichOneof('ValuesOneOf')}' not handled!")
 
