@@ -123,3 +123,22 @@ def test_unsupported_types():
     )
     with pytest.raises(ValueError, match="DataType 'unknown_arrays' not handled!"):
         to_pandas(dms)
+
+
+def test_bytestr_type():
+    dms = ods.DataMatrices()
+    dm = dms.matrices.add(aid=4711, name="ByteStr")
+    values = dm.columns.add(name="DS_BYTESTR", data_type=ods.DS_BYTESTR).bytestr_arrays.values
+    values.add().values.extend([b"abc"] * 3)
+    values.add().values.extend([b"def"] * 2)
+    dm.columns.add(name="DT_BYTESTR", data_type=ods.DT_BYTESTR).bytestr_array.values.extend([b"abc", b"def"])
+
+    pdf = to_pandas(dms)
+    logging.getLogger().info(pdf)
+    # assert pdf.shape == (2, 2)
+
+    assert pdf.to_dict() == {
+        "ByteStr.DS_BYTESTR": {0: [b"abc", b"abc", b"abc"], 1: [b"def", b"def"]},
+        "ByteStr.DT_BYTESTR": {0: b"abc", 1: b"def"},
+    }
+    assert len(pdf.to_json()) > 0
