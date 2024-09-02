@@ -152,7 +152,7 @@ class ConI:
             `IsNull` values are not marked invalid.
         """
         if isinstance(query, ods.SelectStatement):
-            return to_pandas(self.data_read(self.data_read_jaquel(query)))
+            return to_pandas(self.data_read(query))
         else:
             return to_pandas(self.data_read_jaquel(query))
 
@@ -174,7 +174,7 @@ class ConI:
         :return ods.DataMatrices: The DataMatrices representing the result.
             It will contain one ods.DataMatrix for each returned entity type.
         """
-        _ods_entity, ods_query = jaquel_to_ods(self.model(), jaquel)
+        _, ods_query = jaquel_to_ods(self.model(), jaquel)
         return self.data_read(ods_query)
 
     def data_read(self, select_statement: ods.SelectStatement) -> ods.DataMatrices:

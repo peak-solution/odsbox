@@ -2,6 +2,7 @@
 
 from odsbox.con_i import ConI
 from odsbox.submatrix_to_pandas import submatrix_to_pandas
+from odsbox.jaquel import jaquel_to_ods
 
 import logging
 import pytest
@@ -23,6 +24,23 @@ def test_con_i():
         con_i.query_data({"AoEnvironment": {}, "$options": {"$rowlimit": 1}})
         con_i.query_data({"AoUnit": {}, "$options": {"$rowlimit": 1}})
         con_i.query_data({"AoMeasurement": {}, "$options": {"$rowlimit": 1}})
+
+
+def test_query_data():
+    with __create_con_i() as con_i:
+        model = con_i.model_read()
+        assert len(model.entities) > 0
+
+        assert con_i.query_data({"AoEnvironment": {}, "$options": {"$rowlimit": 1}}).empty is False
+        assert con_i.query_data('{"AoEnvironment": {}, "$options": {"$rowlimit": 1}}').empty is False
+
+        entity, select_statement = jaquel_to_ods(con_i.model(), {"AoEnvironment": {}, "$options": {"$rowlimit": 1}})
+        assert entity.base_name == "AoEnvironment"
+        assert con_i.query_data(select_statement).empty is False
+
+        entity, select_statement = jaquel_to_ods(con_i.model(), '{"AoEnvironment": {}, "$options": {"$rowlimit": 1}}')
+        assert entity.base_name == "AoEnvironment"
+        assert con_i.query_data(select_statement).empty is False
 
 
 def test_transaction():
