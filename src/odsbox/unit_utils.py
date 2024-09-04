@@ -1,8 +1,10 @@
-"""Helps to access the unit catalog"""
+"""
+Helps to access the unit catalog and find physical dimensions.
+"""
 
 from pandas import DataFrame
 
-import odsbox.proto.ods_pb2 as _ods
+import odsbox.proto.ods_pb2 as ods
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -20,10 +22,12 @@ def query_physical_dimensions(
     molar_amount: int = 0,
     luminous_intensity: int = 0,
 ) -> DataFrame:
-    """Search for a physical dimension by its SI exponents"""
+    """
+    Search for a physical dimension by its SI exponents.
+    """
     physical_dimension_entity = con_i.mc.entity_by_base_name("AoPhysicalDimension")
 
-    select = _ods.SelectStatement()
+    select = ods.SelectStatement()
     select.columns.add(aid=physical_dimension_entity.aid, attribute="*")
     ci = select.where.add()
     ci.condition.aid = physical_dimension_entity.aid
@@ -66,11 +70,13 @@ def query_units(
     molar_amount: int = 0,
     luminous_intensity: int = 0,
 ) -> DataFrame:
-    """Search for a unit by its SI exponents"""
+    """
+    Search for a unit by its SI exponents.
+    """
     unit_entity = con_i.mc.entity_by_base_name("AoUnit")
     physical_dimension_entity = con_i.mc.entity_by_base_name("AoPhysicalDimension")
 
-    select = _ods.SelectStatement()  # pylint: disable=E1101
+    select = ods.SelectStatement()  # pylint: disable=E1101
     select.columns.add(aid=unit_entity.aid, attribute="*")
     select.columns.add(aid=physical_dimension_entity.aid, attribute="Name")
     select.joins.add(
@@ -119,12 +125,14 @@ def query_quantity(
     molar_amount: int = 0,
     luminous_intensity: int = 0,
 ) -> DataFrame:
-    """Search for a quantity by its SI exponents"""
+    """
+    Search for a quantity by its SI exponents.
+    """
     unit_entity = con_i.mc.entity_by_base_name("AoUnit")
     physical_dimension_entity = con_i.mc.entity_by_base_name("AoPhysicalDimension")
     quantity_entity = con_i.mc.entity_by_base_name("AoQuantity")
 
-    select = _ods.SelectStatement()
+    select = ods.SelectStatement()
     select.columns.add(aid=quantity_entity.aid, attribute="*")
     select.columns.add(aid=unit_entity.aid, attribute="Name")
     select.columns.add(aid=physical_dimension_entity.aid, attribute="Name")

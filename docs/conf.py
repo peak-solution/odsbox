@@ -32,12 +32,12 @@ release = "0.1.0"
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    "sphinx.ext.napoleon",  # to render Google format docstrings
     "sphinx.ext.autodoc",
     "sphinx.ext.doctest",
     "sphinx.ext.intersphinx",
     "sphinx.ext.ifconfig",
     "sphinx.ext.viewcode",  # Add links to highlighted source code
-    "sphinx.ext.napoleon",  # to render Google format docstrings
     "sphinx.ext.githubpages",
 ]
 

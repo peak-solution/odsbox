@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .con_i import ConI
-import odsbox.proto.ods_pb2 as _ods
+import odsbox.proto.ods_pb2 as ods
 
 
 class UnitCatalog:
@@ -29,13 +29,23 @@ class UnitCatalog:
         self.unknown_physical_dimension = None
 
     def get(self, unit_name: str) -> int | None:
-        """Get a unit by its case sensitive name"""
+        """
+        Get a unit by its case sensitive name.
+
+        :param str unit_name: Case sensitive name of an unit.
+        :return int | None: The unit id if the unit exists. Else `None` is returned.
+        """
         if unit_name is None or "" == unit_name:
             return self.get("-")
         return self.__unit_map.get(unit_name) if unit_name in self.__unit_map else None
 
     def get_or_create(self, unit_name: str) -> int:
-        """Get a unit by its case sensitive name or create one using an unknown physical dimension."""
+        """
+        Get a unit by its case sensitive name or create one using an unknown physical dimension.
+
+        :param str unit_name: Case sensitive name of an unit.
+        :return int: The unit id if the unit exists.
+        """
         if unit_name is None or "" == unit_name:
             # Unit is obligatory
             return self.get_or_create("-")
@@ -47,7 +57,12 @@ class UnitCatalog:
         return new_unit_id
 
     def create(self, unit_name: str) -> int:
-        """Create a unit by its case sensitive name using an unknown physical dimension."""
+        """
+        Create a unit by its case sensitive name using an unknown physical dimension.
+
+        :param str unit_name: Case sensitive name of an unit.
+        :return int: The unit id if the unit exists.
+        """
         physical_dimension_id = self.__get_or_create_unknown_physical_dimension()
         unit_id = self.__create_auto_unit(unit_name, physical_dimension_id)
         return unit_id
@@ -71,7 +86,7 @@ class UnitCatalog:
                 physical_dimension_id,
             )
         else:
-            ts = _ods.DataMatrices()
+            ts = ods.DataMatrices()
             dm = ts.matrices.add(aid=physical_dimension_entity.aid)
             dm.columns.add(
                 name=self.__con_i.mc.attribute_by_base_name(physical_dimension_entity, "name").name
@@ -115,7 +130,7 @@ class UnitCatalog:
 
     def __create_auto_unit(self, name: str, physical_dimension_id: int):
         unit = self.__con_i.mc.entity_by_base_name("AoUnit")
-        ts = _ods.DataMatrices()
+        ts = ods.DataMatrices()
         dm = ts.matrices.add(aid=unit.aid)
         dm.columns.add(name=self.__con_i.mc.attribute_by_base_name(unit, "name").name).string_array.values[:] = [name]
         dm.columns.add(name=self.__con_i.mc.attribute_by_base_name(unit, "mime_type").name).string_array.values[:] = [

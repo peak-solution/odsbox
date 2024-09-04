@@ -29,13 +29,17 @@ class Transaction:
         self.abort()
 
     def commit(self) -> None:
-        """Commit the transaction."""
+        """
+        Commit the transaction.
+        """
         if None is not self.__con_i:
             self.__con_i.transaction_commit()
             self.__con_i = None
 
     def abort(self) -> None:
-        """Aborts the transaction."""
+        """
+        Aborts the transaction.
+        """
         if None is not self.__con_i:
             self.__con_i.transaction_abort()
             self.__con_i = None
