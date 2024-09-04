@@ -106,7 +106,13 @@ def __get_datamatrix_column_values(column: ods.DataMatrix.Column) -> list:
 
 
 def to_pandas(data_matrices: ods.DataMatrices) -> pd.DataFrame:
-    """Converts data in an ASAM ODS DataMatrices into a pandas DataFrame."""
+    """
+    Converts data in an ASAM ODS DataMatrices into a pandas DataFrame.
+
+    :param ods.DataMatrices data_matrices: matrices to be converted.
+    :return pd.DataFrame: A pandas dataframe containing all the single matrices in a single frame. The
+                          columns are named by the schema `ENTITY_NAME.ATTRIBUTE_NAME`.
+    """
     if 0 == len(data_matrices.matrices):
         return pd.DataFrame()
 

@@ -22,12 +22,12 @@ def __get_column_from_dms(dms: ods.DataMatrices, entity: ods.Model.Entity, name:
 
 
 def __convert_bulk_to_pandas_data_frame(
-    con_i: "ConI", local_column_id_lookup: dict, data_matrices: ods.DataMatrices
+    con_i: "ConI", local_column_id_lookup: dict, localcolumn_bulk: ods.DataMatrices
 ) -> pd.DataFrame:
-    if 1 != len(data_matrices.matrices):
+    if 1 != len(localcolumn_bulk.matrices):
         raise ValueError("Only allowed to have one matrix")
 
-    values_matrix = data_matrices.matrices[0]
+    values_matrix = localcolumn_bulk.matrices[0]
     start_index = values_matrix.row_start
 
     local_column_entity = con_i.mc.entity_by_base_name("AoLocalColumn")
@@ -84,7 +84,14 @@ def __convert_bulk_to_pandas_data_frame(
 
 
 def submatrix_to_pandas(con_i: "ConI", submatrix_iid: int) -> pd.DataFrame:
-    """Loads an ASAM ODS SubMatrix and returns it as a pandas DataFrame."""
+    """
+    Loads an ASAM ODS SubMatrix and returns it as a pandas DataFrame.
+
+    :param ConI con_i: ASAM ODS server session.
+    :param int submatrix_iid: id of an submatrix to be retrieved.
+    :return pd.DataFrame: A pandas dataframe containing the values of the localcolumn as pandas columns.
+                          The name of the localcolumn is used as pandas column name. The flags are ignored.
+    """
     local_column_entity = con_i.mc.entity_by_base_name("AoLocalColumn")
 
     lc_meta_select_statement = ods.SelectStatement()
@@ -130,7 +137,7 @@ def submatrix_to_pandas(con_i: "ConI", submatrix_iid: int) -> pd.DataFrame:
         con_i.mc.attribute_by_base_name(local_column_entity, "sequence_representation").name,
     )
 
-    lc_id_lookup = {}
+    localcolumn_id_lookup = {}
 
     for id_value, name_value, independent_value, sequence_representation_value in zip(
         id_column.longlong_array.values,
@@ -138,29 +145,26 @@ def submatrix_to_pandas(con_i: "ConI", submatrix_iid: int) -> pd.DataFrame:
         independent_column.long_array.values,
         sequence_representation_column.long_array.values,
     ):
-        lc_id_lookup[id_value] = {
+        localcolumn_id_lookup[id_value] = {
             "name": name_value,
             "id": id_value,
             "independent": 0 != independent_value,
             "sequence_representation": sequence_representation_value,
         }
 
-    lc_bulk_select_statement = ods.SelectStatement()
-    column = lc_bulk_select_statement.columns.add()
+    localcolumn_bulk_select_statement = ods.SelectStatement()
+    column = localcolumn_bulk_select_statement.columns.add()
     column.aid = local_column_entity.aid
     column.attribute = con_i.mc.attribute_by_base_name(local_column_entity, "id").name
-    column = lc_bulk_select_statement.columns.add()
+    column = localcolumn_bulk_select_statement.columns.add()
     column.aid = local_column_entity.aid
     column.attribute = con_i.mc.attribute_by_base_name(local_column_entity, "values").name
-    column = lc_bulk_select_statement.columns.add()
-    column.aid = local_column_entity.aid
-    column.attribute = con_i.mc.attribute_by_base_name(local_column_entity, "flags").name
-    condition_item = lc_bulk_select_statement.where.add()
+    condition_item = localcolumn_bulk_select_statement.where.add()
     condition_item.condition.aid = local_column_entity.aid
     condition_item.condition.attribute = con_i.mc.relation_by_base_name(local_column_entity, "submatrix").name
     condition_item.condition.operator = ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_EQ
     condition_item.condition.longlong_array.values.append(submatrix_iid)
 
-    lc_bulk_dms = con_i.data_read(lc_bulk_select_statement)
+    localcolumn_bulk = con_i.data_read(localcolumn_bulk_select_statement)
 
-    return __convert_bulk_to_pandas_data_frame(con_i, lc_id_lookup, lc_bulk_dms)
+    return __convert_bulk_to_pandas_data_frame(con_i, localcolumn_id_lookup, localcolumn_bulk)

@@ -1,15 +1,14 @@
 """
 Helper for ASAM ODS HTTP API conI session
 
-Example:
+Example::
 
-    ```
     with ConI(
         url="http://localhost:8087/api",
         auth=("sa", "sa")
     ) as con_i:
         units = con_i.query_data({"AoUnit": {}})
-    ```
+
 """
 
 import logging
@@ -32,15 +31,14 @@ class ConI:
     """
     This is a helper to hold an ASAM ODS HTTP API ConI session.
 
-    Example:
+    Example::
 
-        ```
         with ConI(
             url="http://localhost:8087/api",
             auth=("sa", "sa")
         ) as con_i:
             units = con_i.query_data({"AoUnit": {}})
-        ```
+
     """
 
     __log: logging.Logger = logging.getLogger(__name__)
@@ -58,15 +56,13 @@ class ConI:
         """
         Create a session object keeping track of ASAM ODS session URL named `conI`.
 
-        Example:
+        Example::
 
-            ```
             with ConI(
                 url="http://localhost:8087/api",
                 auth=("sa", "sa")
             ) as con_i:
                 units = con_i.query_data({"AoUnit": {}})
-            ```
 
         :param str url: base url of the ASAM ODS API of a given server. An example is "http://localhost:8080/api".
         :param requests.auth.AuthBase auth: An auth object to be used for the used requests package.
@@ -264,12 +260,11 @@ class ConI:
         """
         Open a transaction object to be used in a with clause
 
-        Example:
-        ```
-        with con_i.transaction() as transaction:
-            # do writing
-            transaction.commit()
-        ```
+        Example::
+
+            with con_i.transaction() as transaction:
+                # do writing
+                transaction.commit()
 
         :raises requests.HTTPError: If creation of transaction fails.
         :return Transaction: transaction object that will abort automatically if commit is not called.

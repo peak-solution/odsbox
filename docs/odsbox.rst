@@ -1,36 +1,40 @@
 python\_package package
 =======================
 
-Subpackages
------------
+Module contents
+---------------
 
-.. toctree::
-   :maxdepth: 4
-
-   odsbox.con_i
-   odsbox.datamatrices_to_pandas
-   odsbox.jaquel
-   odsbox.model_cache
-   odsbox.submatrix_to_pandas
-   odsbox.transaction
-   odsbox.unit_catalog
-   odsbox.unit_utils
-
-Submodules
-----------
-
-python\_package.setup module
-----------------------------
-
-.. automodule:: odsbox.setup
+.. automodule:: odsbox.con_i
    :members:
    :undoc-members:
    :show-inheritance:
 
-Module contents
----------------
+.. automodule:: odsbox.transaction
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
-.. automodule:: odsbox
+.. automodule:: odsbox.unit_catalog
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: odsbox.model_cache
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: odsbox.jaquel
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: odsbox.datamatrices_to_pandas
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: odsbox.submatrix_to_pandas
    :members:
    :undoc-members:
    :show-inheritance:

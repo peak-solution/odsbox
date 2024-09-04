@@ -6,7 +6,10 @@ import odsbox.proto.ods_pb2 as ods
 
 
 class ModelCache:
-    """The model object returned from ods server needs some utilities to work with it."""
+    """
+    The ods.Model object returned from ods server needs some utilities to work with it.
+    This cache functionality useful for daily work.
+    """
 
     __model: ods.Model = None
     __log: logging.Logger = logging.getLogger(__name__)
