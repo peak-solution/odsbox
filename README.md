@@ -1,7 +1,7 @@
 # ASAM ODSBox
 
-The odsbox is a lightweight Python wrapper on the standardized [ASAM ODS REST API](https://www.asam.net/standards/detail/ods/wiki/).
-Using intuitive JAQuel Queries and [pandas.DataFrames](https://pandas.pydata.org/) the `odsbox` makes dealing with ASAM ODS
+The ODSBox is a lightweight Python wrapper on the standardized [ASAM ODS REST API](https://www.asam.net/standards/detail/ods/wiki/).
+Using intuitive JAQuel queries and [pandas.DataFrames](https://pandas.pydata.org/) the ODSBox makes dealing with ASAM ODS
 data in Python more fun.
 
 ``` python
@@ -21,8 +21,9 @@ with ConI(url="https://MY_SERVER/api", auth=("sa", "sa")) as con_i:
 ## Messages send via HTTP
 
 The API makes use of the ASAM ODS protobuf message definitions provided at
-[ASAM-ODS-Interfaces](https://github.com/asam-ev/ASAM-ODS-Interfaces)
+[ASAM-ODS-Interfaces](https://github.com/asam-ev/ASAM-ODS-Interfaces).
 
 ## JAQuel Queries
 
-JAQuel allows you to query your data in a simple and intuitive way following the concepts of the [MongoDB Query Language (MQL)](https://www.mongodb.com/docs/manual/tutorial/query-documents/). The definition of query expression as JSON easily integrates with the Python language – a win-win situation.
+JAQuel allows you to query your data in a simple and intuitive way inspired
+by [MongoDB Query Language (MQL)](https://www.mongodb.com/docs/manual/tutorial/query-documents/). The definition of query expression as JSON easily integrates with the Python language – a win-win situation.
