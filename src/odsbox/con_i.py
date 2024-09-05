@@ -117,7 +117,8 @@ class ConI:
         """
         Get the ASAM ODS session URL used to work with this session.
 
-        :return str: The ASAM ODS session URL
+        :return: The ASAM ODS session URL
+        :rtype: str
         """
         return self.__con_i
 
