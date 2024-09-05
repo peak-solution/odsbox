@@ -29,7 +29,7 @@ class ModelCache:
         """
         Determine the application element id of an entity by its name.
 
-        :entity_or_name: entity object or case sensitive application name to lookup
+        :param str entity_or_name: entity object or case sensitive application name to lookup
         :raises ValueError: If the entity does not exist.
         :return int: The ApplicationElementId of the entity.
         """
@@ -39,7 +39,7 @@ class ModelCache:
         """
         Get the entity name.
 
-        :entity_name: case insensitive name of an entity.
+        :param str entity_name: case insensitive name of an entity.
         :raises ValueError: If the entity does not exist.
         """
         entity = self.__model.entities.get(entity_name)
@@ -55,7 +55,7 @@ class ModelCache:
         """
         Get the entity by its base name.
 
-        :entity_base_name: case insensitive name of the base model element.
+        :param str entity_base_name: case insensitive name of the base model element.
         :raises ValueError: If the entity does not exist.
         """
         name_casefold = entity_base_name.casefold()
@@ -68,7 +68,7 @@ class ModelCache:
         """
         Get the entity by its ApplicationElementId(aid).
 
-        :aid: ApplicationElementId of an entity to lookup.
+        :param int aid: ApplicationElementId of an entity to lookup.
         :raises ValueError: If the entity does not exist.
         :return ods.Model.Entity: Entity corresponding to given aid.
         """
@@ -125,8 +125,8 @@ class ModelCache:
         """
         Get the attribute by base name.
 
-        :entity_or_name: entity object or case sensitive application name to lookup
-        :attribute_base_name: case insensitive name of the base model element.
+        :param str | ods.Model.Entity entity_or_name: entity object or case sensitive application name to lookup
+        :param str attribute_base_name: case insensitive name of the base model element.
         :raises ValueError: If the attribute does not exist.
         :return ods.Model.Attribute: Corresponding attribute.
         """
@@ -186,8 +186,8 @@ class ModelCache:
         """
         Get the relation by base name.
 
-        :entity_or_name: entity object or case sensitive application name to lookup
-        :relation_base_name: case insensitive name of the base model element.
+        :param str | ods.Model.Entity entity_or_name: entity object or case sensitive application name to lookup
+        :param str relation_base_name: case insensitive name of the base model element.
         :raises ValueError: If the relation does not exist.
         :return ods.Model.Relation: Corresponding relation.
         """
@@ -202,7 +202,7 @@ class ModelCache:
         """
         Get enumeration by its name.
 
-        :enumeration_name: case insensitive name of the application model enumeration.
+        :param str enumeration_name: case insensitive name of the application model enumeration.
         :raises ValueError: If the enumeration does not exist.
         :return ods.Model.Enumeration: Corresponding enumeration.
         """
@@ -219,10 +219,10 @@ class ModelCache:
         """
         Convert an enumeration value into its string representation.
 
-        :enumeration_or_name: ods enumeration or its case insensitive name
-        :lookup_value: integer value to check
+        :param str | ods.Model.Enumeration enumeration_or_name: ods enumeration or its case insensitive name
+        :param int lookup_value: integer value to check
         :raises ValueError: If the enumeration does not exist or does not contain value.
-        :return String representation of int value.
+        :return str: String representation of int value.
         """
         enumeration = self.__enumeration(enumeration_or_name)
         for key, value in enumeration.items.items():
@@ -234,8 +234,8 @@ class ModelCache:
         """
         Convert an enumeration integer value into its string representation.
 
-        :enumeration_or_name: ods enumeration or its case insensitive name
-        :lookup_key: case insensitive string key value to check
+        :param str | ods.Model.Enumeration enumeration_or_name: ods enumeration or its case insensitive name
+        :param str lookup_key: case insensitive string key value to check
         :raises ValueError: If the enumeration does not exist or does not contain the key.
         :return str: Int representation of string value.
         """
