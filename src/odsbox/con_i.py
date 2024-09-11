@@ -3,6 +3,8 @@ Helper for ASAM ODS HTTP API conI session
 
 Example::
 
+    from odsbox.con_i import ConI
+
     with ConI(
         url="http://localhost:8087/api",
         auth=("sa", "sa")
@@ -33,6 +35,8 @@ class ConI:
 
     Example::
 
+        from odsbox.con_i import ConI
+
         with ConI(
             url="http://localhost:8087/api",
             auth=("sa", "sa")
@@ -58,11 +62,34 @@ class ConI:
 
         Example::
 
+            from odsbox.con_i import ConI
+
+            # basic auth
             with ConI(
                 url="http://localhost:8087/api",
                 auth=("sa", "sa")
             ) as con_i:
                 units = con_i.query_data({"AoUnit": {}})
+
+        Example::
+
+            import requests
+            from odsbox.con_i import ConI
+
+            class BearerAuth(requests.auth.AuthBase):
+                def __init__(self, token):
+                    self.token = token
+                def __call__(self, r):
+                    r.headers["authorization"] = "Bearer " + self.token
+                    return r
+
+            # bearer auth
+            with ConI(
+                url="http://localhost:8087/api",
+                auth=BearerAuth("YOUR_BEARER_TOKEN")
+            ) as con_i:
+                units = con_i.query_data({"AoUnit": {}})
+
 
         :param str url: base url of the ASAM ODS API of a given server. An example is "http://localhost:8080/api".
         :param requests.auth.AuthBase auth: An auth object to be used for the used requests package.
@@ -117,8 +144,7 @@ class ConI:
         """
         Get the ASAM ODS session URL used to work with this session.
 
-        :return: The ASAM ODS session URL
-        :rtype: str
+        :return str: The ASAM ODS session URL
         """
         return self.__con_i
 
