@@ -13,8 +13,10 @@ Example::
 
 """
 
+from __future__ import annotations
+
 import logging
-from typing import List
+from typing import List, Tuple
 
 import requests
 import requests.auth
@@ -46,14 +48,14 @@ class ConI:
     """
 
     __log: logging.Logger = logging.getLogger(__name__)
-    __session: requests.Session = None
-    __con_i: str = None
-    mc: ModelCache = None
+    __session: requests.Session | None
+    __con_i: str | None
+    mc: ModelCache
 
     def __init__(
         self,
         url: str = "http://localhost:8080/api",
-        auth: requests.auth.AuthBase = ("sa", "sa"),
+        auth: requests.auth.AuthBase | Tuple[str, str] = ("sa", "sa"),
         context_variables: ods.ContextVariables | dict | None = None,
         verify_certificate: bool = True,
     ):
@@ -155,7 +157,7 @@ class ConI:
 
         :raises requests.HTTPError: If delete the ASAM ODS session fails.
         """
-        if None is not self.__session:
+        if self.__session is not None:
             response = self.__session.delete(
                 self.__con_i,
             )
@@ -164,20 +166,22 @@ class ConI:
             self.__con_i = None
             self.__check_result(response)
 
-    def query_data(self, query: str | dict | ods.SelectStatement) -> DataFrame:
+    def query_data(self, query: str | dict | ods.SelectStatement, enum_as_string: bool = False) -> DataFrame:
         """
         Query ods server for content and return the results as Pandas DataFrame
 
         :param str | dict | ods.SelectStatement query: Query given as JAQueL query (dict or str)
             or as an ASAM ODS SelectStatement.
+        :param bool enum_as_string: columns of type DT_ENUM are returned as int values.
+            If this is set to true the int values are mapped to the corresponding string values.
         :raises requests.HTTPError: If query fails.
         :return DataFrame: The DataMatrices as Pandas.Dataframe. The columns are named as `ENTITY_NAME.ATTRIBUTE_NAME`.
             `IsNull` values are not marked invalid.
         """
-        if isinstance(query, ods.SelectStatement):
-            return to_pandas(self.data_read(query))
-        else:
-            return to_pandas(self.data_read_jaquel(query))
+        data_matrices = (
+            self.data_read(query) if isinstance(query, ods.SelectStatement) else self.data_read_jaquel(query)
+        )
+        return to_pandas(data_matrices, self.mc, enum_as_string)
 
     def model(self) -> ods.Model:
         """
@@ -225,7 +229,7 @@ class ConI:
         response = self.ods_post_request("data-create", data)
         return_value = ods.DataMatrices()
         return_value.ParseFromString(response.content)
-        return return_value.matrices[0].columns[0].longlong_array.values
+        return list(return_value.matrices[0].columns[0].longlong_array.values)
 
     def data_update(self, data: ods.DataMatrices) -> None:
         """
@@ -469,6 +473,9 @@ class ConI:
         :raises requests.HTTPError: If status code is not 200 or 201.
         :return requests.Response: requests response if successful.
         """
+
+        if self.__session is None or self.__con_i is None:
+            raise ValueError("No open session!")
 
         response = self.__session.post(
             self.__con_i + "/" + relative_url_part,

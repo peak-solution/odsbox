@@ -42,7 +42,7 @@ def __convert_bulk_to_pandas_data_frame(
         elif column.name == local_column_values_name:
             values_column = column
 
-    if None is id_column or None is values_column:
+    if id_column is None or values_column is None:
         raise ValueError("id and values column must be present")
 
     id_array = id_column.longlong_array.values
