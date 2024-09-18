@@ -8,15 +8,20 @@ authors = [
     {name = "Andreas Krantz", email = "a.krantz@peak-solution.de"},
 ]
 description = "Toolbox for accessing ASAM ODS servers using the HTTP API"
+license = {file = "LICENSE"}
+keywords = ["asam", "ods", "measurement", "data access", "data science", "data analysis"]
 readme = "README.md"
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12"
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Scientific/Engineering :: Information Analysis"
 ]
 requires-python = ">=3.10.14"
 dynamic = ["version"]
@@ -52,8 +57,9 @@ test = [
 ]
 
 [project.urls]
-Documentation = "https://github.com/peak-solution/odsbox/tree/main#readme"
-Source = "https://github.com/peak-solution/odsbox"
+Homepage = "https://github.com/peak-solution/odsbox/tree/main#readme"
+Documentation = "https://peak-solution.github.io/odsbox"
+Repository = "https://github.com/peak-solution/odsbox"
 Tracker = "https://github.com/peak-solution/odsbox/issues"
 
 [tool.flit.module]
