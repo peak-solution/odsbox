@@ -1,5 +1,7 @@
 """Helper class for Units in ASAM ODS"""
 
+from __future__ import annotations
+
 import logging
 
 from typing import TYPE_CHECKING
@@ -73,7 +75,7 @@ class UnitCatalog:
 
         return self.unknown_physical_dimension
 
-    def __get_or_create_unknown_phys_dim(self, name):
+    def __get_or_create_unknown_phys_dim(self, name) -> int:
         physical_dimension_entity = self.__con_i.mc.entity_by_base_name("AoPhysicalDimension")
         existing_physical_dimension = self.__con_i.query_data(
             {"AoPhysicalDimension": {"name": name}, "$attributes": {"id": 1}}

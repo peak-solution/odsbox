@@ -7184,6 +7184,22 @@
           "length": 50,
           "obligatory": true,
           "id": 3
+        },
+        "DT_ENUM_VALUES": {
+          "name": "DT_ENUM_VALUES",
+          "dataType": "DT_ENUM",
+          "length": 1,
+          "obligatory": true,
+          "enumeration": "valid_enum",
+          "id": 4
+        },
+        "DS_ENUM_VALUES": {
+          "name": "DS_ENUM_VALUES",
+          "dataType": "DS_ENUM",
+          "length": 1,
+          "obligatory": true,
+          "enumeration": "valid_enum",
+          "id": 4
         }
       },
       "relations": {

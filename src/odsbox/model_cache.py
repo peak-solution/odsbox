@@ -1,5 +1,7 @@
 """helps working with the ASAM ODS model"""
 
+from __future__ import annotations
+
 import logging
 
 import odsbox.proto.ods_pb2 as ods
@@ -11,7 +13,7 @@ class ModelCache:
     This cache functionality useful for daily work.
     """
 
-    __model: ods.Model = None
+    __model: ods.Model
     __log: logging.Logger = logging.getLogger(__name__)
 
     def __init__(self, model: ods.Model):

@@ -1,10 +1,13 @@
 """ods works with datamatrices object. This utilities converts
 them to an pandas dataframe for ease of use."""
 
+from __future__ import annotations
+
 import pandas as pd
 import numpy as np
 
 import odsbox.proto.ods_pb2 as ods
+from odsbox.model_cache import ModelCache
 
 
 def unknown_array_values(
@@ -44,7 +47,18 @@ def unknown_array_values(
     raise ValueError(f"DataType {unknown_array.WhichOneof('UnknownOneOf')} not handled in python code!")
 
 
-def __get_datamatrix_column_values(column: ods.DataMatrix.Column) -> list:
+def __adjust_enums(
+    model_cache: ModelCache | None, enumeration: ods.Model.Enumeration | None, values: list[int] | None
+) -> list[int] | list[str] | None:
+    if values is None or enumeration is None or model_cache is None:
+        return values
+
+    return list(map(lambda x: model_cache.enumeration_value_to_key(enumeration, x), values))
+
+
+def __get_datamatrix_column_values(
+    column: ods.DataMatrix.Column, model_cache: ModelCache | None, enumeration: ods.Model.Enumeration | None
+) -> list | None:
     if column.WhichOneof("ValuesOneOf") is None:
         return None
 
@@ -54,6 +68,8 @@ def __get_datamatrix_column_values(column: ods.DataMatrix.Column) -> list:
             return list(zip(rv[::3], rv[1::3], rv[2::3]))
         return rv
     if column.HasField("long_array"):
+        if ods.DT_ENUM == column.data_type:
+            return __adjust_enums(model_cache, enumeration, list(column.long_array.values))
         return list(column.long_array.values)
     if column.HasField("float_array"):
         if ods.DT_COMPLEX == column.data_type:
@@ -80,6 +96,8 @@ def __get_datamatrix_column_values(column: ods.DataMatrix.Column) -> list:
             ]
         return [list(item.values) for item in column.string_arrays.values]
     if column.HasField("long_arrays"):
+        if ods.DS_ENUM == column.data_type:
+            return [__adjust_enums(model_cache, enumeration, list(item.values)) for item in column.long_arrays.values]
         return [list(item.values) for item in column.long_arrays.values]
     if column.HasField("float_arrays"):
         if ods.DS_COMPLEX == column.data_type:
@@ -105,11 +123,39 @@ def __get_datamatrix_column_values(column: ods.DataMatrix.Column) -> list:
     raise ValueError(f"DataType '{column.WhichOneof('ValuesOneOf')}' not handled!")
 
 
-def to_pandas(data_matrices: ods.DataMatrices) -> pd.DataFrame:
+def __get_datamatrix_column_values_ex(
+    column: ods.DataMatrix.Column, model_cache: ModelCache | None, enum_as_string: bool, entity: ods.Model.Entity | None
+) -> list:
+    enumeration = None
+    if (
+        enum_as_string
+        and entity is not None
+        and model_cache is not None
+        and column.data_type in [ods.DT_ENUM, ods.DS_ENUM]
+    ):
+        attribute = model_cache.attribute_no_throw(entity, column.name)
+        if attribute is not None:
+            if attribute.enumeration is not None:
+                enumeration = model_cache.model().enumerations[attribute.enumeration]
+
+    values = __get_datamatrix_column_values(column, model_cache, enumeration)
+    return_values = [] if values is None else values
+
+    return return_values
+
+
+def to_pandas(
+    data_matrices: ods.DataMatrices, model_cache: ModelCache | None = None, enum_as_string: bool = False
+) -> pd.DataFrame:
     """
     Converts data in an ASAM ODS DataMatrices into a pandas DataFrame.
 
     :param ods.DataMatrices data_matrices: matrices to be converted.
+    :param ModelCache | None model_cache: ModelCache is used to do enum conversion
+    :param bool enum_as_string: columns of type DT_ENUM are returned as int values.
+                                If this is set to true the model_cache is used to map the int values
+                                to the corresponding string values.
+
     :return pd.DataFrame: A pandas dataframe containing all the single matrices in a single frame. The
                           columns are named by the schema `ENTITY_NAME.ATTRIBUTE_NAME`.
     """
@@ -122,9 +168,11 @@ def to_pandas(data_matrices: ods.DataMatrices) -> pd.DataFrame:
     column_dict = {}
 
     for matrix in data_matrices.matrices:
+        entity = model_cache.entity(matrix.name) if model_cache is not None else None
         for column in matrix.columns:
             # The flags are ignored here. There might be NULL in here. Check `column.is_null` for this.
-            values = __get_datamatrix_column_values(column)
-            column_dict[matrix.name + "." + column.name] = [] if values is None else values
+            column_dict[matrix.name + "." + column.name] = __get_datamatrix_column_values_ex(
+                column, model_cache, enum_as_string, entity
+            )
 
     return pd.DataFrame(column_dict)
