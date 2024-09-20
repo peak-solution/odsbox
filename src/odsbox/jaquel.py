@@ -1,9 +1,13 @@
 """Used to convert JAQueL queries to ASAM ODS SelectStatements"""
 
+from __future__ import annotations
+
 import datetime
 import json
 import re
 from typing import Tuple, List, Any
+
+from google.protobuf.internal import containers as _containers
 
 import odsbox.proto.ods_pb2 as ods
 
@@ -108,7 +112,7 @@ def __model_get_attribute(
     return None
 
 
-def __model_get_entity_ex(model: ods.Model, entity_name_or_aid: str | int) -> ods.Model.Entity | None:
+def __model_get_entity_ex(model: ods.Model, entity_name_or_aid: str | int) -> ods.Model.Entity:
     if isinstance(entity_name_or_aid, int) or entity_name_or_aid.isdigit():
         entity_aid = int(entity_name_or_aid)
         for key in model.entities:
@@ -125,7 +129,7 @@ def __model_get_entity_ex(model: ods.Model, entity_name_or_aid: str | int) -> od
     raise SyntaxError(f"Entity '{entity_name_or_aid}' is unknown in model.")
 
 
-def __model_get_enum_index(model: ods.Model, entity: ods.Model.Entity, attribute_name: str, str_val: str) -> int | None:
+def __model_get_enum_index(model: ods.Model, entity: ods.Model.Entity, attribute_name: str, str_val: str) -> int:
     attr = entity.attributes[attribute_name]
     enum = model.enumerations[attr.enumeration]
     for key in enum.items:
@@ -158,7 +162,7 @@ def __parse_path_and_add_joins(
     model: ods.Model,
     entity: ods.Model.Entity,
     attribute_path: str,
-    joins: List[ods.SelectStatement.JoinItem],
+    joins: _containers.RepeatedCompositeFieldContainer[ods.SelectStatement.JoinItem],
 ) -> Tuple["ods.DataTypeEnum", str, ods.Model.Entity]:
     attribute_type = ods.DataTypeEnum.DT_UNKNOWN
     attribute_name = ""
@@ -213,7 +217,7 @@ def __add_join_to_seq(
     model: ods.Model,
     entity_from: ods.Model.Entity,
     relation: ods.Model.Relation,
-    join_sequence: List[ods.SelectStatement.JoinItem],
+    join_sequence: _containers.RepeatedCompositeFieldContainer[ods.SelectStatement.JoinItem],
     join_type: ods.SelectStatement.JoinItem.JoinTypeEnum,
 ) -> None:
     entity_to = model.entities[relation.entity_name]
@@ -421,18 +425,20 @@ def __set_condition_value(
     attribute_name: str,
     attribute_type: ods.DataTypeEnum,
     src_values: List[Any] | Any,
-    condition_item: ods.SelectStatement.ConditionItem,
+    condition_item: ods.SelectStatement.ConditionItem.Condition,
 ) -> None:
     if isinstance(src_values, list):
         if attribute_type in (ods.DataTypeEnum.DT_BYTE, ods.DataTypeEnum.DS_BYTE):
+            byte_values = []
             for src_value in src_values:
-                condition_item.byte_array.values.append(int(src_value))
+                byte_values.append(int(src_value))
+            condition_item.byte_array.values = bytes(byte_values)
         elif attribute_type in (
             ods.DataTypeEnum.DT_BOOLEAN,
             ods.DataTypeEnum.DS_BOOLEAN,
         ):
             for src_value in src_values:
-                condition_item.boolean_array.values.append(int(src_value))
+                condition_item.boolean_array.values.append(bool(src_value))
         elif attribute_type in (ods.DataTypeEnum.DT_SHORT, ods.DataTypeEnum.DS_SHORT):
             for src_value in src_values:
                 condition_item.long_array.values.append(int(src_value))
@@ -484,9 +490,9 @@ def __set_condition_value(
             raise ValueError(f"Unknown how to attach array, does not exist as {attribute_type} union.")
     else:
         if attribute_type == ods.DataTypeEnum.DT_BYTE:
-            condition_item.byte_array.values.append(int(src_values))
+            condition_item.byte_array.values = bytes([int(src_values)])
         elif attribute_type == ods.DataTypeEnum.DT_BOOLEAN:
-            condition_item.boolean_array.values.append(int(src_values))
+            condition_item.boolean_array.values.append(bool(src_values))
         elif attribute_type == ods.DataTypeEnum.DT_SHORT:
             condition_item.long_array.values.append(int(src_values))
         elif attribute_type == ods.DataTypeEnum.DT_LONG:

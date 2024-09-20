@@ -111,7 +111,6 @@ class ConI:
             }
         )
         session.verify = verify_certificate
-        session.timeout = 600.0
 
         _context_variables = None
         if isinstance(context_variables, ods.ContextVariables):
@@ -122,7 +121,7 @@ class ConI:
                 for key, value in context_variables.items():
                     _context_variables.variables[key].string_array.values.append(value)
 
-        response = session.post(url + "/ods", data=_context_variables.SerializeToString())
+        response = session.post(url + "/ods", data=_context_variables.SerializeToString(), timeout=60.0)
         if 201 == response.status_code:
             con_i = response.headers["location"]
             self.__log.debug("ConI: %s", con_i)
@@ -148,6 +147,8 @@ class ConI:
 
         :return str: The ASAM ODS session URL
         """
+        if self.__con_i is None:
+            raise ValueError("ConI already closed")
         return self.__con_i
 
     def logout(self):
@@ -158,9 +159,9 @@ class ConI:
         :raises requests.HTTPError: If delete the ASAM ODS session fails.
         """
         if self.__session is not None:
-            response = self.__session.delete(
-                self.__con_i,
-            )
+            if self.__con_i is None:
+                raise ValueError("ConI already closed")
+            response = self.__session.delete(self.__con_i, timeout=60.0)
             self.__session.close()
             self.__session = None
             self.__con_i = None
@@ -464,12 +465,15 @@ class ConI:
         """
         self.ods_post_request("password-update", password_update)
 
-    def ods_post_request(self, relative_url_part: str, message: Message | None = None) -> requests.Response:
+    def ods_post_request(
+        self, relative_url_part: str, message: Message | None = None, timeout: float = 600.0
+    ) -> requests.Response:
         """
         Do ODS post call with the given relative URL.
 
         :param str relative_url_part: url part that is joined to conI URL using `/`.
-        :param Message | None message: protobuf message to be send, defaults to None
+        :param Message | None message: protobuf message to be send, defaults to None.
+        :param float timeout: maximal time to wait for response.
         :raises requests.HTTPError: If status code is not 200 or 201.
         :return requests.Response: requests response if successful.
         """
@@ -480,6 +484,7 @@ class ConI:
         response = self.__session.post(
             self.__con_i + "/" + relative_url_part,
             data=message.SerializeToString() if message is not None else None,
+            timeout=timeout,
         )
         self.__check_result(response)
         return response
