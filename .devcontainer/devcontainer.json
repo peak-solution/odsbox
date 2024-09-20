@@ -20,7 +20,7 @@
 				"ms-python.black-formatter",
 				"ms-vsliveshare.vsliveshare",
 				"ryanluker.vscode-coverage-gutters",
-				"bungcip.better-toml",
+				"tamasfe.even-better-toml",
 				"GitHub.copilot"
 			],
 			"settings": {
