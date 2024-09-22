@@ -1,5 +1,5 @@
 """ods works with datamatrices object. This utilities converts
-them to an pandas dataframe for ease of use."""
+them to an pandas DataFrame for ease of use."""
 
 from __future__ import annotations
 
@@ -156,7 +156,7 @@ def to_pandas(
                                 If this is set to true the model_cache is used to map the int values
                                 to the corresponding string values.
 
-    :return pd.DataFrame: A pandas dataframe containing all the single matrices in a single frame. The
+    :return pd.DataFrame: A pandas DataFrame containing all the single matrices in a single frame. The
                           columns are named by the schema `ENTITY_NAME.ATTRIBUTE_NAME`.
     """
     if 0 == len(data_matrices.matrices):

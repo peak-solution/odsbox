@@ -263,7 +263,7 @@ def __parse_attributes(
 
         if element.startswith("$"):
             if element in _jo_aggregates:
-                element_attribute["aggr"] = _jo_aggregates[element]
+                element_attribute["aggregate"] = _jo_aggregates[element]
             elif "$unit" == element:
                 element_attribute["unit"] = element_dict[element]
                 continue
@@ -293,7 +293,7 @@ def __parse_attributes(
                     aid=attribute_entity.aid,
                     attribute=attribute_name,
                     unit_id=int(element_attribute["unit"]),
-                    aggregate=element_attribute["aggr"],
+                    aggregate=element_attribute["aggregate"],
                 )
 
 
@@ -368,8 +368,8 @@ def __parse_conditions_conjunction(
     if not isinstance(element_dict, list):
         raise SyntaxError("$and and $or must always contain array")
 
-    if attribute_dict["conjuction_count"] > 0:
-        target.where.add().conjunction = attribute_dict["conjuction"]
+    if attribute_dict["conjunction_count"] > 0:
+        target.where.add().conjunction = attribute_dict["conjunction"]
 
     if len(element_dict) > 1:
         target.where.add().conjunction = ods.SelectStatement.ConditionItem.ConjuctionEnum.CO_OPEN
@@ -384,8 +384,8 @@ def __parse_conditions_conjunction(
 
         target.where.add().conjunction = ods.SelectStatement.ConditionItem.ConjuctionEnum.CO_OPEN
         elem_attribute = attribute_dict.copy()
-        elem_attribute["conjuction_count"] = 0
-        elem_attribute["conjuction"] = ods.SelectStatement.ConditionItem.ConjuctionEnum.CO_AND
+        elem_attribute["conjunction_count"] = 0
+        elem_attribute["conjunction"] = ods.SelectStatement.ConditionItem.ConjuctionEnum.CO_AND
         elem_attribute["options"] = ""
         __parse_conditions(model, entity, target, elem, elem_attribute)
         target.where.add().conjunction = ods.SelectStatement.ConditionItem.ConjuctionEnum.CO_CLOSE
@@ -405,12 +405,12 @@ def __parse_conditions_not(
     if not isinstance(element_dict, object):
         raise SyntaxError("$not must always contain object")
 
-    if attribute_dict["conjuction_count"] > 0:
-        target.where.add().conjunction = attribute_dict["conjuction"]
+    if attribute_dict["conjunction_count"] > 0:
+        target.where.add().conjunction = attribute_dict["conjunction"]
 
     elem_attribute = attribute_dict.copy()
-    elem_attribute["conjuction_count"] = 0
-    elem_attribute["conjuction"] = ods.SelectStatement.ConditionItem.ConjuctionEnum.CO_AND
+    elem_attribute["conjunction_count"] = 0
+    elem_attribute["conjunction"] = ods.SelectStatement.ConditionItem.ConjuctionEnum.CO_AND
     elem_attribute["options"] = ""
 
     target.where.add().conjunction = ods.SelectStatement.ConditionItem.ConjuctionEnum.CO_NOT
@@ -583,7 +583,7 @@ def __parse_conditions(
                     element_dict[elem],
                     attribute_dict,
                 )
-                attribute_dict["conjuction_count"] = attribute_dict["conjuction_count"] + 1
+                attribute_dict["conjunction_count"] = attribute_dict["conjunction_count"] + 1
                 continue
             elif "$or" == elem:
                 __parse_conditions_conjunction(
@@ -594,11 +594,11 @@ def __parse_conditions(
                     element_dict[elem],
                     attribute_dict,
                 )
-                attribute_dict["conjuction_count"] = attribute_dict["conjuction_count"] + 1
+                attribute_dict["conjunction_count"] = attribute_dict["conjunction_count"] + 1
                 continue
             elif "$not" == elem:
                 __parse_conditions_not(model, entity, target, element_dict[elem], attribute_dict)
-                attribute_dict["conjuction_count"] = attribute_dict["conjuction_count"] + 1
+                attribute_dict["conjunction_count"] = attribute_dict["conjunction_count"] + 1
                 continue
             elif "$options" == elem:
                 continue
@@ -610,13 +610,13 @@ def __parse_conditions(
             elem_attribute["path"] += elem
 
         if isinstance(element_dict[elem], dict):
-            old_conjuction_count = elem_attribute["conjuction_count"]
+            old_conjunction_count = elem_attribute["conjunction_count"]
             __parse_conditions(model, entity, target, element_dict[elem], elem_attribute)
-            if old_conjuction_count != elem_attribute["conjuction_count"]:
-                attribute_dict["conjuction_count"] = attribute_dict["conjuction_count"] + 1
+            if old_conjunction_count != elem_attribute["conjunction_count"]:
+                attribute_dict["conjunction_count"] = attribute_dict["conjunction_count"] + 1
         else:
-            if 0 != attribute_dict["conjuction_count"]:
-                target.where.add().conjunction = elem_attribute["conjuction"]
+            if 0 != attribute_dict["conjunction_count"]:
+                target.where.add().conjunction = elem_attribute["conjunction"]
 
             condition_path = elem_attribute["path"]
             condition_operator = elem_attribute["operator"]
@@ -634,7 +634,7 @@ def __parse_conditions(
                 condition_unit_id,
                 condition_options,
             )
-            attribute_dict["conjuction_count"] = attribute_dict["conjuction_count"] + 1
+            attribute_dict["conjunction_count"] = attribute_dict["conjunction_count"] + 1
 
 
 def jaquel_to_ods(model: ods.Model, jaquel_query: str | dict) -> Tuple[ods.Model.Entity, ods.SelectStatement]:
@@ -674,8 +674,8 @@ def jaquel_to_ods(model: ods.Model, jaquel_query: str | dict) -> Tuple[ods.Model
                     qse,
                     query[elem],
                     {
-                        "conjuction": ods.SelectStatement.ConditionItem.ConjuctionEnum.CO_AND,
-                        "conjuction_count": 0,
+                        "conjunction": ods.SelectStatement.ConditionItem.ConjuctionEnum.CO_AND,
+                        "conjunction_count": 0,
                         "path": "",
                         "operator": OperatorEnum.OP_EQ,
                         "options": "",
@@ -710,7 +710,7 @@ def jaquel_to_ods(model: ods.Model, jaquel_query: str | dict) -> Tuple[ods.Model
                     entity,
                     qse,
                     query[elem],
-                    {"path": "", "aggr": ods.AggregateEnum.AG_NONE, "unit": 0},
+                    {"path": "", "aggregate": ods.AggregateEnum.AG_NONE, "unit": 0},
                 )
             elif "$orderby" == elem:
                 __parse_orderby(model, entity, qse, query[elem], {"path": ""})

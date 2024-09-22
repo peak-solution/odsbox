@@ -88,22 +88,22 @@ def test_entity_by_aid():
 def test_attribute_no_throw():
     mc = ModelCache(__get_model("mdm_nvh_model.json"))
     entity = mc.entity("MeaResult")
-    assert "StorageType" == mc.attribute_no_throw(entity, "StorageType").name
-    assert "StorageType" == mc.attribute_no_throw(entity, "STORAGETYPE").name
-    assert "StorageType" == mc.attribute_no_throw(entity, "ao_storagetype").name
-    assert "StorageType" == mc.attribute_no_throw(entity, "ao_storagetype").name
+    assert "StorageType" == mc.attribute_no_throw(entity, "StorageType").name  # type: ignore
+    assert "StorageType" == mc.attribute_no_throw(entity, "STORAGETYPE").name  # type: ignore
+    assert "StorageType" == mc.attribute_no_throw(entity, "ao_storagetype").name  # type: ignore
+    assert "StorageType" == mc.attribute_no_throw(entity, "ao_storagetype").name  # type: ignore
     assert mc.attribute_no_throw(entity, "DoesNotExist") is None
 
-    assert "StorageType" == mc.attribute_no_throw("MeaResult", "StorageType").name
-    assert "StorageType" == mc.attribute_no_throw("MeaResult", "STORAGETYPE").name
-    assert "StorageType" == mc.attribute_no_throw("MeaResult", "ao_storagetype").name
-    assert "StorageType" == mc.attribute_no_throw("MeaResult", "ao_storagetype").name
+    assert "StorageType" == mc.attribute_no_throw("MeaResult", "StorageType").name  # type: ignore
+    assert "StorageType" == mc.attribute_no_throw("MeaResult", "STORAGETYPE").name  # type: ignore
+    assert "StorageType" == mc.attribute_no_throw("MeaResult", "ao_storagetype").name  # type: ignore
+    assert "StorageType" == mc.attribute_no_throw("MeaResult", "ao_storagetype").name  # type: ignore
     assert mc.attribute_no_throw("MeaResult", "DoesNotExist") is None
 
-    assert "StorageType" == mc.attribute_no_throw("MEARESULT", "StorageType").name
-    assert "StorageType" == mc.attribute_no_throw("MEARESULT", "STORAGETYPE").name
-    assert "StorageType" == mc.attribute_no_throw("MEARESULT", "ao_storagetype").name
-    assert "StorageType" == mc.attribute_no_throw("MEARESULT", "ao_storagetype").name
+    assert "StorageType" == mc.attribute_no_throw("MEARESULT", "StorageType").name  # type: ignore
+    assert "StorageType" == mc.attribute_no_throw("MEARESULT", "STORAGETYPE").name  # type: ignore
+    assert "StorageType" == mc.attribute_no_throw("MEARESULT", "ao_storagetype").name  # type: ignore
+    assert "StorageType" == mc.attribute_no_throw("MEARESULT", "ao_storagetype").name  # type: ignore
     assert mc.attribute_no_throw("MEARESULT", "DoesNotExist") is None
 
 
@@ -141,16 +141,16 @@ def test_attribute():
 def test_relation_no_throw():
     mc = ModelCache(__get_model("mdm_nvh_model.json"))
     entity = mc.entity("MeaResult")
-    assert "TestStep" == mc.relation_no_throw(entity, "test").name
-    assert "TestStep" == mc.relation_no_throw(entity, "TEST").name
-    assert "TestStep" == mc.relation_no_throw(entity, "TestStep").name
-    assert "TestStep" == mc.relation_no_throw(entity, "TESTSTEP").name
+    assert "TestStep" == mc.relation_no_throw(entity, "test").name  # type: ignore
+    assert "TestStep" == mc.relation_no_throw(entity, "TEST").name  # type: ignore
+    assert "TestStep" == mc.relation_no_throw(entity, "TestStep").name  # type: ignore
+    assert "TestStep" == mc.relation_no_throw(entity, "TESTSTEP").name  # type: ignore
     assert mc.relation_no_throw(entity, "DoesNotExist") is None
 
-    assert "TestStep" == mc.relation_no_throw("MeaResult", "test").name
-    assert "TestStep" == mc.relation_no_throw("MeaResult", "TEST").name
-    assert "TestStep" == mc.relation_no_throw("MEARESULT", "TestStep").name
-    assert "TestStep" == mc.relation_no_throw("MEARESULT", "TESTSTEP").name
+    assert "TestStep" == mc.relation_no_throw("MeaResult", "test").name  # type: ignore
+    assert "TestStep" == mc.relation_no_throw("MeaResult", "TEST").name  # type: ignore
+    assert "TestStep" == mc.relation_no_throw("MEARESULT", "TestStep").name  # type: ignore
+    assert "TestStep" == mc.relation_no_throw("MEARESULT", "TESTSTEP").name  # type: ignore
     assert mc.relation_no_throw("MEARESULT", "DoesNotExist") is None
 
 

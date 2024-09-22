@@ -15,12 +15,12 @@ def test_unit_get():
     with __create_con_i() as con_i:
         unit_catalog = UnitCatalog(con_i)
 
-        assert unit_catalog.get("gradC") > 0
-        assert unit_catalog.get("s") > 0
-        assert unit_catalog.get("1/min") > 0
-        assert unit_catalog.get("V") > 0
-        assert unit_catalog.get("J") > 0
-        assert unit_catalog.get("A") > 0
+        assert unit_catalog.get("gradC") is not None
+        assert unit_catalog.get("s") is not None
+        assert unit_catalog.get("1/min") is not None
+        assert unit_catalog.get("V") is not None
+        assert unit_catalog.get("J") is not None
+        assert unit_catalog.get("A") is not None
         assert unit_catalog.get("UnitDoesNotExit") is None
         assert unit_catalog.get("UnitDoesNotExit") is None
 

@@ -69,7 +69,7 @@ def test_submatrix_load():
         logging.getLogger().info(sm_s.shape)
         assert sm_s.shape[0] <= 1
         if 1 == sm_s.shape[0]:
-            submatrix_id = sm_s.iloc[0, 0]
+            submatrix_id = int(sm_s.iloc[0, 0])  # type: ignore
             assert 0 != submatrix_id
             logging.getLogger().info(submatrix_id)
             submatrix_dataframe = submatrix_to_pandas(con_i, submatrix_id)

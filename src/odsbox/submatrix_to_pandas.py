@@ -1,4 +1,4 @@
-"""converts a submatrix delivered as a datamatrix protobuf object into a pandas dataframe."""
+"""converts a submatrix delivered as a datamatrix protobuf object into a pandas DataFrame."""
 
 from typing import TYPE_CHECKING
 
@@ -89,7 +89,7 @@ def submatrix_to_pandas(con_i: "ConI", submatrix_iid: int) -> pd.DataFrame:
 
     :param ConI con_i: ASAM ODS server session.
     :param int submatrix_iid: id of an submatrix to be retrieved.
-    :return pd.DataFrame: A pandas dataframe containing the values of the localcolumn as pandas columns.
+    :return pd.DataFrame: A pandas DataFrame containing the values of the localcolumn as pandas columns.
                           The name of the localcolumn is used as pandas column name. The flags are ignored.
     """
     local_column_entity = con_i.mc.entity_by_base_name("AoLocalColumn")

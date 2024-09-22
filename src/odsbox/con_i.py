@@ -176,7 +176,7 @@ class ConI:
         :param bool enum_as_string: columns of type DT_ENUM are returned as int values.
             If this is set to true the int values are mapped to the corresponding string values.
         :raises requests.HTTPError: If query fails.
-        :return DataFrame: The DataMatrices as Pandas.Dataframe. The columns are named as `ENTITY_NAME.ATTRIBUTE_NAME`.
+        :return DataFrame: The DataMatrices as Pandas.DataFrame. The columns are named as `ENTITY_NAME.ATTRIBUTE_NAME`.
             `IsNull` values are not marked invalid.
         """
         data_matrices = (
