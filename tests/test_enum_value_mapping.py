@@ -18,7 +18,7 @@ def __get_model(model_file_name):
 
 
 def test_map_enum_values():
-    mc = ModelCache(__get_model("mdm_nvh_model.json"))
+    mc = ModelCache(__get_model("application_model.json"))
 
     mq_entity = mc.entity_by_base_name("AoMeasurementQuantity")
     assert mq_entity is not None
@@ -77,7 +77,7 @@ def test_map_enum_values():
 
 
 def test_map_enum_values_ds():
-    mc = ModelCache(__get_model("mdm_nvh_model.json"))
+    mc = ModelCache(__get_model("application_model.json"))
 
     entity = mc.entity("sound_measurement")
     assert entity is not None

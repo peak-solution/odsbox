@@ -19,7 +19,7 @@ def __get_model(model_file_name):
 
 
 def test_conversion1():
-    model = __get_model("mdm_nvh_model.json")
+    model = __get_model("application_model.json")
 
     entity, ss = jaquel_to_ods(
         model,
@@ -43,7 +43,7 @@ def test_conversion1():
 
 
 def test_conversion2():
-    model = __get_model("mdm_nvh_model.json")
+    model = __get_model("application_model.json")
 
     entity, ss = jaquel_to_ods(
         model,
@@ -72,7 +72,7 @@ def __read_json_file(file_path):
 def test_predefined():
     predefined_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "test_data", "jaquel")
 
-    model = __get_model("mdm_nvh_model.json")
+    model = __get_model("application_model.json")
 
     for path in Path(predefined_path).rglob("*.json"):
         logging.getLogger().info(path.stem)
@@ -90,7 +90,7 @@ def test_predefined():
 
 
 def test_syntax_errors():
-    model = __get_model("mdm_nvh_model.json")
+    model = __get_model("application_model.json")
 
     with pytest.raises(SyntaxError, match="Does not define a target entity."):
         jaquel_to_ods(model, {"$attributes": {"factor": {"$min": 1}}})

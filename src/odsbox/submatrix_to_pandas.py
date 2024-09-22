@@ -22,7 +22,10 @@ def __get_column_from_dms(dms: ods.DataMatrices, entity: ods.Model.Entity, name:
 
 
 def __convert_bulk_to_pandas_data_frame(
-    con_i: "ConI", local_column_id_lookup: dict, localcolumn_bulk: ods.DataMatrices
+    con_i: "ConI",
+    local_column_id_lookup: dict,
+    localcolumn_bulk: ods.DataMatrices,
+    date_as_timestamp: bool,
 ) -> pd.DataFrame:
     if 1 != len(localcolumn_bulk.matrices):
         raise ValueError("Only allowed to have one matrix")
@@ -58,7 +61,7 @@ def __convert_bulk_to_pandas_data_frame(
     for local_column_id, local_column_values in zip(id_array, values_array):
         local_column_meta = local_column_id_lookup[local_column_id]
         local_column_name = local_column_meta["name"]
-        local_column_values = unknown_array_values(local_column_values)
+        local_column_values = unknown_array_values(local_column_values, date_as_timestamp=date_as_timestamp)
         local_column_len = len(local_column_values)
         number_of_rows = local_column_len if local_column_len > number_of_rows else number_of_rows
         column_dict[local_column_name] = local_column_values
@@ -83,12 +86,18 @@ def __convert_bulk_to_pandas_data_frame(
     return rv
 
 
-def submatrix_to_pandas(con_i: "ConI", submatrix_iid: int) -> pd.DataFrame:
+def submatrix_to_pandas(
+    con_i: "ConI",
+    submatrix_iid: int,
+    date_as_timestamp: bool = False,
+) -> pd.DataFrame:
     """
     Loads an ASAM ODS SubMatrix and returns it as a pandas DataFrame.
 
     :param ConI con_i: ASAM ODS server session.
     :param int submatrix_iid: id of an submatrix to be retrieved.
+    :param bool date_as_timestamp: columns of type DT_DATE or DS_DATE are returned as string.
+                                   If this is set to True the strings are converted to pandas Timestamp.
     :return pd.DataFrame: A pandas DataFrame containing the values of the localcolumn as pandas columns.
                           The name of the localcolumn is used as pandas column name. The flags are ignored.
     """
@@ -167,4 +176,6 @@ def submatrix_to_pandas(con_i: "ConI", submatrix_iid: int) -> pd.DataFrame:
 
     localcolumn_bulk = con_i.data_read(localcolumn_bulk_select_statement)
 
-    return __convert_bulk_to_pandas_data_frame(con_i, localcolumn_id_lookup, localcolumn_bulk)
+    return __convert_bulk_to_pandas_data_frame(
+        con_i, localcolumn_id_lookup, localcolumn_bulk, date_as_timestamp=date_as_timestamp
+    )
