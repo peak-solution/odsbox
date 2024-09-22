@@ -24,6 +24,9 @@ def test_con_i():
         con_i.query_data({"AoEnvironment": {}, "$options": {"$rowlimit": 1}})
         con_i.query_data({"AoUnit": {}, "$options": {"$rowlimit": 1}})
         con_i.query_data({"AoMeasurement": {}, "$options": {"$rowlimit": 1}})
+        con_i.query_data(
+            {"AoMeasurement": {}, "$options": {"$rowlimit": 50}}, date_as_timestamp=True, enum_as_string=True
+        )
 
 
 def test_query_data():

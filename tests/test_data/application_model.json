@@ -7189,7 +7189,7 @@
           "name": "DT_ENUM_VALUES",
           "dataType": "DT_ENUM",
           "length": 1,
-          "obligatory": true,
+          "obligatory": false,
           "enumeration": "valid_enum",
           "id": 4
         },
@@ -7197,9 +7197,23 @@
           "name": "DS_ENUM_VALUES",
           "dataType": "DS_ENUM",
           "length": 1,
-          "obligatory": true,
+          "obligatory": false,
           "enumeration": "valid_enum",
-          "id": 4
+          "id": 5
+        },
+        "DT_DATE_VALUES": {
+          "name": "DT_DATE_VALUES",
+          "dataType": "DT_DATE",
+          "length": 30,
+          "obligatory": false,
+          "id": 6
+        },
+        "DS_DATE_VALUES": {
+          "name": "DS_DATE_VALUES",
+          "dataType": "DS_DATE",
+          "length": 30,
+          "obligatory": false,
+          "id": 7
         }
       },
       "relations": {

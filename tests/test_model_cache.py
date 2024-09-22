@@ -20,7 +20,7 @@ def __get_model(model_file_name):
 
 
 def test_base_name_access():
-    model = __get_model("mdm_nvh_model.json")
+    model = __get_model("application_model.json")
 
     mc = ModelCache(model)
     local_column_entity = mc.entity_by_base_name("AoLocalColumn")
@@ -61,7 +61,7 @@ def test_base_name_access():
 
 
 def test_entity():
-    mc = ModelCache(__get_model("mdm_nvh_model.json"))
+    mc = ModelCache(__get_model("application_model.json"))
     assert "LocalColumn" == mc.entity("LocalColumn").name
     assert "LocalColumn" == mc.entity("localcolumn").name
     with pytest.raises(ValueError, match="No entity named 'DoesNotExist' found."):
@@ -69,7 +69,7 @@ def test_entity():
 
 
 def test_aid():
-    mc = ModelCache(__get_model("mdm_nvh_model.json"))
+    mc = ModelCache(__get_model("application_model.json"))
     entity = mc.entity("LocalColumn")
     assert entity.aid == mc.aid("LocalColumn")
     assert entity.aid == mc.aid(entity)
@@ -78,7 +78,7 @@ def test_aid():
 
 
 def test_entity_by_aid():
-    mc = ModelCache(__get_model("mdm_nvh_model.json"))
+    mc = ModelCache(__get_model("application_model.json"))
     entity = mc.entity("LocalColumn")
     assert entity.name == mc.entity_by_aid(entity.aid).name
     with pytest.raises(ValueError, match="No entity found with aid '0'."):
@@ -86,7 +86,7 @@ def test_entity_by_aid():
 
 
 def test_attribute_no_throw():
-    mc = ModelCache(__get_model("mdm_nvh_model.json"))
+    mc = ModelCache(__get_model("application_model.json"))
     entity = mc.entity("MeaResult")
     assert "StorageType" == mc.attribute_no_throw(entity, "StorageType").name  # type: ignore
     assert "StorageType" == mc.attribute_no_throw(entity, "STORAGETYPE").name  # type: ignore
@@ -108,7 +108,7 @@ def test_attribute_no_throw():
 
 
 def test_attribute():
-    mc = ModelCache(__get_model("mdm_nvh_model.json"))
+    mc = ModelCache(__get_model("application_model.json"))
     entity = mc.entity("MeaResult")
     assert "StorageType" == mc.attribute(entity, "StorageType").name
     assert "StorageType" == mc.attribute(entity, "STORAGETYPE").name
@@ -139,7 +139,7 @@ def test_attribute():
 
 
 def test_relation_no_throw():
-    mc = ModelCache(__get_model("mdm_nvh_model.json"))
+    mc = ModelCache(__get_model("application_model.json"))
     entity = mc.entity("MeaResult")
     assert "TestStep" == mc.relation_no_throw(entity, "test").name  # type: ignore
     assert "TestStep" == mc.relation_no_throw(entity, "TEST").name  # type: ignore
@@ -155,7 +155,7 @@ def test_relation_no_throw():
 
 
 def test_relation():
-    mc = ModelCache(__get_model("mdm_nvh_model.json"))
+    mc = ModelCache(__get_model("application_model.json"))
     entity = mc.entity("MeaResult")
     assert "TestStep" == mc.relation(entity, "test").name
     assert "TestStep" == mc.relation(entity, "TEST").name
@@ -178,7 +178,7 @@ def test_relation():
 
 
 def test_enumeration_access():
-    mc = ModelCache(__get_model("mdm_nvh_model.json"))
+    mc = ModelCache(__get_model("application_model.json"))
     assert "datatype_enum" == mc.enumeration("datatype_enum").name
     assert "datatype_enum" == mc.enumeration("DataType_Enum").name
     with pytest.raises(ValueError):
@@ -186,7 +186,7 @@ def test_enumeration_access():
 
 
 def test_enumeration_values():
-    mc = ModelCache(__get_model("mdm_nvh_model.json"))
+    mc = ModelCache(__get_model("application_model.json"))
     datatype_enum = mc.enumeration("datatype_enum")
     assert datatype_enum is not None
 
