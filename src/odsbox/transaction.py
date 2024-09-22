@@ -12,10 +12,9 @@ class Transaction:
     If no commit is called it will abort the transaction if with sections is left.
     """
 
-    __con_i: "ConI" = None
+    __con_i: "ConI | None" = None
 
     def __init__(self, con_i: "ConI"):
-        self.__con_i = None
         con_i.transaction_create()
         self.__con_i = con_i
 
@@ -32,7 +31,7 @@ class Transaction:
         """
         Commit the transaction.
         """
-        if None is not self.__con_i:
+        if self.__con_i is not None:
             self.__con_i.transaction_commit()
             self.__con_i = None
 
@@ -40,6 +39,6 @@ class Transaction:
         """
         Aborts the transaction.
         """
-        if None is not self.__con_i:
+        if self.__con_i is not None:
             self.__con_i.transaction_abort()
             self.__con_i = None

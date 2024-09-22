@@ -75,13 +75,13 @@ class UnitCatalog:
 
         return self.unknown_physical_dimension
 
-    def __get_or_create_unknown_phys_dim(self, name) -> int:
+    def __get_or_create_unknown_phys_dim(self, name: str) -> int:
         physical_dimension_entity = self.__con_i.mc.entity_by_base_name("AoPhysicalDimension")
         existing_physical_dimension = self.__con_i.query_data(
             {"AoPhysicalDimension": {"name": name}, "$attributes": {"id": 1}}
         )
         if existing_physical_dimension.shape[0] > 0:
-            physical_dimension_id = existing_physical_dimension.iloc[0, 0]
+            physical_dimension_id = int(existing_physical_dimension.iloc[0, 0])  # type: ignore
             self.__log.debug(
                 "Physical dimension '%s' already exists. Using existing ID: %s",
                 name,
@@ -130,7 +130,7 @@ class UnitCatalog:
 
         return physical_dimension_id
 
-    def __create_auto_unit(self, name: str, physical_dimension_id: int):
+    def __create_auto_unit(self, name: str, physical_dimension_id: int) -> int:
         unit = self.__con_i.mc.entity_by_base_name("AoUnit")
         ts = ods.DataMatrices()
         dm = ts.matrices.add(aid=unit.aid)
