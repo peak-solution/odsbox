@@ -8,7 +8,8 @@ Welcome to ASAM ODSBox docs's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-   modules
+   overview
+   odsbox
 
 Indices and tables
 ==================
