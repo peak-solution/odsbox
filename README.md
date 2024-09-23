@@ -18,7 +18,10 @@ with ConI(url="https://MY_SERVER/api", auth=("sa", "sa")) as con_i:
     print(measurements)
 ```
 
-See [documentation](https://peak-solution.github.io/odsbox) for overview.
+## Documentation
+
+* [*ODSBox* documentation](https://peak-solution.github.io/odsbox)
+* [Work with ASAM ODS server](https://peak-solution.github.io/data_management_learning_path/ods/query-asam-server.html)
 
 ## Communication
 
