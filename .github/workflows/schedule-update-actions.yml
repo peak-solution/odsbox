@@ -15,11 +15,11 @@ jobs:
       - uses: actions/checkout@v4.2.0
         with:
           # [Required] Access token with `workflow` scope.
-          token: ${{ secrets.PAT }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run GitHub Actions Version Updater
         uses: saadmk11/github-actions-version-updater@v0.8.1
         with:
           # [Required] Access token with `workflow` scope.
-          token: ${{ secrets.PAT }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           pull_request_title: "ci: Update GitHub Actions to Latest Version"
