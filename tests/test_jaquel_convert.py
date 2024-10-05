@@ -147,3 +147,20 @@ def test_syntax_errors():
 
     with pytest.raises(SyntaxError, match=r"Does not define a target entity."):
         jaquel_to_ods(model, {})
+
+
+def test_example_queries():
+    model = __get_model("application_model.json")
+
+    with open(
+        os.path.join(os.path.abspath(os.path.dirname(__file__)), "test_data", "examples_from_jaquel_doc.json"),
+        encoding="utf-8",
+    ) as fh:
+        example_queries = json.load(fh)
+
+    for example_query in example_queries:
+        logging.getLogger().info(example_query)
+
+        entity, select_statement = jaquel_to_ods(model, example_query)
+        assert entity is not None
+        assert select_statement is not None
