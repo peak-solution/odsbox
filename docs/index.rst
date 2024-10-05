@@ -10,6 +10,7 @@ Welcome to ASAM ODSBox docs's documentation!
 
    overview
    odsbox
+   branchstrategies
 
 Indices and tables
 ==================

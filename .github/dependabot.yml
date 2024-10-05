@@ -13,6 +13,7 @@ updates:
   - dependency-type: indirect
   commit-message:
     prefix: "fix: "
+  target-branch: dev
 - package-ecosystem: "github-actions"
   directory: "/"
   schedule:
@@ -20,3 +21,4 @@ updates:
     time: "13:00"
   commit-message:
     prefix: "fix: "
+  target-branch: dev
