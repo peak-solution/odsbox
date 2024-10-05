@@ -10,7 +10,8 @@ Welcome to ASAM ODSBox docs's documentation!
 
    overview
    odsbox
-   branchstrategies
+   jaquel
+   repository_rules
 
 Indices and tables
 ==================
