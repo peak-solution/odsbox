@@ -15,9 +15,6 @@ import sys
 
 sys.path.insert(0, os.path.abspath("../src/"))
 
-from odsbox import __version__ as odsbox_version
-
-
 # -- Project information -----------------------------------------------------
 
 project = "ASAM ODSBox docs"
@@ -25,7 +22,7 @@ copyright = "2024, Peak Solution"
 author = "Peak Solution"
 
 # The full version, including alpha/beta/rc tags
-release = odsbox_version
+release = "1.0.0"
 
 
 # -- General configuration ---------------------------------------------------
