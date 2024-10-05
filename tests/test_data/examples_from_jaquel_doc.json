@@ -1,0 +1,291 @@
+[
+    {
+        "AoTest": {}
+    },
+    {
+        "AoMeasurement": 4711
+    },
+    {
+        "AoMeasurement": "4711"
+    },
+    {
+        "AoMeasurement": {
+            "id": 4711
+        }
+    },
+    {
+        "MeaResult": {
+            "Id": 4711
+        }
+    },
+    {
+        "AoMeasurement": {
+            "test": 4611
+        }
+    },
+    {
+        "AoMeasurement": {
+            "test.id": 4611
+        }
+    },
+    {
+        "AoSubTest": "4611",
+        "$attributes": {
+            "children.name": 1,
+            "children.id": 1
+        }
+    },
+    {
+        "AoSubTest": "4611",
+        "$attributes": {
+            "children": {
+                "name": 1,
+                "id": 1
+            }
+        }
+    },
+    {
+        "AoTestSequence": {
+            "name": "MyTestSequence",
+            "version": "V1"
+        }
+    },
+    {
+        "AoTest": {
+            "name": {
+                "$eq": "MyTest",
+                "$options": "i"
+            }
+        }
+    },
+    {
+        "AoTest": {
+            "name": {
+                "$like": "My*",
+                "$options": "i"
+            }
+        }
+    },
+    {
+        "AoMeasurement": {
+            "name": "MyMea",
+            "test.name": "MySubTest2",
+            "test.parent_test.name": "MySubTest1",
+            "test.parent_test.parent_test.name": "MyTest"
+        }
+    },
+    {
+        "AoMeasurement": {
+            "name": "MyMea",
+            "test": {
+                "name": "MySubTest2",
+                "parent_test": {
+                    "name": "MySubTest1",
+                    "parent_test": {
+                        "name": "MyTest"
+                    }
+                }
+            }
+        }
+    },
+    {
+        "AoMeasurement": {
+            "id": {
+                "$in": [
+                    4711,
+                    4712,
+                    4713
+                ]
+            }
+        }
+    },
+    {
+        "AoMeasurement": {
+            "measurement_begin": {
+                "$gte": "2012-04-23T00:00:00.000Z",
+                "$lt": "2012-04-24T00:00:00.000Z"
+            }
+        }
+    },
+    {
+        "AoMeasurement": {
+            "measurement_begin": {
+                "$between": [
+                    "2012-04-23T00:00:00.000Z",
+                    "2012-04-24T00:00:00.000Z"
+                ]
+            }
+        }
+    },
+    {
+        "AoMeasurement": {
+            "$and": [
+                {
+                    "measurement_begin": {
+                        "$gte": "2012-04-23T00:00:00.000Z",
+                        "$lt": "2012-04-24T00:00:00.000Z"
+                    }
+                },
+                {
+                    "measurement_end": {
+                        "$gte": "2012-04-23T00:00:00.000Z",
+                        "$lt": "2012-04-24T00:00:00.000Z"
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "AoMeasurement": {
+            "$or": [
+                {
+                    "measurement_begin": {
+                        "$gte": "2012-04-23T00:00:00.000Z",
+                        "$lt": "2012-04-24T00:00:00.000Z"
+                    }
+                },
+                {
+                    "measurement_begin": {
+                        "$gte": "2012-05-23T00:00:00.000Z",
+                        "$lt": "2012-05-24T00:00:00.000Z"
+                    }
+                },
+                {
+                    "measurement_begin": {
+                        "$gte": "2012-06-23T00:00:00.000Z",
+                        "$lt": "2012-06-24T00:00:00.000Z"
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "AoTestSequence": {
+            "$not": {
+                "$and": [
+                    {
+                        "name": "MyTestSequence"
+                    },
+                    {
+                        "version": "V1"
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "AoTest": {
+            "$and": [
+                {
+                    "name": {
+                        "$like": "My*",
+                        "$options": "i"
+                    }
+                },
+                {
+                    "name": {
+                        "$like": "??Test"
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "AoMeasurementQuantity": 4711,
+        "$attributes": {
+            "name": 1,
+            "id": 1,
+            "maximum": {
+                "$unit": 3
+            }
+        }
+    },
+    {
+        "AoMeasurementQuantity": {
+            "maximum": {
+                "$unit": 3,
+                "$between": [
+                    1.2,
+                    2.3
+                ]
+            }
+        }
+    },
+    {
+        "AoMeasurementQuantity": {
+            "name": "Revs"
+        },
+        "$attributes": {
+            "minimum": {
+                "$min": 1,
+                "$max": 1
+            },
+            "maximum": {
+                "$min": 1,
+                "$max": 1
+            }
+        }
+    },
+    {
+        "AoMeasurement": {
+            "$or": [
+                {
+                    "measurement_begin": {
+                        "$gte": "2012-04-23T00:00:00.000Z",
+                        "$lt": "2012-04-24T00:00:00.000Z"
+                    }
+                },
+                {
+                    "measurement_begin": {
+                        "$gte": "2012-05-23T00:00:00.000Z",
+                        "$lt": "2012-05-24T00:00:00.000Z"
+                    }
+                },
+                {
+                    "measurement_begin": {
+                        "$gte": "2012-06-23T00:00:00.000Z",
+                        "$lt": "2012-06-24T00:00:00.000Z"
+                    }
+                }
+            ]
+        },
+        "$options": {
+            "$rowlimit": 1000,
+            "$rowskip": 500
+        },
+        "$attributes": {
+            "name": 1,
+            "id": 1,
+            "test": {
+                "name": 1,
+                "id": 1
+            }
+        },
+        "$orderby": {
+            "test.name": 0,
+            "name": 1
+        },
+        "$groupby": {
+            "id": 1
+        }
+    },
+    {
+        "AoMeasurement": {},
+        "$attributes": {
+            "name": {
+                "$distinct": 1
+            }
+        }
+    },
+    {
+        "AoMeasurementQuantity": {
+            "measurement": 4712
+        },
+        "$attributes": {
+            "name": 1,
+            "id": 1,
+            "datatype": 1,
+            "unit:OUTER.name": 1
+        }
+    }
+]

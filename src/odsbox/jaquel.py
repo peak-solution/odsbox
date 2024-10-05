@@ -20,6 +20,7 @@ _jo_aggregates = {
     "$min": ods.AggregateEnum.AG_MIN,
     "$max": ods.AggregateEnum.AG_MAX,
     "$avg": ods.AggregateEnum.AG_AVG,
+    "$stddev": ods.AggregateEnum.AG_STDDEV,
     "$sum": ods.AggregateEnum.AG_SUM,
     "$distinct": ods.AggregateEnum.AG_DISTINCT,
     "$point": ods.AggregateEnum.AG_VALUES_POINT,
@@ -267,8 +268,6 @@ def __parse_attributes(
             elif "$unit" == element:
                 element_attribute["unit"] = element_dict[element]
                 continue
-            elif "$calculated" == element:
-                raise SyntaxError('currently not supported "' + element + '"')
             elif "$options" == element:
                 raise SyntaxError("Actually no $options defined for attributes")
             else:
