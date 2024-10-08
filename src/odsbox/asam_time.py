@@ -1,4 +1,4 @@
-"""datetime is represented as string in ASAM ODS. Here you find some helpers."""
+"""datetime is represented as string in ASAM ODS formatted using YYYYMMDDHHMMSSFFF. Here you find some helpers."""
 
 from __future__ import annotations
 
@@ -22,7 +22,8 @@ def to_pd_timestamp(asam_time: str) -> pd.Timestamp:
     """
     Convert ASAM ODS datetime string to pandas Timestamp.
 
-    :param str asam_time: ASAM ODS datetime string to be converted
+    :param str asam_time: ASAM ODS datetime string to be converted. formatted like `YYYYMMDDHHMMSSFFF`.
+                          It must at least contain `YYYYMMDD`.
     :raises requests.SyntaxError: If content is invalid.
     :return pd.Timestamp: Corresponding pandas Timestamp value. For empty string `pd.NaT` is returned.
     """
@@ -42,3 +43,24 @@ def to_pd_timestamp(asam_time: str) -> pd.Timestamp:
         microsecond=int(asam_time_normalized[14:20]) if asam_time_len >= 20 else 0,
         nanosecond=int(asam_time_normalized[20:23]) if asam_time_len >= 23 else 0,
     )
+
+
+def from_pd_timestamp(timestamp: pd.Timestamp, length: int = 17) -> str:
+    """
+    Convert a pandas Timestamp to a string formatted as asamtime (`YYYYMMDDHHMMSSFFF`).
+
+    :param pd.Timestamp timestamp: The pandas Timestamp to convert. The timezone
+                                   information given in timestamp is ignored.
+    :param int length: The desired length of the output string. The final string will
+                       be truncated to the specified length. The maximum is 23 including
+                       nanoseconds.
+    :return str: The asam time representation of the timestamp. For `None` or `pd.NaT`
+                 an empty string is returned.
+    """
+    if timestamp is None or pd.isna(timestamp):
+        return ""
+
+    asam_time_str = timestamp.strftime("%Y%m%d%H%M%S%f")
+    if length > 20:
+        asam_time_str += f"{timestamp.nanosecond:03d}"
+    return asam_time_str[: min(length, len(asam_time_str))]
