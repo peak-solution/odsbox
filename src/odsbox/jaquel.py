@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import datetime
+from datetime import datetime
 import json
 import re
 from typing import Tuple, List, Any
@@ -152,11 +152,21 @@ def _jo_enum_get_numeric_value(
     return int(name_or_number)
 
 
-def __jo_date(date_string: str) -> str:
-    if date_string.endswith("Z"):
-        tv = datetime.datetime.strptime(date_string, "%Y-%m-%dT%H:%M:%S.%fZ")
-        return re.sub(r"(?<=[^\s]{14})0+$", "", tv.strftime("%Y%m%d%H%M%S%f"))
-    return date_string
+def __jo_date(date_value: str | datetime) -> str:
+    tv = None
+    if isinstance(date_value, str):
+        if "T" in date_value:
+            format_string = "%Y-%m-%dT%H:%M:%S"
+            if "." in date_value:
+                format_string += ".%f"
+            if date_value.endswith("Z"):
+                format_string += "Z"
+            tv = datetime.strptime(date_value, format_string)
+        else:
+            return date_value
+    else:
+        tv = date_value
+    return re.sub(r"(?<=[^\s]{14})0+$", "", tv.strftime("%Y%m%d%H%M%S%f"))
 
 
 def __parse_path_and_add_joins(

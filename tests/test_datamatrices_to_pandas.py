@@ -327,3 +327,19 @@ def test_ds_external_reference():
             ],
         },
     }
+
+
+def test_unknown_arrays_empty():
+    dms = ods.DataMatrices()
+    dm = dms.matrices.add(aid=4711, name="UnknownTypes")
+    dm.columns.add(name="Values", base_name="values", data_type=ods.DT_UNKNOWN).unknown_arrays.values.add(
+        data_type=ods.DT_DOUBLE
+    )
+
+    pdf = to_pandas(dms)
+    logging.getLogger().info(pdf)
+    assert pdf.shape == (1, 1)
+    assert len(pdf.to_json()) > 0
+    assert pdf.to_dict() != {}
+
+    assert unknown_array_values(dm.columns[0].unknown_arrays.values[0]) == []

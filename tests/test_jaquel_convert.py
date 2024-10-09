@@ -1,6 +1,7 @@
 # pylint: disable=C0114, C0115, C0116, E1101
 import os
 import json
+from datetime import datetime
 from pathlib import Path
 import logging
 import pytest
@@ -164,3 +165,45 @@ def test_example_queries():
         entity, select_statement = jaquel_to_ods(model, example_query)
         assert entity is not None
         assert select_statement is not None
+
+
+def test_datetime_handling():
+    model = __get_model("application_model.json")
+    _, select_statement = jaquel_to_ods(
+        model, {"AoMeasurement": {"measurement_begin": datetime(2024, 1, 15, 16, 33, 55, 123456)}}
+    )
+    assert '"20240115163355123456"' in MessageToJson(select_statement)
+
+    _, select_statement = jaquel_to_ods(
+        model, {"AoMeasurement": {"measurement_begin": datetime(2024, 1, 15, 16, 33, 55)}}
+    )
+    assert '"20240115163355"' in MessageToJson(select_statement)
+
+    _, select_statement = jaquel_to_ods(model, {"AoMeasurement": {"measurement_begin": datetime(2024, 1, 15, 16, 33)}})
+    assert '"20240115163300"' in MessageToJson(select_statement)
+
+    _, select_statement = jaquel_to_ods(model, {"AoMeasurement": {"measurement_begin": "20240115163355123456"}})
+    assert '"20240115163355123456"' in MessageToJson(select_statement)
+
+    _, select_statement = jaquel_to_ods(model, {"AoMeasurement": {"measurement_begin": "2024-01-15T16:33:55.123456Z"}})
+    assert '"20240115163355123456"' in MessageToJson(select_statement)
+
+    _, select_statement = jaquel_to_ods(model, {"AoMeasurement": {"measurement_begin": "2024-01-15T16:33:55Z"}})
+    assert '"20240115163355"' in MessageToJson(select_statement)
+
+    _, select_statement = jaquel_to_ods(model, {"AoMeasurement": {"measurement_begin": "2024-01-15T16:33:55"}})
+    assert '"20240115163355"' in MessageToJson(select_statement)
+
+
+def test_is_in():
+    model = __get_model("application_model.json")
+    _, select_statement = jaquel_to_ods(
+        model, {"AoMeasurementQuantity": {"datatype": {"$in": ["DT_STRING", "DT_DOUBLE"]}}}
+    )
+    assert select_statement is not None
+
+    _, select_statement = jaquel_to_ods(model, {"AoMeasurementQuantity": {"name": {"$in": ["first", "second"]}}})
+    assert select_statement is not None
+
+    with pytest.raises(SyntaxError, match='Enum entry for "does_not_exist" does not exist'):
+        jaquel_to_ods(model, {"AoMeasurementQuantity": {"datatype": {"$in": ["does_not_exist"]}}})
