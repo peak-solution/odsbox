@@ -17,82 +17,82 @@ The lookup order is:
 
 ### Get all AoTest instances
 
-```json
-{
+```python
+r = con_i.query_data({
     "AoTest": {}
-}
+})
 ```
 
 ### Access instances using id only
 
 Get measurement with id 4711
 
-```json
-{
+```python
+r = con_i.query_data({
     "AoMeasurement": 4711
-}
+})
 ```
 
-```json
-{
+```python
+r = con_i.query_data({
     "AoMeasurement": "4711"
-}
+})
 ```
 
-```json
-{
+```python
+r = con_i.query_data({
     "AoMeasurement": {
         "id": 4711
     }
-}
+})
 ```
 
 Using application names.
 
-```json
-{
+```python
+r = con_i.query_data({
     "MeaResult": {
         "Id": 4711
     }
-}
+})
 ```
 
 
 ### Get children of a given SubTest
 
 
-```json
-{
+```python
+r = con_i.query_data({
     "AoMeasurement": {
         "test": 4611
     }
-}
+})
 ```
 
-```json
-{
+```python
+r = con_i.query_data({
     "AoMeasurement": {
         "test.id": 4611
     }
-}
+})
 ```
 
 TIP: `test.id` is a duplicate because the id is also stored in test column
 
 ### Use inverse to do the same job
 
-```json
-{
+```python
+r = con_i.query_data({
     "AoSubTest": "4611",
     "$attributes": {
         "children.name": 1,
         "children.id": 1
     }
-}
+})
 ```
 
-```json
-{
+```python
+r = con_i.query_data({
     "AoSubTest": "4611",
     "$attributes": {
         "children": {
@@ -100,48 +100,48 @@ TIP: `test.id` is a duplicate because the id is also stored in test column
             "id": 1
         }
     }
-}
+})
 ```
 
 ### Search for a AoTestSequence by name and version
 
-```json
-{
+```python
+r = con_i.query_data({
     "AoTestSequence": {
         "name": "MyTestSequence",
         "version": "V1"
     }
-}
+})
 ```
 ### Case insensitive match
 
-```json
-{
+```python
+r = con_i.query_data({
     "AoTest": {
         "name": {
             "$eq": "MyTest",
             "$options": "i"
         }
     }
-}
+})
 ```
 ### Case insensitive match
 
-```json
-{
+```python
+r = con_i.query_data({
     "AoTest": {
         "name": {
             "$like": "My*",
             "$options": "i"
         }
     }
-}
+})
 ```
 
 ### Resolve asam path
 
-```json
-{
+```python
+r = con_i.query_data({
     "AoMeasurement": {
         "name": "MyMea",
         "version": "V1",
@@ -152,11 +152,11 @@ TIP: `test.id` is a duplicate because the id is also stored in test column
         "test.parent_test.parent_test.name": "MyTest",
         "test.parent_test.parent_test.version": "V1"
     }
-}
+})
 ```
 
-```json
-{
+```python
+r = con_i.query_data({
     "AoMeasurement": {
         "name": "MyMea",
         "version": "V1",
@@ -173,13 +173,13 @@ TIP: `test.id` is a duplicate because the id is also stored in test column
             }
         }
     }
-}
+})
 ```
 
 ### Use $in operator
 
-```json
-{
+```python
+r = con_i.query_data({
     "AoMeasurement": {
         "id": {
             "$in": [
@@ -189,26 +189,26 @@ TIP: `test.id` is a duplicate because the id is also stored in test column
             ]
         }
     }
-}
+})
 ```
 
 ### Search for a time span
 
-```json
-{
+```python
+r = con_i.query_data({
     "AoMeasurement": {
         "measurement_begin": {
             "$gte": "2012-04-23T00:00:00.000Z",
             "$lt": "2012-04-24T00:00:00.000Z"
         }
     }
-}
+})
 ```
 
 ### Use between operator
 
-```json
-{
+```python
+r = con_i.query_data({
     "AoMeasurement": {
         "measurement_begin": {
             "$between": [
@@ -217,13 +217,13 @@ TIP: `test.id` is a duplicate because the id is also stored in test column
             ]
         }
     }
-}
+})
 ```
 
 ### Simple $and example
 
-```json
-{
+```python
+r = con_i.query_data({
     "AoMeasurement": {
         "$and": [
             {
@@ -240,13 +240,13 @@ TIP: `test.id` is a duplicate because the id is also stored in test column
             }
         ]
     }
-}
+})
 ```
 
 ### Simple or example
 
-```json
-{
+```python
+r = con_i.query_data({
     "AoMeasurement": {
         "$or": [
             {
@@ -269,13 +269,13 @@ TIP: `test.id` is a duplicate because the id is also stored in test column
             }
         ]
     }
-}
+})
 ```
 
 ### Simple $not example
 
-```json
-{
+```python
+r = con_i.query_data({
     "AoTestSequence": {
         "$not": {
             "$and": [
@@ -288,13 +288,13 @@ TIP: `test.id` is a duplicate because the id is also stored in test column
             ]
         }
     }
-}
+})
 ```
 
 ### Mixed case sensitive/insensitive
 
-```json
-{
+```python
+r = con_i.query_data({
     "AoTest": {
         "$and": [
             {
@@ -310,12 +310,12 @@ TIP: `test.id` is a duplicate because the id is also stored in test column
             }
         ]
     }
-}
+})
 ```
 ### Define unit for attribute to be retrieved
 
-```json
-{
+```python
+r = con_i.query_data({
     "AoMeasurementQuantity": 4711,
     "$attributes": {
         "name": 1,
@@ -324,13 +324,13 @@ TIP: `test.id` is a duplicate because the id is also stored in test column
             "$unit": 1234
         }
     }
-}
+})
 ```
 
 ### Define unit for attribute value in condition
 
-```json
-{
+```python
+r = con_i.query_data({
     "AoMeasurementQuantity": {
         "maximum": {
             "$unit": 3,
@@ -340,13 +340,13 @@ TIP: `test.id` is a duplicate because the id is also stored in test column
             ]
         }
     }
-}
+})
 ```
 
 ### Access $min and $max from minimum and maximum
 
-```json
-{
+```python
+r = con_i.query_data({
     "AoMeasurementQuantity": {
         "name": "Revs"
     },
@@ -360,13 +360,13 @@ TIP: `test.id` is a duplicate because the id is also stored in test column
             "$max": 1
         }
     }
-}
+})
 ```
 
 ### Do a full query filling some query elements
 
-```json
-{
+```python
+r = con_i.query_data({
     "AoMeasurement": {
         "$or": [
             {
@@ -408,24 +408,24 @@ TIP: `test.id` is a duplicate because the id is also stored in test column
     "$groupby": {
         "id": 1
     }
-}
+})
 ```
 
-```json
-{
+```python
+r = con_i.query_data({
     "AoMeasurement": {},
     "$attributes": {
         "name": {
             "$distinct": 1
         }
     }
-}
+})
 ```
 
 ### Use outer join to retrieve sparse set unit names
 
-```json
-{
+```python
+r = con_i.query_data({
     "AoMeasurementQuantity": {
         "measurement": 4712
     },
@@ -435,7 +435,7 @@ TIP: `test.id` is a duplicate because the id is also stored in test column
         "datatype": 1,
         "unit:OUTER.name": 1
     }
-}
+})
 ```
 
 ## Special key values
