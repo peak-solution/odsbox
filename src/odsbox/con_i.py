@@ -170,18 +170,14 @@ class ConI:
     def query_data(
         self,
         query: str | dict | ods.SelectStatement,
-        enum_as_string: bool = False,
-        date_as_timestamp: bool = False,
+        **kwargs,
     ) -> DataFrame:
         """
         Query ods server for content and return the results as Pandas DataFrame
 
         :param str | dict | ods.SelectStatement query: Query given as JAQueL query (dict or str)
             or as an ASAM ODS SelectStatement.
-        :param bool enum_as_string: columns of type DT_ENUM are returned as int values.
-            If this is set to True the int values are mapped to the corresponding string values.
-        :param bool date_as_timestamp: columns of type DT_DATE or DS_DATE are returned as string.
-            If this is set to True the strings are converted to pandas Timestamp.
+        :param kwargs: additional arguments passed to `to_pandas`.
         :raises requests.HTTPError: If query fails.
         :return DataFrame: The DataMatrices as Pandas.DataFrame. The columns are named as `ENTITY_NAME.ATTRIBUTE_NAME`.
             `IsNull` values are not marked invalid.
@@ -189,9 +185,7 @@ class ConI:
         data_matrices = (
             self.data_read(query) if isinstance(query, ods.SelectStatement) else self.data_read_jaquel(query)
         )
-        return to_pandas(
-            data_matrices, model_cache=self.mc, enum_as_string=enum_as_string, date_as_timestamp=date_as_timestamp
-        )
+        return to_pandas(data_matrices, model_cache=self.mc, **kwargs)
 
     def model(self) -> ods.Model:
         """
