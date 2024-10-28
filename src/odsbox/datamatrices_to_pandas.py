@@ -195,13 +195,13 @@ def to_pandas(
     for matrix in data_matrices.matrices:
         entity = model_cache.entity(matrix.name) if model_cache is not None else None
         for column in matrix.columns:
+            aggregate_postfix = (
+                ""
+                if ods.AggregateEnum.AG_NONE == column.aggregate
+                else name_separator + ods.AggregateEnum.Name(column.aggregate)
+            )
+            column_name = f"{matrix.name}{name_separator}{column.name}{aggregate_postfix}"
             # The flags are ignored here. There might be NULL in here. Check `column.is_null` for this.
-            column_name = f"{
-                matrix.name}{
-                name_separator}{
-                column.name}{
-                '' if ods.AggregateEnum.AG_NONE == column.aggregate else
-                name_separator + ods.AggregateEnum.Name(column.aggregate)}"
             column_dict[column_name] = __get_datamatrix_column_values_ex(
                 column, model_cache, enum_as_string, entity, date_as_timestamp
             )

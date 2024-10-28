@@ -245,10 +245,8 @@ def __parse_path_and_add_joins(
             # Must be a relation
             relation = __model_get_relation(model, attribute_entity, path_part)
             if relation is None:
-                raise SyntaxError(
-                    f"'{path_part}' is no relation of entity '{attribute_entity.name}'.{
-                        __model_get_suggestion_relation(attribute_entity, path_part)}"
-                )
+                suggestion_text = __model_get_suggestion_relation(attribute_entity, path_part)
+                raise SyntaxError(f"'{path_part}' is no relation of entity '{attribute_entity.name}'.{suggestion_text}")
             attribute_name = relation.name
 
             # add join
@@ -273,9 +271,9 @@ def __parse_path_and_add_joins(
                 else:
                     relation = __model_get_relation(model, attribute_entity, path_part)
                     if relation is None:
+                        suggestion_text = __model_get_suggestion_attribute(attribute_entity, path_part)
                         raise SyntaxError(
-                            f"'{path_part}' is neither attribute nor relation of entity '{attribute_entity.name}'.{
-                                __model_get_suggestion_attribute(attribute_entity, path_part)}"
+                            f"'{path_part}' is neither attribute nor relation of entity '{attribute_entity.name}'.{suggestion_text}"  # noqa: E501
                         )
                     attribute_name = relation.name
                     attribute_type = ods.DataTypeEnum.DT_LONGLONG  # its an id
