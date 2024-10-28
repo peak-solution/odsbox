@@ -96,19 +96,22 @@ def test_syntax_errors():
     with pytest.raises(SyntaxError, match="Does not define a target entity."):
         jaquel_to_ods(model, {"$attributes": {"factor": {"$min": 1}}})
 
-    with pytest.raises(SyntaxError, match='Unknown aggregate "\\$mi"'):
+    with pytest.raises(SyntaxError, match="Unknown aggregate '\\$mi'."):
         jaquel_to_ods(model, {"AoUnit": {}, "$attributes": {"factor": {"$mi": 1}}})
 
-    with pytest.raises(SyntaxError, match='Unknown operator "\\$lik"'):
+    with pytest.raises(SyntaxError, match="Unknown operator '\\$lik'. Did you mean '\\$like'?'"):
         jaquel_to_ods(model, {"AoLocalColumn": {"name": {"$lik": "abc"}}})
 
-    with pytest.raises(SyntaxError, match="'name' is no relation of entity 'LocalColumn'"):
+    with pytest.raises(SyntaxError, match="'name' is no relation of entity 'LocalColumn'."):
         jaquel_to_ods(model, {"AoLocalColumn": {"name": {"like": "abc"}}})
 
     with pytest.raises(json.decoder.JSONDecodeError):
         jaquel_to_ods(model, "{")
 
-    with pytest.raises(SyntaxError, match="'nr_of_rows' is neither attribute nor relation of entity 'SubMatrix'"):
+    with pytest.raises(
+        SyntaxError,
+        match="'nr_of_rows' is neither attribute nor relation of entity 'SubMatrix'. Did you mean 'number_of_rows'?",
+    ):
         jaquel_to_ods(
             model, {"AoLocalColumn": {}, "$attributes": {"Id": 1, "name": 1, "submatrix": {"nr_of_rows": 1, "name": 1}}}
         )
@@ -205,5 +208,97 @@ def test_is_in():
     _, select_statement = jaquel_to_ods(model, {"AoMeasurementQuantity": {"name": {"$in": ["first", "second"]}}})
     assert select_statement is not None
 
-    with pytest.raises(SyntaxError, match='Enum entry for "does_not_exist" does not exist'):
+    with pytest.raises(SyntaxError, match="Enum entry for 'does_not_exist' does not exist."):
         jaquel_to_ods(model, {"AoMeasurementQuantity": {"datatype": {"$in": ["does_not_exist"]}}})
+
+    with pytest.raises(SyntaxError, match="Enum entry for 'DTLONG' does not exist."):
+        jaquel_to_ods(model, {"AoMeasurementQuantity": {"datatype": {"$in": ["DTLONG"]}}})
+
+
+def test_suggestions_enum():
+    model = __get_model("application_model.json")
+
+    with pytest.raises(SyntaxError, match="Enum entry for 'DTLONG' does not exist. Did you mean 'DT_LONG'?"):
+        jaquel_to_ods(model, {"AoMeasurementQuantity": {"datatype": "DTLONG"}})
+
+    with pytest.raises(SyntaxError, match="Enum entry for 'dtlong' does not exist. Did you mean 'DT_LONG'?"):
+        jaquel_to_ods(model, {"AoMeasurementQuantity": {"datatype": "dtlong"}})
+
+    with pytest.raises(SyntaxError, match="Enum entry for 'LONG' does not exist. Did you mean 'DT_LONG'?"):
+        jaquel_to_ods(model, {"AoMeasurementQuantity": {"datatype": "LONG"}})
+
+    with pytest.raises(SyntaxError, match="Enum entry for 'INT32' does not exist."):
+        jaquel_to_ods(model, {"AoMeasurementQuantity": {"datatype": "INT32"}})
+
+
+def test_suggestions_attribute():
+    model = __get_model("application_model.json")
+
+    with pytest.raises(
+        SyntaxError,
+        match="'data_type' is neither attribute nor relation of entity 'MeaQuantity'. Did you mean 'DataType'?",
+    ):
+        jaquel_to_ods(model, {"AoMeasurementQuantity": {"data_type": "DT_LONG"}})
+
+    with pytest.raises(
+        SyntaxError,
+        match="'units' is neither attribute nor relation of entity 'MeaQuantity'. Did you mean 'Unit'?",
+    ):
+        jaquel_to_ods(model, {"AoMeasurementQuantity": {"units": 4711}})
+
+
+def test_suggestions_relation():
+    model = __get_model("application_model.json")
+
+    with pytest.raises(
+        SyntaxError,
+        match="'units' is no relation of entity 'MeaQuantity'. Did you mean 'Unit'?",
+    ):
+        jaquel_to_ods(model, {"AoMeasurementQuantity": {"units.name": "m"}})
+
+
+def test_suggestions_entity():
+    model = __get_model("application_model.json")
+
+    with pytest.raises(
+        SyntaxError,
+        match="Entity 'AoMeasurmentQuantity' is unknown in model. Did you mean 'AoMeasurementQuantity'?",
+    ):
+        jaquel_to_ods(model, {"AoMeasurmentQuantity": {"datatype": "DT_LONG"}})
+
+    with pytest.raises(
+        SyntaxError,
+        match="Entity 'MeasurmentQuantity' is unknown in model. Did you mean 'AoMeasurementQuantity'?",
+    ):
+        jaquel_to_ods(model, {"MeasurmentQuantity": {"datatype": "DT_LONG"}})
+
+    with pytest.raises(
+        SyntaxError,
+        match="Entity 'AoMeasurmentQuantity' is unknown in model. Did you mean 'AoMeasurementQuantity'?",
+    ):
+        jaquel_to_ods(model, {"AoMeasurmentQuantity": {"datatype": "DT_LONG"}})
+
+    with pytest.raises(
+        SyntaxError,
+        match="Entity 'AoTests' is unknown in model. Did you mean 'AoTest'?",
+    ):
+        jaquel_to_ods(model, {"AoTests": {"name": "Start"}})
+
+
+def test_suggestions_aggregate():
+    model = __get_model("application_model.json")
+
+    with pytest.raises(SyntaxError, match="Unknown aggregate '\\$stev'. Did you mean '\\$stddev'?"):
+        jaquel_to_ods(model, {"AoUnit": {}, "$attributes": {"factor": {"$stev": 1}}})
+
+    with pytest.raises(SyntaxError, match="Unknown aggregate '\\$regexp'. Did you mean '\\$max'?"):
+        jaquel_to_ods(model, {"AoUnit": {}, "$attributes": {"factor": {"$regexp": "a.*"}}})
+
+    with pytest.raises(SyntaxError, match="Unknown operator '\\$GTEQ'. Did you mean '\\$gte'?"):
+        jaquel_to_ods(model, {"AoUnit": {"factor": {"$GTEQ": 2.0}}})
+
+    with pytest.raises(SyntaxError, match="Unknown operator '\\$gtE'. Did you mean '\\$gte'?."):
+        jaquel_to_ods(model, {"AoUnit": {"factor": {"$gtE": 2.0}}})
+
+    with pytest.raises(SyntaxError, match="Unknown operator '\\$abc'. Did you mean '\\$between'?"):
+        jaquel_to_ods(model, {"AoUnit": {"factor": {"$abc": 2.0}}})

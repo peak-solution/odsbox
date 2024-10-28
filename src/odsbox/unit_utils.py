@@ -21,6 +21,7 @@ def query_physical_dimensions(
     temperature: int = 0,
     molar_amount: int = 0,
     luminous_intensity: int = 0,
+    **kwargs,
 ) -> DataFrame:
     """
     Search for a physical dimension by its SI exponents.
@@ -57,7 +58,7 @@ def query_physical_dimensions(
     ci.condition.aid = physical_dimension_entity.aid
     ci.condition.attribute = con_i.mc.attribute_by_base_name(physical_dimension_entity, "luminous_intensity_exp").name
     ci.condition.long_array.values.append(luminous_intensity)
-    return to_pandas(con_i.data_read(select))
+    return to_pandas(con_i.data_read(select), **kwargs)
 
 
 def query_units(
@@ -69,6 +70,7 @@ def query_units(
     temperature: int = 0,
     molar_amount: int = 0,
     luminous_intensity: int = 0,
+    **kwargs,
 ) -> DataFrame:
     """
     Search for a unit by its SI exponents.
@@ -112,7 +114,10 @@ def query_units(
     ci.condition.aid = physical_dimension_entity.aid
     ci.condition.attribute = con_i.mc.attribute_by_base_name(physical_dimension_entity, "luminous_intensity_exp").name
     ci.condition.long_array.values.append(luminous_intensity)
-    return to_pandas(con_i.data_read(select))
+    return to_pandas(
+        con_i.data_read(select),
+        **kwargs,
+    )
 
 
 def query_quantity(
@@ -124,6 +129,7 @@ def query_quantity(
     temperature: int = 0,
     molar_amount: int = 0,
     luminous_intensity: int = 0,
+    **kwargs,
 ) -> DataFrame:
     """
     Search for a quantity by its SI exponents.
@@ -174,4 +180,4 @@ def query_quantity(
     ci.condition.aid = physical_dimension_entity.aid
     ci.condition.attribute = con_i.mc.attribute_by_base_name(physical_dimension_entity, "luminous_intensity_exp").name
     ci.condition.long_array.values.append(luminous_intensity)
-    return to_pandas(con_i.data_read(select))
+    return to_pandas(con_i.data_read(select), **kwargs)

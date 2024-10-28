@@ -6,6 +6,7 @@ from datetime import datetime
 import json
 import re
 from typing import Tuple, List, Any
+from difflib import get_close_matches
 
 from google.protobuf.internal import containers as _containers
 
@@ -127,7 +128,60 @@ def __model_get_entity_ex(model: ods.Model, entity_name_or_aid: str | int) -> od
         if entity.name.lower() == entity_name_or_aid.lower() or entity.base_name.lower() == entity_name_or_aid.lower():
             return entity
 
-    raise SyntaxError(f"Entity '{entity_name_or_aid}' is unknown in model.")
+    raise SyntaxError(
+        f"Entity '{entity_name_or_aid}' is unknown in model.{__model_get_suggestion_entity(model, entity_name_or_aid)}"
+    )
+
+
+def __model_get_suggestion(lower_case_dict: dict, str_val: str) -> str:
+    suggestions = get_close_matches(
+        str_val.lower(),
+        lower_case_dict,
+        n=1,
+        cutoff=0.3,
+    )
+    if len(suggestions) > 0:
+        return_value = lower_case_dict[suggestions[0]]
+        return f" Did you mean '{return_value}'?"
+    return ""
+
+
+def __model_get_enum_suggestion(enumeration: ods.Model.Enumeration, str_val: str) -> str:
+    available = {key.lower(): key for key in enumeration.items}
+    return __model_get_suggestion(available, str_val)
+
+
+def __model_get_suggestion_attribute(entity: ods.Model.Entity, attribute_or_relation_name: str) -> str:
+    available = {}
+    available.update({relation.base_name.lower(): relation.base_name for key, relation in entity.relations.items()})
+    available.update({attribute.base_name.lower(): attribute.base_name for key, attribute in entity.attributes.items()})
+    available.update({relation.name.lower(): relation.name for key, relation in entity.relations.items()})
+    available.update({attribute.name.lower(): attribute.name for key, attribute in entity.attributes.items()})
+    return __model_get_suggestion(available, attribute_or_relation_name)
+
+
+def __model_get_suggestion_relation(entity: ods.Model.Entity, relation_name: str) -> str:
+    available = {}
+    available.update({relation.base_name.lower(): relation.base_name for key, relation in entity.relations.items()})
+    available.update({relation.name.lower(): relation.name for key, relation in entity.relations.items()})
+    return __model_get_suggestion(available, relation_name)
+
+
+def __model_get_suggestion_entity(model: ods.Model, entity_name: str) -> str:
+    available = {}
+    available.update({entity.base_name.lower(): entity.base_name for key, entity in model.entities.items()})
+    available.update({entity.name.lower(): entity.name for key, entity in model.entities.items()})
+    return __model_get_suggestion(available, entity_name)
+
+
+def __model_get_suggestion_aggregate(aggregate_name: str) -> str:
+    available = {key.lower(): key for key in _jo_aggregates}
+    return __model_get_suggestion(available, aggregate_name)
+
+
+def __model_get_suggestion_operators(operator_name: str) -> str:
+    available = {key.lower(): key for key in _jo_operators}
+    return __model_get_suggestion(available, operator_name)
 
 
 def __model_get_enum_index(model: ods.Model, entity: ods.Model.Entity, attribute_name: str, str_val: str) -> int:
@@ -137,7 +191,7 @@ def __model_get_enum_index(model: ods.Model, entity: ods.Model.Entity, attribute
         if key.lower() == str_val.lower():
             return enum.items[key]
 
-    raise SyntaxError('Enum entry for "' + str_val + '" does not exist')
+    raise SyntaxError(f"Enum entry for '{str_val}' does not exist.{__model_get_enum_suggestion(enum, str_val)}")
 
 
 def _jo_enum_get_numeric_value(
@@ -191,7 +245,8 @@ def __parse_path_and_add_joins(
             # Must be a relation
             relation = __model_get_relation(model, attribute_entity, path_part)
             if relation is None:
-                raise SyntaxError(f"'{path_part}' is no relation of entity '{attribute_entity.name}'")
+                suggestion_text = __model_get_suggestion_relation(attribute_entity, path_part)
+                raise SyntaxError(f"'{path_part}' is no relation of entity '{attribute_entity.name}'.{suggestion_text}")
             attribute_name = relation.name
 
             # add join
@@ -216,8 +271,9 @@ def __parse_path_and_add_joins(
                 else:
                     relation = __model_get_relation(model, attribute_entity, path_part)
                     if relation is None:
+                        suggestion_text = __model_get_suggestion_attribute(attribute_entity, path_part)
                         raise SyntaxError(
-                            f"'{path_part}' is neither attribute nor relation of entity '{attribute_entity.name}'"
+                            f"'{path_part}' is neither attribute nor relation of entity '{attribute_entity.name}'.{suggestion_text}"  # noqa: E501
                         )
                     attribute_name = relation.name
                     attribute_type = ods.DataTypeEnum.DT_LONGLONG  # its an id
@@ -281,7 +337,7 @@ def __parse_attributes(
             elif "$options" == element:
                 raise SyntaxError("Actually no $options defined for attributes")
             else:
-                raise SyntaxError('Unknown aggregate "' + element + '"')
+                raise SyntaxError(f"Unknown aggregate '{element}'.{__model_get_suggestion_aggregate(element)}")
         else:
             if element_attribute["path"]:
                 element_attribute["path"] += "."
@@ -612,7 +668,7 @@ def __parse_conditions(
             elif "$options" == elem:
                 continue
             else:
-                raise SyntaxError('Unknown operator "' + elem + '"')
+                raise SyntaxError(f"Unknown operator '{elem}'.{__model_get_suggestion_operators(elem)}")
         else:
             if elem_attribute["path"]:
                 elem_attribute["path"] += "."
