@@ -28,6 +28,11 @@ def test_con_i():
             {"AoMeasurement": {}, "$options": {"$rowlimit": 50}}, date_as_timestamp=True, enum_as_string=True
         )
 
+        r = con_i.query_data(
+            {"AoUnit": {}, "$attributes": {"name": 1}, "$options": {"$rowlimit": 1}}, name_separator="::"
+        )
+        assert f"{entity.name}::" in r.columns[0]
+
 
 def test_query_data():
     with __create_con_i() as con_i:

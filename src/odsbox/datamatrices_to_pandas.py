@@ -167,6 +167,7 @@ def to_pandas(
     model_cache: ModelCache | None = None,
     enum_as_string: bool = False,
     date_as_timestamp: bool = False,
+    name_separator: str = ".",
 ) -> pd.DataFrame:
     """
     Converts data in an ASAM ODS DataMatrices into a pandas DataFrame.
@@ -178,9 +179,10 @@ def to_pandas(
                                 to the corresponding string values.
     :param bool date_as_timestamp: columns of type DT_DATE or DS_DATE are returned as string.
                                    If this is set to True the strings are converted to pandas Timestamp.
+    :param str name_separator: separator used to concatenate entity and attribute names to define column name.
 
     :return pd.DataFrame: A pandas DataFrame containing all the single matrices in a single frame. The
-                          columns are named by the schema `ENTITY_NAME.ATTRIBUTE_NAME`.
+                          columns are named by the schema `ENTITY_NAME.ATTRIBUTE_NAME[.AGGREGATE]`.
     """
     if 0 == len(data_matrices.matrices):
         return pd.DataFrame()
@@ -194,7 +196,13 @@ def to_pandas(
         entity = model_cache.entity(matrix.name) if model_cache is not None else None
         for column in matrix.columns:
             # The flags are ignored here. There might be NULL in here. Check `column.is_null` for this.
-            column_dict[matrix.name + "." + column.name] = __get_datamatrix_column_values_ex(
+            column_name = f"{
+                matrix.name}{
+                name_separator}{
+                column.name}{
+                '' if ods.AggregateEnum.AG_NONE == column.aggregate else
+                name_separator + ods.AggregateEnum.Name(column.aggregate)}"
+            column_dict[column_name] = __get_datamatrix_column_values_ex(
                 column, model_cache, enum_as_string, entity, date_as_timestamp
             )
 

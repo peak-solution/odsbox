@@ -343,3 +343,37 @@ def test_unknown_arrays_empty():
     assert pdf.to_dict() != {}
 
     assert unknown_array_values(dm.columns[0].unknown_arrays.values[0]) == []
+
+
+def test_aggregates():
+    dms = ods.DataMatrices()
+    dm = dms.matrices.add(aid=4711, name="Aggregates")
+    dm.columns.add(
+        name="Name", base_name="name", aggregate=ods.AggregateEnum.AG_NONE, data_type=ods.DT_STRING
+    ).string_array.values[:] = ["my_name"]
+    dm.columns.add(
+        name="Maximum", base_name="maximum", aggregate=ods.AggregateEnum.AG_MAX, data_type=ods.DT_DOUBLE
+    ).double_array.values[:] = [1.2]
+    dm.columns.add(
+        name="Maximum", base_name="maximum", aggregate=ods.AggregateEnum.AG_MIN, data_type=ods.DT_DOUBLE
+    ).double_array.values[:] = [1.1]
+
+    pdf = to_pandas(dms)
+    logging.getLogger().info(pdf)
+    assert pdf.shape == (1, 3)
+    assert pdf.to_dict() == {
+        "Aggregates.Name": {0: "my_name"},
+        "Aggregates.Maximum.AG_MAX": {0: 1.2},
+        "Aggregates.Maximum.AG_MIN": {0: 1.1},
+    }
+    assert len(pdf.to_json()) > 0
+
+    pdf = to_pandas(dms, name_separator="::")
+    logging.getLogger().info(pdf)
+    assert pdf.shape == (1, 3)
+    assert pdf.to_dict() == {
+        "Aggregates::Name": {0: "my_name"},
+        "Aggregates::Maximum::AG_MAX": {0: 1.2},
+        "Aggregates::Maximum::AG_MIN": {0: 1.1},
+    }
+    assert len(pdf.to_json()) > 0
