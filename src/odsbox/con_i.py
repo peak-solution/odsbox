@@ -16,6 +16,7 @@ Example::
 from __future__ import annotations
 
 import logging
+import os
 from typing import List, Tuple
 
 import requests
@@ -127,7 +128,7 @@ class ConI:
             self.__log.debug("ConI: %s", con_i)
             self.__session = session
             self.__con_i = con_i
-        self.__check_result(response)
+        self.check_requests_response(response)
         # lets cache the model
         self.model_read()
 
@@ -165,7 +166,7 @@ class ConI:
             self.__session.close()
             self.__session = None
             self.__con_i = None
-            self.__check_result(response)
+            self.check_requests_response(response)
 
     def query_data(
         self,
@@ -468,6 +469,114 @@ class ConI:
         """
         self.ods_post_request("password-update", password_update)
 
+    def file_access(self, file_identifier: ods.FileIdentifier) -> str:
+        """
+        Get file access URL for file content.
+
+        :param ods.FileIdentifier file_identifier: Define content to be accessed.
+                                                   Might be an AoFile or a DT_BLOB attribute.
+        :raises requests.HTTPError: If something went wrong.
+        :raises ValueError: If no file location provided by server.
+        :return str: The server file URL.
+        """
+        response = self.ods_post_request("file-access", file_identifier)
+        server_file_url = response.headers.get("location")
+        if server_file_url is None:
+            raise ValueError("No file location provided by server!")
+        return server_file_url
+
+    def file_access_download(
+        self,
+        file_identifier: ods.FileIdentifier,
+        target_file_or_folder: str,
+        overwrite_existing: bool = False,
+        default_filename: str = "download.bin",
+    ) -> str:
+        """
+        Read file content from server.
+
+        :param ods.FileIdentifier file_identifier: Define content to be read. Might be an AoFile or a DT_BLOB attribute.
+        :param str target_file_or_folder: Path to save the file content to. If pointing to an existing folder. Original
+                                          filename will be used. Full path is returned.
+        :param bool overwrite_existing: If existing files should be overwritten. It defaults to False.
+        :param str default_filename: Default filename if no filename is provided by server. It defaults to "download.bin".
+        :raises requests.HTTPError: If something went wrong.
+        :raises FileExistsError: If file already exists and 'overwrite_existing' is False.
+        :raises ValueError: If no open session.
+        :return str: file path of saved file.
+        """
+        server_file_url = self.file_access(file_identifier)
+
+        if self.__session is None:
+            raise ValueError("No open session!")
+        file_response = self.__session.get(server_file_url)
+        self.check_requests_response(file_response)
+
+        target_file_path = target_file_or_folder
+        if os.path.isdir(target_file_path):
+            content_disposition = file_response.headers.get(
+                "Content-Disposition", f'attachment; filename="{default_filename}"'
+            )
+            filename = (
+                content_disposition.split("filename=")[1].strip('"')
+                if "filename=" in content_disposition
+                else default_filename
+            )
+            target_file_path = os.path.join(target_file_path, filename)
+
+        if not overwrite_existing and os.path.exists(target_file_path):
+            raise FileExistsError(f"File '{target_file_path}' already exists and 'overwrite_existing' is False.")
+
+        with open(target_file_path, "wb") as file:
+            file.write(file_response.content)
+
+        return target_file_path
+
+    def file_access_upload(
+        self,
+        file_identifier: ods.FileIdentifier,
+        source_file_path: str,
+    ) -> None:
+        """
+        Upload file content to server.
+
+        :param ods.FileIdentifier file_identifier: Define content to be written. Might be an AoFile or a DT_BLOB attribute.
+        :param str source_file_path: Path to the file to be uploaded.
+        :raises requests.HTTPError: If something went wrong.
+        :raises FileNotFoundError: If source file was not found.
+        :raises ValueError: If no open session.
+        """
+        if not os.path.isfile(source_file_path):
+            raise FileNotFoundError(f"File '{source_file_path}' not found.")
+
+        server_file_url = self.file_access(file_identifier)
+
+        with open(source_file_path, "rb") as file:
+            if self.__session is None:
+                raise ValueError("No open session!")
+            put_response = self.__session.put(
+                server_file_url, data=file, headers={"Content-Type": "application/octet-stream"}
+            )
+            self.check_requests_response(put_response)
+
+    def file_access_delete(
+        self,
+        file_identifier: ods.FileIdentifier,
+    ) -> None:
+        """
+        Delete file content from server.
+
+        :param ods.FileIdentifier file_identifier: Define content to be deleted. Might be an AoFile or a DT_BLOB attribute.
+        :raises requests.HTTPError: If something went wrong.
+        :raises ValueError: If no open session.
+        """
+        server_file_url = self.file_access(file_identifier)
+
+        if self.__session is None:
+            raise ValueError("No open session!")
+        delete_response = self.__session.delete(server_file_url)
+        self.check_requests_response(delete_response)
+
     def ods_post_request(
         self, relative_url_part: str, message: Message | None = None, timeout: float = 600.0
     ) -> requests.Response:
@@ -489,10 +598,11 @@ class ConI:
             data=message.SerializeToString() if message is not None else None,
             timeout=timeout,
         )
-        self.__check_result(response)
+        self.check_requests_response(response)
         return response
 
-    def __check_result(self, response: requests.Response):
+    @staticmethod
+    def check_requests_response(response: requests.Response):
         if response.status_code not in (200, 201):
             response.headers
             if (
