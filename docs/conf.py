@@ -38,6 +38,7 @@ extensions = [
     "sphinx.ext.ifconfig",
     "sphinx.ext.viewcode",  # Add links to highlighted source code
     "sphinx.ext.githubpages",
+    "sphinx_sitemap",
     "myst_parser",
 ]
 
@@ -58,6 +59,10 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 html_theme = "sphinx_rtd_theme"
 
 html_context = {"google_site_verification": "M-YV4bEhpyyWVOBQB9VLsSCjKfqO_UpvTBMJ7DS5t_U"}
+
+# for sitemap
+html_baseurl = "https://peak-solution.github.io/odsbox/"
+sitemap_url_scheme = "{link}"
 
 templates_path = ["_templates"]
 
