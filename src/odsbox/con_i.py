@@ -499,7 +499,8 @@ class ConI:
         :param str target_file_or_folder: Path to save the file content to. If pointing to an existing folder. Original
                                           filename will be used. Full path is returned.
         :param bool overwrite_existing: If existing files should be overwritten. It defaults to False.
-        :param str default_filename: Default filename if no filename is provided by server. It defaults to "download.bin".
+        :param str default_filename: Default filename if no filename is provided by server.
+                                     It defaults to "download.bin".
         :raises requests.HTTPError: If something went wrong.
         :raises FileExistsError: If file already exists and 'overwrite_existing' is False.
         :raises ValueError: If no open session.
@@ -509,7 +510,13 @@ class ConI:
 
         if self.__session is None:
             raise ValueError("No open session!")
-        file_response = self.__session.get(server_file_url)
+        file_response = self.__session.get(
+            server_file_url,
+            headers={
+                "Content-Type": "application/octet-stream, application/x-asamods+protobuf, */*",
+                "Accept": "application/octet-stream, application/x-asamods+protobuf, */*",
+            },
+        )
         self.check_requests_response(file_response)
 
         target_file_path = target_file_or_folder
@@ -540,7 +547,8 @@ class ConI:
         """
         Upload file content to server.
 
-        :param ods.FileIdentifier file_identifier: Define content to be written. Might be an AoFile or a DT_BLOB attribute.
+        :param ods.FileIdentifier file_identifier: Define content to be written.
+                                                   Might be an AoFile or a DT_BLOB attribute.
         :param str source_file_path: Path to the file to be uploaded.
         :raises requests.HTTPError: If something went wrong.
         :raises FileNotFoundError: If source file was not found.
@@ -566,7 +574,8 @@ class ConI:
         """
         Delete file content from server.
 
-        :param ods.FileIdentifier file_identifier: Define content to be deleted. Might be an AoFile or a DT_BLOB attribute.
+        :param ods.FileIdentifier file_identifier: Define content to be deleted.
+                                                   Might be an AoFile or a DT_BLOB attribute.
         :raises requests.HTTPError: If something went wrong.
         :raises ValueError: If no open session.
         """
