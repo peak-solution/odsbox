@@ -51,6 +51,10 @@ class ConI:
     __log: logging.Logger = logging.getLogger(__name__)
     __session: requests.Session | None
     __con_i: str | None
+    __default_http_headers: dict[str, str] = {
+        "Content-Type": "application/x-asamods+protobuf",
+        "Accept": "application/x-asamods+protobuf",
+    }
     mc: ModelCache
 
     def __init__(
@@ -105,12 +109,6 @@ class ConI:
         """
         session = requests.Session()
         session.auth = auth
-        session.headers.update(
-            {
-                "Content-Type": "application/x-asamods+protobuf",
-                "Accept": "application/x-asamods+protobuf",
-            }
-        )
         session.verify = verify_certificate
 
         _context_variables = None
@@ -122,7 +120,12 @@ class ConI:
                 for key, value in context_variables.items():
                     _context_variables.variables[key].string_array.values.append(value)
 
-        response = session.post(url + "/ods", data=_context_variables.SerializeToString(), timeout=60.0)
+        response = session.post(
+            url + "/ods",
+            data=_context_variables.SerializeToString(),
+            timeout=60.0,
+            headers=self.__default_http_headers,
+        )
         if 201 == response.status_code:
             con_i = response.headers["location"]
             self.__log.debug("ConI: %s", con_i)
@@ -162,7 +165,9 @@ class ConI:
         if self.__session is not None:
             if self.__con_i is None:
                 raise ValueError("ConI already closed")
-            response = self.__session.delete(self.__con_i, timeout=60.0)
+            response = self.__session.delete(
+                self.__con_i, timeout=60.0, headers={"Accept": "application/x-asamods+protobuf"}
+            )
             self.__session.close()
             self.__session = None
             self.__con_i = None
@@ -513,7 +518,6 @@ class ConI:
         file_response = self.__session.get(
             server_file_url,
             headers={
-                "Content-Type": "application/octet-stream, application/x-asamods+protobuf, */*",
                 "Accept": "application/octet-stream, application/x-asamods+protobuf, */*",
             },
         )
@@ -563,7 +567,9 @@ class ConI:
             if self.__session is None:
                 raise ValueError("No open session!")
             put_response = self.__session.put(
-                server_file_url, data=file, headers={"Content-Type": "application/octet-stream"}
+                server_file_url,
+                data=file,
+                headers={"Content-Type": "application/octet-stream", "Accept": "application/x-asamods+protobuf"},
             )
             self.check_requests_response(put_response)
 
@@ -583,11 +589,15 @@ class ConI:
 
         if self.__session is None:
             raise ValueError("No open session!")
-        delete_response = self.__session.delete(server_file_url)
+        delete_response = self.__session.delete(server_file_url, headers={"Accept": "application/x-asamods+protobuf"})
         self.check_requests_response(delete_response)
 
     def ods_post_request(
-        self, relative_url_part: str, message: Message | None = None, timeout: float = 600.0
+        self,
+        relative_url_part: str,
+        message: Message | None = None,
+        timeout: float = 600.0,
+        headers: dict[str, str] | None = None,
     ) -> requests.Response:
         """
         Do ODS post call with the given relative URL.
@@ -606,6 +616,7 @@ class ConI:
             self.__con_i + "/" + relative_url_part,
             data=message.SerializeToString() if message is not None else None,
             timeout=timeout,
+            headers=(headers if headers is not None else self.__default_http_headers),
         )
         self.check_requests_response(response)
         return response
