@@ -8,7 +8,7 @@ import pytest
 
 def __create_con_i():
     """Create a connection session for an ASAM ODS server"""
-    return ConI("http://79.140.180.128:10032/api", ("sa", "sa"))
+    return ConI("https://docker.peak-solution.de:10032/api", ("Demo", "mdm"))
 
 
 def test_unit_get():

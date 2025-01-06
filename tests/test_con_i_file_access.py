@@ -12,7 +12,7 @@ from odsbox.proto.ods_pb2 import FileIdentifier
 
 @pytest.fixture
 def con_i():
-    return ConI("http://79.140.180.128:10032/api", ("sa", "sa"))
+    return ConI("https://docker.peak-solution.de:10032/api", ("Demo", "mdm"))
 
 
 def test_file_access_download_success(con_i):
