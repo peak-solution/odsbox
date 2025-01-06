@@ -80,7 +80,7 @@ def __convert_bulk_to_pandas_data_frame(
             ]
 
     rv = pd.DataFrame(column_dict)
-    if None is not independent_local_column_name:
+    if independent_local_column_name is not None:
         rv.set_index(independent_local_column_name)
 
     return rv

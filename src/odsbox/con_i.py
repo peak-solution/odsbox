@@ -136,7 +136,7 @@ class ConI:
         self.model_read()
 
     def __del__(self):
-        if None is not self.__session:
+        if self.__session is not None:
             self.logout()
 
     def __enter__(self):
