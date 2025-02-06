@@ -39,7 +39,7 @@ dependencies = [
 [project.optional-dependencies]
 exd-data = ["grpcio>=1.59.3,<2.0.0"]
 test = [
-    "bandit[toml]==1.8.0",
+    "bandit[toml]==1.8.2",
     "black==24.10.0",
     "check-manifest==0.50",
     "flake8-bugbear==24.12.12",
@@ -47,7 +47,7 @@ test = [
     "flake8-formatter_junit_xml",
     "flake8",
     "flake8-pyproject",
-    "pre-commit==4.0.1",
+    "pre-commit==4.1.0",
     "pylint==3.3.4",
     "pylint_junit",
     "pytest-cov==6.0.0",
