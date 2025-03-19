@@ -47,7 +47,7 @@ test = [
     "flake8-formatter_junit_xml",
     "flake8",
     "flake8-pyproject",
-    "pre-commit==4.1.0",
+    "pre-commit==4.2.0",
     "pylint==3.3.4",
     "pylint_junit",
     "pytest-cov==6.0.0",
