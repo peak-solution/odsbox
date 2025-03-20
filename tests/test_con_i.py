@@ -82,3 +82,24 @@ def test_submatrix_load():
             logging.getLogger().info(submatrix_id)
             submatrix_dataframe = submatrix_to_pandas(con_i, submatrix_id)
             assert submatrix_dataframe is not None
+
+
+def test_bug_93_outer_join_on_n_relation():
+    logging.getLogger().info(
+        "In case of outer join the direction is important and must point from n to 1 when generated from jaquel."
+    )
+    with __create_con_i() as con_i:
+        df = con_i.query_data(
+            {
+                "AoMeasurement": {},
+                "$attributes": {
+                    "name": 1,
+                    "measurement_quantities:OUTER": {"name": 1, "unit:OUTER.name": 1},
+                    "submatrices:OUTER.name": 1,
+                },
+                "$options": {"$rowlimit": 10},
+            }
+        )
+        assert df is not None
+        assert df.empty is False
+        assert 4 == len(df.columns)
