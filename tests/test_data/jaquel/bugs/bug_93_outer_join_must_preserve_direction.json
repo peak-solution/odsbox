@@ -1,0 +1,14 @@
+{
+    "AoMeasurement": {},
+    "$attributes": {
+        "name": 1,
+        "measurement_quantities:OUTER": {
+            "name": 1,
+            "unit:OUTER.name": 1
+        },
+        "submatrices:OUTER.name": 1
+    },
+    "$options": {
+        "$rowlimit": 10
+    }
+}
