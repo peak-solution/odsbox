@@ -250,7 +250,12 @@ def __parse_path_and_add_joins(
             attribute_name = relation.name
 
             # add join
-            if (-1 == relation.range_max) and (1 == relation.inverse_range_max):
+            if (
+                (-1 == relation.range_max)
+                and (1 == relation.inverse_range_max)
+                and join_type != ods.SelectStatement.JoinItem.JoinTypeEnum.JT_OUTER
+            ):
+                # in case of OUTER join the direction is important and must be like addressed
                 inverse_entity = model.entities[relation.entity_name]
                 inverse_relation = inverse_entity.relations[relation.inverse_name]
                 __add_join_to_seq(model, inverse_entity, inverse_relation, joins, join_type)

@@ -87,6 +87,10 @@ def test_predefined():
             Path(str(path) + ".proto").read_text(encoding="utf-8"),
             select_statement_ref,
         )
+        if select_statement_ref != select_statement:
+            select_statement_json = MessageToJson(select_statement)
+            logging.getLogger().info(select_statement_json)
+
         assert select_statement_ref == select_statement
 
 
