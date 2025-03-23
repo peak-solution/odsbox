@@ -68,6 +68,7 @@
         "seqskip",
         "stddev",
         "STORAGETYPE",
+        "submatrices",
         "submatrix",
         "TESTSTEP",
         "valuematrix"
