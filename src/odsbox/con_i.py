@@ -30,6 +30,7 @@ from odsbox.datamatrices_to_pandas import to_pandas
 from odsbox.jaquel import jaquel_to_ods
 from odsbox.model_cache import ModelCache
 from odsbox.transaction import Transaction
+from odsbox.security import Security
 
 
 class ConI:
@@ -55,7 +56,8 @@ class ConI:
         "Content-Type": "application/x-asamods+protobuf",
         "Accept": "application/x-asamods+protobuf",
     }
-    mc: ModelCache
+    __security: Security | None = None
+    __mc: ModelCache | None = None
 
     def __init__(
         self,
@@ -171,6 +173,8 @@ class ConI:
             self.__session.close()
             self.__session = None
             self.__con_i = None
+            self.__security = None
+            self.__mc = None
             self.check_requests_response(response)
 
     def query_data(
@@ -358,7 +362,7 @@ class ConI:
         response = self.ods_post_request("model-read")
         model = ods.Model()
         model.ParseFromString(response.content)
-        self.mc = ModelCache(model)
+        self.__mc = ModelCache(model)
         return model
 
     def model_update(self, model_parts: ods.Model, update_model: bool = True) -> None:
@@ -636,3 +640,29 @@ class ConI:
                     response=response,
                 )
             response.raise_for_status()
+
+    @property
+    def mc(self) -> ModelCache:
+        """
+        Get the model cache for the current session.
+
+        :return ods.ModelCache: ModelCache object containing the cached application model.
+        """
+        if self.__mc is None:
+            raise ValueError("No open session!")
+        return self.__mc
+
+    @property
+    def security(self) -> Security:
+        """
+        Get the security information for the current session.
+
+        :raises requests.HTTPError: If security info retrieval fails.
+        :return ods.Security: Security object containing permissions and roles.
+        """
+        if self.__session is None:
+            raise ValueError("No open session!")
+
+        if self.__security is None:
+            self.__security = Security(self)
+        return self.__security
