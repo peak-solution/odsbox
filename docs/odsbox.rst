@@ -61,3 +61,10 @@ asam_time
 .. automodule:: odsbox.asam_time
    :members:
    :show-inheritance:
+
+security
+---------
+
+.. automodule:: odsbox.security
+   :members:
+   :show-inheritance:
