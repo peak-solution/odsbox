@@ -1,11 +1,17 @@
 """Integration test for ASAM ODS session"""
 
+from _pytest.fixtures import FixtureRequest
 from odsbox.con_i import ConI
 from odsbox.submatrix_to_pandas import submatrix_to_pandas
 from odsbox.jaquel import jaquel_to_ods
+import odsbox.proto.ods_pb2 as ods
+
+from google.protobuf.json_format import MessageToJson
 
 import logging
 import pytest
+import os
+import tempfile
 
 
 def __create_con_i():
@@ -103,3 +109,196 @@ def test_bug_93_outer_join_on_n_relation():
         assert df is not None
         assert df.empty is False
         assert 4 == len(df.columns)
+
+
+@pytest.mark.integration
+def test_values_data_read(request: FixtureRequest):
+    test_name = request.node.name
+    with __create_con_i() as con_i:
+        sm_df = con_i.query_data(
+            {
+                "AoSubmatrix": {"name": "Profile_02"},
+                "$attributes": {"id": 1, "number_of_rows": 1},
+                "$options": {"$rowlimit": 1},
+            }
+        )
+        assert sm_df.empty is False
+        sm_id: int = sm_df.iat[0, 0]
+        sm_number_of_rows: int = sm_df.iat[0, 1]
+        logging.getLogger().info("Submatrix Id: %s, number_of_rows:%s", sm_id, sm_number_of_rows)
+        assert sm_id is not None
+        assert sm_number_of_rows is not None
+
+        lc_info_df = con_i.query_data(
+            {
+                "AoLocalColumn": {"submatrix": sm_id},
+                "$attributes": {"id": 1, "name": 1, "sequence_representation": 1, "independent": 1},
+            }
+        )
+        assert lc_info_df.empty is False
+
+        lc_info_dms = con_i.data_read_jaquel(
+            {
+                "AoLocalColumn": {"submatrix": sm_id},
+                "$attributes": {"id": 1, "name": 1, "sequence_representation": 1, "independent": 1},
+            }
+        )
+        assert 1 == len(lc_info_dms.matrices)
+        with open(
+            os.path.join(tempfile.gettempdir(), f"{test_name}_lc_info.proto.json"), "w", encoding="utf-8"
+        ) as json_file:
+            json_file.write(MessageToJson(lc_info_dms))
+
+        lc_values_df = con_i.query_data(
+            {
+                "AoLocalColumn": {"submatrix": sm_id},
+                "$attributes": {"id": 1, "values": 1, "generation_parameters": 1},
+                "$options": {"$seqlimit": 10, "$seqskip": 0},
+            }
+        )
+        assert lc_values_df.empty is False
+
+        lc_values_dms = con_i.data_read_jaquel(
+            {
+                "AoLocalColumn": {"submatrix": sm_id},
+                "$attributes": {"id": 1, "values": 1, "generation_parameters": 1},
+                "$options": {"$seqlimit": sm_number_of_rows, "$seqskip": 0},
+            }
+        )
+        assert 1 == len(lc_values_dms.matrices)
+        with open(
+            os.path.join(tempfile.gettempdir(), f"{test_name}_lc_values.proto.json"), "w", encoding="utf-8"
+        ) as json_file:
+            json_file.write(MessageToJson(lc_values_dms))
+
+
+# @pytest.mark.integration
+def test_values_valuematrix_read_calculated(request: FixtureRequest):
+    test_name = request.node.name
+    with __create_con_i() as con_i:
+        sm_df = con_i.query_data(
+            {
+                "AoSubmatrix": {"name": "Profile_02"},
+                "$attributes": {"id": 1, "number_of_rows": 1},
+                "$options": {"$rowlimit": 1},
+            }
+        )
+        assert sm_df.empty is False
+        sm_id: int = sm_df.iat[0, 0]
+        sm_number_of_rows: int = sm_df.iat[0, 1]
+        logging.getLogger().info("Submatrix Id: %s, number_of_rows:%s", sm_id, sm_number_of_rows)
+        assert sm_id is not None
+        assert sm_number_of_rows is not None
+
+        lc_entity = con_i.mc.entity_by_base_name("AoLocalColumn")
+        assert lc_entity is not None
+
+        lc_info_df = con_i.query_data(
+            {
+                "AoLocalColumn": {"submatrix": sm_id},
+                "$attributes": {"id": 1, "name": 1, "sequence_representation": 1, "independent": 1},
+            }
+        )
+        assert lc_info_df.empty is False
+
+        lc_info_dms = con_i.data_read_jaquel(
+            {
+                "AoLocalColumn": {"submatrix": sm_id},
+                "$attributes": {"id": 1, "name": 1, "sequence_representation": 1, "independent": 1},
+            }
+        )
+        assert 1 == len(lc_info_dms.matrices)
+        with open(
+            os.path.join(tempfile.gettempdir(), f"{test_name}_lc_info.proto.json"), "w", encoding="utf-8"
+        ) as json_file:
+            json_file.write(MessageToJson(lc_info_dms))
+
+        lc_attributes = [
+            con_i.mc.attribute_by_base_name(lc_entity, "name").name,
+            con_i.mc.attribute_by_base_name(lc_entity, "values").name,
+        ]
+
+        lc_values_dms = con_i.valuematrix_read(
+            ods.ValueMatrixRequestStruct(
+                aid=con_i.mc.entity_by_base_name("AoSubmatrix").aid,
+                iid=sm_id,
+                mode=ods.ValueMatrixRequestStruct.ModeEnum.MO_CALCULATED,
+                columns=[ods.ValueMatrixRequestStruct.ColumnItem(name="*")],
+                attributes=lc_attributes,
+                values_start=0,
+                values_limit=10,
+            )
+        )
+        assert 1 == len(lc_values_dms.matrices)
+        with open(
+            os.path.join(tempfile.gettempdir(), f"{test_name}_lc_values.proto.json"), "w", encoding="utf-8"
+        ) as json_file:
+            json_file.write(MessageToJson(lc_values_dms))
+
+
+def test_values_valuematrix_read_storage(request: FixtureRequest):
+    test_name = request.node.name
+    with __create_con_i() as con_i:
+        sm_df = con_i.query_data(
+            {
+                "AoSubmatrix": {"name": "Profile_02"},
+                "$attributes": {"id": 1, "number_of_rows": 1},
+                "$options": {"$rowlimit": 1},
+            }
+        )
+        assert sm_df.empty is False
+        sm_id: int = sm_df.iat[0, 0]
+        sm_number_of_rows: int = sm_df.iat[0, 1]
+        logging.getLogger().info("Submatrix Id: %s, number_of_rows:%s", sm_id, sm_number_of_rows)
+        assert sm_id is not None
+        assert sm_number_of_rows is not None
+
+        lc_entity = con_i.mc.entity_by_base_name("AoLocalColumn")
+        assert lc_entity is not None
+
+        lc_info_df = con_i.query_data(
+            {
+                "AoLocalColumn": {"submatrix": sm_id},
+                "$attributes": {"id": 1, "name": 1, "sequence_representation": 1, "independent": 1},
+            }
+        )
+        assert lc_info_df.empty is False
+
+        lc_names = lc_info_df.iloc[:, 1].tolist()
+        lc_columns = [ods.ValueMatrixRequestStruct.ColumnItem(name=lc_name) for lc_name in lc_names]
+
+        lc_attributes = [
+            con_i.mc.attribute_by_base_name(lc_entity, "name").name,
+            con_i.mc.attribute_by_base_name(lc_entity, "values").name,
+            con_i.mc.attribute_by_base_name(lc_entity, "generation_parameters").name,
+        ]
+
+        lc_info_dms = con_i.data_read_jaquel(
+            {
+                "AoLocalColumn": {"submatrix": sm_id},
+                "$attributes": {"id": 1, "name": 1, "sequence_representation": 1, "independent": 1},
+            }
+        )
+        assert 1 == len(lc_info_dms.matrices)
+        with open(
+            os.path.join(tempfile.gettempdir(), f"{test_name}_lc_info.proto.json"), "w", encoding="utf-8"
+        ) as json_file:
+            json_file.write(MessageToJson(lc_info_dms))
+
+        value_matrix_request = ods.ValueMatrixRequestStruct(
+            aid=con_i.mc.entity_by_base_name("AoSubmatrix").aid,
+            iid=sm_id,
+            mode=ods.ValueMatrixRequestStruct.ModeEnum.MO_STORAGE,
+            columns=lc_columns,
+            attributes=lc_attributes,
+            values_start=0,
+            values_limit=10,
+        )
+        value_matrix_request_str = MessageToJson(value_matrix_request, indent=None)
+        logging.getLogger().info(value_matrix_request_str)
+        lc_values_dms = con_i.valuematrix_read(value_matrix_request)
+        assert 1 == len(lc_values_dms.matrices)
+        with open(
+            os.path.join(tempfile.gettempdir(), f"{test_name}_lc_values.proto.json"), "w", encoding="utf-8"
+        ) as json_file:
+            json_file.write(MessageToJson(lc_values_dms))
