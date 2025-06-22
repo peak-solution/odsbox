@@ -65,6 +65,7 @@ class ConI:
         auth: requests.auth.AuthBase | Tuple[str, str] = ("sa", "sa"),
         context_variables: ods.ContextVariables | dict | None = None,
         verify_certificate: bool = True,
+        load_model: bool = True,
     ):
         """
         Create a session object keeping track of ASAM ODS session URL named `conI`.
@@ -107,8 +108,12 @@ class ConI:
             connection they are passed here. It defaults to None.
         :param bool verify_certificate: If no certificate is provided for https insecure access can be enabled.
             It defaults to True.
+        :param bool load_model: If the model should be read after connection is established. It defaults to True.
         :raises requests.HTTPError: If connection to ASAM ODS server fails.
         """
+        self.__session = None
+        self.__con_i = None
+
         session = requests.Session()
         session.auth = auth
         session.verify = verify_certificate
@@ -134,8 +139,9 @@ class ConI:
             self.__session = session
             self.__con_i = con_i
         self.check_requests_response(response)
-        # lets cache the model
-        self.model_read()
+        if load_model:
+            # lets cache the model
+            self.model_read()
 
     def __del__(self):
         if self.__session is not None:
@@ -649,7 +655,7 @@ class ConI:
         :return ods.ModelCache: ModelCache object containing the cached application model.
         """
         if self.__mc is None:
-            raise ValueError("No open session!")
+            raise ValueError("Model not read! Call model_read() first.")
         return self.__mc
 
     @property
