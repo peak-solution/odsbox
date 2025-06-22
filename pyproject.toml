@@ -39,7 +39,7 @@ dependencies = [
 [project.optional-dependencies]
 exd-data = ["grpcio>=1.59.3,<2.0.0"]
 test = [
-    "bandit[toml]==1.8.3",
+    "bandit[toml]==1.8.5",
     "black==25.1.0",
     "check-manifest==0.50",
     "flake8-bugbear==24.12.12",
@@ -50,10 +50,10 @@ test = [
     "pre-commit==4.2.0",
     "pylint==3.3.7",
     "pylint_junit",
-    "pytest-cov==6.1.1",
-    "pytest-mock<3.14.1",
+    "pytest-cov==6.2.1",
+    "pytest-mock<3.14.2",
     "pytest-runner",
-    "pytest==8.3.5",
+    "pytest==8.4.1",
     "pytest-github-actions-annotate-failures",
     "pytest-xdist",
     "shellcheck-py==0.10.0.1",
