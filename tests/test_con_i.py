@@ -16,9 +16,9 @@ import os
 import tempfile
 
 
-def __create_con_i():
+def __create_con_i(load_model: bool = True) -> ConI:
     """Create a connection session for an ASAM ODS server"""
-    return ConI("https://docker.peak-solution.de:10032/api", ("Demo", "mdm"))
+    return ConI("https://docker.peak-solution.de:10032/api", ("Demo", "mdm"), load_model=load_model)
 
 
 def test_con_i():
@@ -361,3 +361,17 @@ def test_security_level():
         assert Security.Level.ELEMENT not in security_level
 
     assert 7 == int(Security.Level.ELEMENT | Security.Level.INSTANCE | Security.Level.ATTRIBUTE)
+
+
+def test_do_not_load_model():
+    """Test that ConI can be created without loading the model"""
+    with __create_con_i(False) as con_i:
+        with pytest.raises(ValueError):
+            _ = con_i.mc
+        with pytest.raises(ValueError):
+            _ = con_i.model()
+        # update model
+        assert con_i.model_read() is not None
+        # Access the cached model
+        assert con_i.mc is not None
+        con_i.model()
