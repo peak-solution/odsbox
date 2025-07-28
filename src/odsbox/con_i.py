@@ -197,6 +197,7 @@ class ConI:
         :raises requests.HTTPError: If query fails.
         :return DataFrame: The DataMatrices as Pandas.DataFrame. The columns are named as `ENTITY_NAME.ATTRIBUTE_NAME`.
             `IsNull` values are not marked invalid.
+        :note: The Create, Read, Update and Delete methods require the `ods.DataMatrices` type - in this case use data_read_jaquel to obtain `ods.DataMatrices`.
         """
         data_matrices = (
             self.data_read(query) if isinstance(query, ods.SelectStatement) else self.data_read_jaquel(query)
