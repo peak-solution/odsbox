@@ -1,0 +1,10 @@
+{
+    "AoMeasurement": {
+        "measurement_begin": {
+            "$null": 1
+        }
+    },
+    "$options": {
+        "$rowlimit": 5
+    }
+}
