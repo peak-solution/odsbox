@@ -15,14 +15,16 @@ import sys
 
 sys.path.insert(0, os.path.abspath("../src/"))
 
+import odsbox  # noqa
+
 # -- Project information -----------------------------------------------------
 
 project = "ASAM ODSBox docs"
-copyright = "2024, Peak Solution"
+copyright = "2025, Peak Solution"
 author = "Peak Solution"
 
 # The full version, including alpha/beta/rc tags
-release = "1.0.0"
+release = odsbox.__version__
 
 
 # -- General configuration ---------------------------------------------------
