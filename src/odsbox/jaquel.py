@@ -617,14 +617,18 @@ def __add_condition(
     condition_item.condition.attribute = attribute_name
     condition_item.condition.operator = __get_ods_operator(attribute_type, condition_operator, condition_options)
     condition_item.condition.unit_id = int(condition_unit_id)
-    __set_condition_value(
-        model,
-        attribute_entity,
-        attribute_name,
-        attribute_type,
-        condition_operand_value,
-        condition_item.condition,
-    )
+    if condition_item.condition.operator not in (
+        OperatorEnum.OP_IS_NULL,
+        OperatorEnum.OP_IS_NOT_NULL,
+    ):
+        __set_condition_value(
+            model,
+            attribute_entity,
+            attribute_name,
+            attribute_type,
+            condition_operand_value,
+            condition_item.condition,
+        )
 
 
 def __parse_conditions(
