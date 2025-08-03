@@ -1,0 +1,18 @@
+{
+    "columns": [
+        {
+            "aid": "79",
+            "attribute": "*"
+        }
+    ],
+    "where": [
+        {
+            "condition": {
+                "aid": "79",
+                "attribute": "MeasurementBegin",
+                "operator": "OP_IS_NOT_NULL"
+            }
+        }
+    ],
+    "rowLimit": "5"
+}

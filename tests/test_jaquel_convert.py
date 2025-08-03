@@ -87,11 +87,8 @@ def test_predefined():
             Path(str(path) + ".proto").read_text(encoding="utf-8"),
             select_statement_ref,
         )
-        if select_statement_ref != select_statement:
-            select_statement_json = MessageToJson(select_statement)
-            logging.getLogger().info(select_statement_json)
 
-        assert select_statement_ref == select_statement
+        assert select_statement_ref == select_statement, f"Does not match {MessageToJson(select_statement)}"
 
 
 def test_syntax_errors():
@@ -306,3 +303,31 @@ def test_suggestions_aggregate():
 
     with pytest.raises(SyntaxError, match="Unknown operator '\\$abc'. Did you mean '\\$between'?"):
         jaquel_to_ods(model, {"AoUnit": {"factor": {"$abc": 2.0}}})
+
+
+def test_issue_127_not_null():
+    model = __get_model("application_model.json")
+
+    entity, ss = jaquel_to_ods(
+        model,
+        {"AoMeasurement": {"measurement_begin": {"$notnull": 1}}},
+    )
+    logging.getLogger().info(MessageToJson(ss))
+    assert entity is not None
+    assert entity.name == "MeaResult"
+    assert ss is not None
+    assert ss.where[0].condition.operator == ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_IS_NOT_NULL
+
+
+def test_issue_127_null():
+    model = __get_model("application_model.json")
+
+    entity, ss = jaquel_to_ods(
+        model,
+        {"AoMeasurement": {"measurement_begin": {"$null": 1}}},
+    )
+    logging.getLogger().info(MessageToJson(ss))
+    assert entity is not None
+    assert entity.name == "MeaResult"
+    assert ss is not None
+    assert ss.where[0].condition.operator == ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_IS_NULL
