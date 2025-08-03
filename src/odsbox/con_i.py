@@ -50,14 +50,10 @@ class ConI:
     """
 
     __log: logging.Logger = logging.getLogger(__name__)
-    __session: requests.Session | None
-    __con_i: str | None
     __default_http_headers: dict[str, str] = {
         "Content-Type": "application/x-asamods+protobuf",
         "Accept": "application/x-asamods+protobuf",
     }
-    __security: Security | None = None
-    __mc: ModelCache | None = None
 
     def __init__(
         self,
@@ -66,6 +62,7 @@ class ConI:
         context_variables: ods.ContextVariables | dict | None = None,
         verify_certificate: bool = True,
         load_model: bool = True,
+        allow_redirects: bool = False,
     ):
         """
         Create a session object keeping track of ASAM ODS session URL named `conI`.
@@ -109,10 +106,14 @@ class ConI:
         :param bool verify_certificate: If no certificate is provided for https insecure access can be enabled.
             It defaults to True.
         :param bool load_model: If the model should be read after connection is established. It defaults to True.
+        :param bool allow_redirects: If redirects should be allowed in requests calls. It defaults to False.
         :raises requests.HTTPError: If connection to ASAM ODS server fails.
         """
-        self.__session = None
-        self.__con_i = None
+        self.__session: requests.Session | None = None
+        self.__con_i: str | None = None
+        self.__security: Security | None = None
+        self.__mc: ModelCache | None = None
+        self.__allow_redirects: bool = allow_redirects
 
         session = requests.Session()
         session.auth = auth
@@ -132,6 +133,7 @@ class ConI:
             data=_context_variables.SerializeToString(),
             timeout=60.0,
             headers=self.__default_http_headers,
+            allow_redirects=self.__allow_redirects,
         )
         if 201 == response.status_code:
             con_i = response.headers["location"]
@@ -174,7 +176,10 @@ class ConI:
             if self.__con_i is None:
                 raise ValueError("ConI already closed")
             response = self.__session.delete(
-                self.__con_i, timeout=60.0, headers={"Accept": "application/x-asamods+protobuf"}
+                self.__con_i,
+                timeout=60.0,
+                headers={"Accept": "application/x-asamods+protobuf"},
+                allow_redirects=self.__allow_redirects,
             )
             self.__session.close()
             self.__session = None
@@ -568,6 +573,7 @@ class ConI:
             headers={
                 "Accept": "application/octet-stream, application/x-asamods+protobuf, */*",
             },
+            allow_redirects=self.__allow_redirects,
         )
         self.check_requests_response(file_response)
 
@@ -620,6 +626,7 @@ class ConI:
                 server_file_url,
                 data=file,
                 headers={"Content-Type": "application/octet-stream", "Accept": "application/x-asamods+protobuf"},
+                allow_redirects=self.__allow_redirects,
             )
             self.check_requests_response(put_response)
 
@@ -641,7 +648,11 @@ class ConI:
 
         if self.__session is None:
             raise ValueError("No open session!")
-        delete_response = self.__session.delete(server_file_url, headers={"Accept": "application/x-asamods+protobuf"})
+        delete_response = self.__session.delete(
+            server_file_url,
+            headers={"Accept": "application/x-asamods+protobuf"},
+            allow_redirects=self.__allow_redirects,
+        )
         self.check_requests_response(delete_response)
 
     def ods_post_request(
@@ -669,6 +680,7 @@ class ConI:
             data=message.SerializeToString() if message is not None else None,
             timeout=timeout,
             headers=(headers if headers is not None else self.__default_http_headers),
+            allow_redirects=self.__allow_redirects,
         )
         self.check_requests_response(response)
         return response
