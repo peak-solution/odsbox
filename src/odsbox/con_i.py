@@ -50,14 +50,10 @@ class ConI:
     """
 
     __log: logging.Logger = logging.getLogger(__name__)
-    __session: requests.Session | None
-    __con_i: str | None
     __default_http_headers: dict[str, str] = {
         "Content-Type": "application/x-asamods+protobuf",
         "Accept": "application/x-asamods+protobuf",
     }
-    __security: Security | None = None
-    __mc: ModelCache | None = None
 
     def __init__(
         self,
@@ -66,6 +62,7 @@ class ConI:
         context_variables: ods.ContextVariables | dict | None = None,
         verify_certificate: bool = True,
         load_model: bool = True,
+        allow_redirects: bool = False,
     ):
         """
         Create a session object keeping track of ASAM ODS session URL named `conI`.
@@ -109,10 +106,14 @@ class ConI:
         :param bool verify_certificate: If no certificate is provided for https insecure access can be enabled.
             It defaults to True.
         :param bool load_model: If the model should be read after connection is established. It defaults to True.
+        :param bool allow_redirects: If redirects should be allowed in requests calls. It defaults to False.
         :raises requests.HTTPError: If connection to ASAM ODS server fails.
         """
-        self.__session = None
-        self.__con_i = None
+        self.__session: requests.Session | None = None
+        self.__con_i: str | None = None
+        self.__security: Security | None = None
+        self.__mc: ModelCache | None = None
+        self.__allow_redirects: bool = allow_redirects
 
         session = requests.Session()
         session.auth = auth
@@ -132,6 +133,7 @@ class ConI:
             data=_context_variables.SerializeToString(),
             timeout=60.0,
             headers=self.__default_http_headers,
+            allow_redirects=self.__allow_redirects,
         )
         if 201 == response.status_code:
             con_i = response.headers["location"]
@@ -174,7 +176,10 @@ class ConI:
             if self.__con_i is None:
                 raise ValueError("ConI already closed")
             response = self.__session.delete(
-                self.__con_i, timeout=60.0, headers={"Accept": "application/x-asamods+protobuf"}
+                self.__con_i,
+                timeout=60.0,
+                headers={"Accept": "application/x-asamods+protobuf"},
+                allow_redirects=self.__allow_redirects,
             )
             self.__session.close()
             self.__session = None
@@ -186,6 +191,8 @@ class ConI:
     def query_data(
         self,
         query: str | dict | ods.SelectStatement,
+        enum_as_string: bool = False,
+        date_as_timestamp: bool = False,
         **kwargs,
     ) -> DataFrame:
         """
@@ -193,6 +200,11 @@ class ConI:
 
         :param str | dict | ods.SelectStatement query: Query given as JAQueL query (dict or str)
             or as an ASAM ODS SelectStatement.
+        :param bool enum_as_string: columns of type DT_ENUM or DS_ENUM are returned as int values.
+                                    If this is set to True the model_cache is used to map the int values
+                                    to the corresponding string values.
+        :param bool date_as_timestamp: columns of type DT_DATE or DS_DATE are returned as string.
+                                       If this is set to True the strings are converted to pandas Timestamp.
         :param kwargs: additional arguments passed to `to_pandas`.
         :raises requests.HTTPError: If query fails.
         :return DataFrame: The DataMatrices as Pandas.DataFrame. The columns are named as `ENTITY_NAME.ATTRIBUTE_NAME`.
@@ -201,7 +213,13 @@ class ConI:
         data_matrices = (
             self.data_read(query) if isinstance(query, ods.SelectStatement) else self.data_read_jaquel(query)
         )
-        return to_pandas(data_matrices, model_cache=self.mc, **kwargs)
+        return to_pandas(
+            data_matrices,
+            model_cache=self.mc,
+            enum_as_string=enum_as_string,
+            date_as_timestamp=date_as_timestamp,
+            **kwargs,
+        )
 
     def model(self) -> ods.Model:
         """
@@ -233,6 +251,8 @@ class ConI:
         :return ods.DataMatrices: The DataMatrices representing the result.
             It will contain one ods.DataMatrix for each returned entity type.
         """
+        if not isinstance(select_statement, ods.SelectStatement):
+            raise TypeError(f"data_read expects 'ods.SelectStatement', got '{type(select_statement).__name__}'")
         response = self.ods_post_request("data-read", select_statement)
         return_value = ods.DataMatrices()
         return_value.ParseFromString(response.content)
@@ -246,6 +266,8 @@ class ConI:
         :raises requests.HTTPError: If creation fails.
         :return List[int]: list of ids created from your request.
         """
+        if not isinstance(data, ods.DataMatrices):
+            raise TypeError(f"data_create expects 'ods.DataMatrices', got '{type(data).__name__}'")
         response = self.ods_post_request("data-create", data)
         return_value = ods.DataMatrices()
         return_value.ParseFromString(response.content)
@@ -259,6 +281,8 @@ class ConI:
             The `id` column is used to identify the instances to be updated.
         :raises requests.HTTPError: If update fails.
         """
+        if not isinstance(data, ods.DataMatrices):
+            raise TypeError(f"data_update expects 'ods.DataMatrices', got '{type(data).__name__}'")
         self.ods_post_request("data-update", data)
 
     def data_delete(self, data: ods.DataMatrices) -> None:
@@ -269,6 +293,8 @@ class ConI:
             The `id` column is used to identify the instances to be deleted.
         :raises requests.HTTPError: If delete fails.
         """
+        if not isinstance(data, ods.DataMatrices):
+            raise TypeError(f"data_delete expects 'ods.DataMatrices', got '{type(data).__name__}'")
         self.ods_post_request("data-delete", data)
 
     def data_copy(self, copy_request: ods.CopyRequest) -> ods.Instance:
@@ -279,6 +305,8 @@ class ConI:
         :raises requests.HTTPError: If copy fails.
         :return ods.Instance: Newly created instance
         """
+        if not isinstance(copy_request, ods.CopyRequest):
+            raise TypeError(f"data_copy expects 'ods.CopyRequest', got '{type(copy_request).__name__}'")
         response = self.ods_post_request("data-copy", copy_request)
         return_value = ods.Instance()
         return_value.ParseFromString(response.content)
@@ -292,6 +320,10 @@ class ConI:
         :raises requests.HTTPError: If read fails.
         :return ods.NtoMRelatedInstances: Return n to m related instances that were queried.
         """
+        if not isinstance(identifier, ods.NtoMRelationIdentifier):
+            raise TypeError(
+                f"n_m_relation_read expects 'ods.NtoMRelationIdentifier', got '{type(identifier).__name__}'"
+            )
         response = self.ods_post_request("n-m-relation-read", identifier)
         return_value = ods.NtoMRelatedInstances()
         return_value.ParseFromString(response.content)
@@ -305,6 +337,10 @@ class ConI:
         :param ods.NtoMWriteRelatedInstances related_instances: related instances to be
             updated, deleted or created.
         """
+        if not isinstance(related_instances, ods.NtoMWriteRelatedInstances):
+            raise TypeError(
+                f"n_m_relation_write expects 'ods.NtoMWriteRelatedInstances', got '{type(related_instances).__name__}'"
+            )
         self.ods_post_request("n-m-relation-write", related_instances)
 
     def transaction(self) -> Transaction:
@@ -353,6 +389,8 @@ class ConI:
         :raises requests.HTTPError: If ValueMatrix access fails.
         :return ods.DataMatrices: DataMatrices containing the bulk data for the request.
         """
+        if not isinstance(request, ods.ValueMatrixRequestStruct):
+            raise TypeError(f"valuematrix_read expects 'ods.ValueMatrixRequestStruct', got '{type(request).__name__}'")
         response = self.ods_post_request("valuematrix-read", request)
         return_value = ods.DataMatrices()
         return_value.ParseFromString(response.content)
@@ -381,6 +419,8 @@ class ConI:
             updated by reading the whole model again. It defaults to True.
         :raises requests.HTTPError: If model update fails.
         """
+        if not isinstance(model_parts, ods.Model):
+            raise TypeError(f"model_update expects 'ods.Model', got '{type(model_parts).__name__}'")
         self.ods_post_request("model-update", model_parts)
         if update_model:
             # cache again if successfully changed
@@ -395,6 +435,8 @@ class ConI:
             updated by reading the whole model again. It defaults to True.
         :raises requests.HTTPError: If model update fails.
         """
+        if not isinstance(model_parts, ods.Model):
+            raise TypeError(f"model_delete expects 'ods.Model', got '{type(model_parts).__name__}'")
         self.ods_post_request("model-delete", model_parts)
         if update_model:
             # cache again if successfully changed
@@ -428,6 +470,8 @@ class ConI:
         :raises requests.HTTPError: If creation fails.
         :return ods.AsamPath: The AsamPath that represents the instance.
         """
+        if not isinstance(instance, ods.Instance):
+            raise TypeError(f"asampath_create expects 'ods.Instance', got '{type(instance).__name__}'")
         response = self.ods_post_request("asampath-create", instance)
         return_value = ods.AsamPath()
         return_value.ParseFromString(response.content)
@@ -441,6 +485,8 @@ class ConI:
         :raises requests.HTTPError: If path could not be resolved.
         :return ods.Instance: Instance represented by AsamPath.
         """
+        if not isinstance(asam_path, ods.AsamPath):
+            raise TypeError(f"asampath_resolve expects 'ods.AsamPath', got '{type(asam_path).__name__}'")
         response = self.ods_post_request("asampath-resolve", asam_path)
         return_value = ods.Instance()
         return_value.ParseFromString(response.content)
@@ -473,6 +519,8 @@ class ConI:
         :param ods.ContextVariables context_variables: ContextVariables to be set or updated.
         :raises requests.HTTPError: If something went wrong.
         """
+        if not isinstance(context_variables, ods.ContextVariables):
+            raise TypeError(f"context_update expects 'ods.ContextVariables', got '{type(context_variables).__name__}'")
         self.ods_post_request("context-update", context_variables)
 
     def password_update(self, password_update: ods.PasswordUpdate) -> None:
@@ -482,6 +530,8 @@ class ConI:
         :param ods.PasswordUpdate password_update: Defines for which user the password should eb updated.
         :raises requests.HTTPError: If something went wrong.
         """
+        if not isinstance(password_update, ods.PasswordUpdate):
+            raise TypeError(f"password_update expects 'ods.PasswordUpdate', got '{type(password_update).__name__}'")
         self.ods_post_request("password-update", password_update)
 
     def file_access(self, file_identifier: ods.FileIdentifier) -> str:
@@ -494,6 +544,8 @@ class ConI:
         :raises ValueError: If no file location provided by server.
         :return str: The server file URL.
         """
+        if not isinstance(file_identifier, ods.FileIdentifier):
+            raise TypeError(f"file_access expects 'ods.FileIdentifier', got '{type(file_identifier).__name__}'")
         response = self.ods_post_request("file-access", file_identifier)
         server_file_url = response.headers.get("location")
         if server_file_url is None:
@@ -521,6 +573,10 @@ class ConI:
         :raises ValueError: If no open session.
         :return str: file path of saved file.
         """
+        if not isinstance(file_identifier, ods.FileIdentifier):
+            raise TypeError(
+                f"file_access_download expects 'ods.FileIdentifier', got '{type(file_identifier).__name__}'"
+            )
         server_file_url = self.file_access(file_identifier)
 
         if self.__session is None:
@@ -530,6 +586,7 @@ class ConI:
             headers={
                 "Accept": "application/octet-stream, application/x-asamods+protobuf, */*",
             },
+            allow_redirects=self.__allow_redirects,
         )
         self.check_requests_response(file_response)
 
@@ -568,6 +625,8 @@ class ConI:
         :raises FileNotFoundError: If source file was not found.
         :raises ValueError: If no open session.
         """
+        if not isinstance(file_identifier, ods.FileIdentifier):
+            raise TypeError(f"file_access_upload expects 'ods.FileIdentifier', got '{type(file_identifier).__name__}'")
         if not os.path.isfile(source_file_path):
             raise FileNotFoundError(f"File '{source_file_path}' not found.")
 
@@ -580,6 +639,7 @@ class ConI:
                 server_file_url,
                 data=file,
                 headers={"Content-Type": "application/octet-stream", "Accept": "application/x-asamods+protobuf"},
+                allow_redirects=self.__allow_redirects,
             )
             self.check_requests_response(put_response)
 
@@ -595,11 +655,17 @@ class ConI:
         :raises requests.HTTPError: If something went wrong.
         :raises ValueError: If no open session.
         """
+        if not isinstance(file_identifier, ods.FileIdentifier):
+            raise TypeError(f"file_access_delete expects 'ods.FileIdentifier', got '{type(file_identifier).__name__}'")
         server_file_url = self.file_access(file_identifier)
 
         if self.__session is None:
             raise ValueError("No open session!")
-        delete_response = self.__session.delete(server_file_url, headers={"Accept": "application/x-asamods+protobuf"})
+        delete_response = self.__session.delete(
+            server_file_url,
+            headers={"Accept": "application/x-asamods+protobuf"},
+            allow_redirects=self.__allow_redirects,
+        )
         self.check_requests_response(delete_response)
 
     def ods_post_request(
@@ -627,6 +693,7 @@ class ConI:
             data=message.SerializeToString() if message is not None else None,
             timeout=timeout,
             headers=(headers if headers is not None else self.__default_http_headers),
+            allow_redirects=self.__allow_redirects,
         )
         self.check_requests_response(response)
         return response
