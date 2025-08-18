@@ -57,7 +57,6 @@ def __convert_bulk_to_pandas_data_frame(
     column_dict = {}
     number_of_rows = 0
 
-    independent_local_column_name = None
     for local_column_id, local_column_values in zip(id_array, values_array):
         local_column_meta = local_column_id_lookup[local_column_id]
         local_column_name = local_column_meta["name"]
@@ -65,8 +64,6 @@ def __convert_bulk_to_pandas_data_frame(
         local_column_len = len(local_column_values)
         number_of_rows = local_column_len if local_column_len > number_of_rows else number_of_rows
         column_dict[local_column_name] = local_column_values
-        if local_column_meta["independent"]:
-            independent_local_column_name = local_column_name
 
     for local_column_id in id_array:
         local_column_meta = local_column_id_lookup[local_column_id]
@@ -79,11 +76,7 @@ def __convert_bulk_to_pandas_data_frame(
                 offset + x * factor for x in range(0 + start_index, number_of_rows + start_index)
             ]
 
-    rv = pd.DataFrame(column_dict)
-    if independent_local_column_name is not None:
-        rv.set_index(independent_local_column_name)
-
-    return rv
+    return pd.DataFrame(column_dict)
 
 
 def submatrix_to_pandas(
@@ -93,6 +86,9 @@ def submatrix_to_pandas(
 ) -> pd.DataFrame:
     """
     Loads an ASAM ODS SubMatrix and returns it as a pandas DataFrame.
+
+    .. deprecated:: 1.8.0
+        Use ConI.bulk.data_read instead. Stays because of compatibility reasons.
 
     :param ConI con_i: ASAM ODS server session.
     :param int submatrix_iid: id of an submatrix to be retrieved.
