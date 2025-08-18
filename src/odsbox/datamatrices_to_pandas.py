@@ -218,8 +218,10 @@ def to_pandas(
                                 to the corresponding string values.
     :param bool date_as_timestamp: columns of type DT_DATE or DS_DATE are returned as string.
                                    If this is set to True the strings are converted to pandas Timestamp.
-    :param str name_separator: separator used to concatenate entity and attribute names to define column name.
-    :param bool prefer_np_array_for_unknown: If set to True, prefer returning numpy arrays instead of lists for unknown data types.
+    :param str name_separator: separator used to concatenate entity and attribute names to define
+                               column name.
+    :param bool prefer_np_array_for_unknown: If set to True, prefer returning numpy arrays instead
+                                            of lists for unknown data types.
 
     :return pd.DataFrame: A pandas DataFrame containing all the single matrices in a single frame. The
                           columns are named by the schema `ENTITY_NAME.ATTRIBUTE_NAME[.AGGREGATE]`.
