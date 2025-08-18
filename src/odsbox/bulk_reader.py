@@ -185,10 +185,6 @@ class BulkReader:
         ]
         lc_meta_df.set_index("id", inplace=True)
 
-        # Check for duplicate column names and prefix all names with submatrix id if any duplicates exist
-        if (lc_meta_df["name"].value_counts() > 1).any():
-            lc_meta_df["name"] = lc_meta_df.apply(lambda row: f"SM_{row['submatrix']}_{row['name']}", axis=1)
-
         raw_seq_rep_values = {
             SeqRepEnum.raw_linear.value,
             SeqRepEnum.raw_polynomial.value,
@@ -236,6 +232,13 @@ class BulkReader:
             values_limit=values_limit,
             calculate_raw=calculate_raw,
         )
+
+        # Reorder columns to put submatrix, name, id, values as first four columns
+        desired_first_cols = ["submatrix", "name", "id", "values"]
+        existing_cols = merged.columns.tolist()
+        remaining_cols = [col for col in existing_cols if col not in desired_first_cols]
+        new_column_order = desired_first_cols + remaining_cols
+        merged = merged[new_column_order]
 
         return merged
 
