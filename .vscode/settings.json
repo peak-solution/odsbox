@@ -45,6 +45,7 @@
         "EXTERNALREFERENCE",
         "groupby",
         "iloc",
+        "isin",
         "isort",
         "iterrows",
         "jaquel",

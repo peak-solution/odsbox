@@ -1,5 +1,7 @@
 """utility to help loading local column values"""
 
+from __future__ import annotations
+
 from enum import IntEnum
 
 from odsbox.con_i import ConI
@@ -72,8 +74,8 @@ class BulkReader:
         for index, r in localcolumn_df.iterrows():
             name = r.get("name")
             vals = r.get("values")
-            sequence_representation = int(r.get("sequence_representation"))
-            number_of_rows = int(r.get("number_of_rows"))
+            sequence_representation = int(r.get("sequence_representation", SeqRepEnum.explicit.value))
+            number_of_rows = int(r.get("number_of_rows", 0))
             if values_start > number_of_rows:
                 raise ValueError(
                     f"values_start {values_start} is greater than number_of_rows {number_of_rows} for column '{name}'"
