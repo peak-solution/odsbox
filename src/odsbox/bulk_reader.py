@@ -2,14 +2,17 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 from enum import IntEnum
 
-from odsbox.con_i import ConI
 from odsbox.proto.ods_pb2 import ValueMatrixRequestStruct  # pylint: disable=E0611
 from odsbox.datamatrices_to_pandas import to_pandas
 
 import pandas as pd
 import numpy as np
+
+if TYPE_CHECKING:
+    from .con_i import ConI
 
 
 class SeqRepEnum(IntEnum):
@@ -44,7 +47,7 @@ class BulkReader:
     to create customer specific code to retrieve bulk data.
     """
 
-    def __init__(self, con_i: ConI):
+    def __init__(self, con_i: "ConI"):
         """Initialize the BulkReader with a ConI instance."""
         self.__con_i = con_i
 
