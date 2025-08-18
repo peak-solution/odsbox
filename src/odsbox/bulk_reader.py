@@ -124,7 +124,7 @@ class BulkReader:
             ]:
                 if calculate_raw:
                     generation_parameters = r.get("generation_parameters")
-                    if isinstance(generation_parameters, (list, tuple)) and len(generation_parameters) >= 2:
+                    if isinstance(generation_parameters, (list, tuple)) and len(generation_parameters) >= 3:
                         p1 = generation_parameters[0]
                         p2 = generation_parameters[1]
                         p3 = generation_parameters[2]

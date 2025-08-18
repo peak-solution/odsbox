@@ -214,3 +214,182 @@ def test_valuematrix_read_maps_names_and_values(monkeypatch):
 
     # expect dataframe with columns a and b
     assert list(df.columns) == ["a", "b"]
+
+
+def test_query_raises_on_missing_metadata(monkeypatch):
+    # fake ConI: metadata missing id 2 which is present in bulk -> should raise KeyError
+    class FakeConI2:
+        def query_data(self, query):
+            # only metadata for id 1
+            return pd.DataFrame(
+                [
+                    {
+                        "id": 1,
+                        "name": "one",
+                        "independent": False,
+                        "sequence_representation": 0,
+                        "submatrix": 7,
+                        "number_of_rows": 1,
+                    }
+                ]
+            )
+
+        def data_read_jaquel(self, jaquel):
+            return object()
+
+    def fake_to_pandas_bulk(dms, date_as_timestamp=True, prefer_np_array_for_unknown=True):
+        # bulk contains id 2 which lacks metadata
+        return pd.DataFrame([[2, [9, 9]]], columns=["id", "values"])
+
+    monkeypatch.setattr("odsbox.bulk_reader.to_pandas", fake_to_pandas_bulk)
+
+    br = BulkReader(FakeConI2())
+    with pytest.raises(KeyError):
+        br.query({"submatrix": 7})
+
+
+def test_apply_sequence_representation_start_limit():
+    # implicit_linear with start=1 and limit=2 should produce two values starting at offset
+    df = pd.DataFrame(
+        [
+            {
+                "name": "lin",
+                "values": [0, 5],
+                "sequence_representation": SeqRepEnum.implicit_linear.value,
+                "number_of_rows": 5,
+            }
+        ]
+    )
+    BulkReader._BulkReader__apply_sequence_representation(df, values_start=1, values_limit=2)
+    # vals: start at x=1, values_count=2 -> [0 + 1*5, 0 + 2*5] => [5, 10]
+    assert df.loc[0, "values"] == [5, 10]
+
+
+def test_apply_sequence_representation_skip_raw_calculation():
+    # raw_linear should remain as original numeric array when calculate_raw=False
+    df = pd.DataFrame(
+        [
+            {
+                "name": "raw",
+                "values": [1, 2, 3],
+                "sequence_representation": SeqRepEnum.raw_linear.value,
+                "generation_parameters": [1.0, 2.0],
+                "number_of_rows": 3,
+            }
+        ]
+    )
+    BulkReader._BulkReader__apply_sequence_representation(df, calculate_raw=False)
+    # values should be unchanged (still list of ints)
+    assert list(df.loc[0, "values"]) == [1, 2, 3]
+
+
+def test_generation_parameters_requested_when_raw_seq(monkeypatch):
+    # metadata indicates raw_linear sequence representation -> generation_parameters should be requested
+    class FakeConI3:
+        def query_data(self, query):
+            return pd.DataFrame(
+                [
+                    {
+                        "id": 1,
+                        "name": "rawcol",
+                        "independent": False,
+                        "sequence_representation": SeqRepEnum.raw_linear.value,
+                        "submatrix": 9,
+                        "number_of_rows": 3,
+                    }
+                ]
+            )
+
+        def data_read_jaquel(self, jaquel):
+            return object()
+
+    # to_pandas should return id, values, generation_parameters columns (will be renamed inside query)
+    def fake_to_pandas(dms, date_as_timestamp=True, prefer_np_array_for_unknown=True):
+        return pd.DataFrame([[1, [1, 2], [1.0, 2.0]]])
+
+    monkeypatch.setattr("odsbox.bulk_reader.to_pandas", fake_to_pandas)
+
+    br = BulkReader(FakeConI3())
+    merged = br.query({"submatrix": 9})
+    # generation_parameters column should be present after processing
+    assert "generation_parameters" in merged.columns
+
+
+def test_generation_parameters_not_requested_when_not_raw(monkeypatch):
+    # metadata indicates explicit sequence representation -> generation_parameters should NOT be requested
+    class FakeConI4:
+        def query_data(self, query):
+            return pd.DataFrame(
+                [
+                    {
+                        "id": 1,
+                        "name": "expcol",
+                        "independent": False,
+                        "sequence_representation": SeqRepEnum.explicit.value,
+                        "submatrix": 10,
+                        "number_of_rows": 2,
+                    }
+                ]
+            )
+
+        def data_read_jaquel(self, jaquel):
+            return object()
+
+    def fake_to_pandas2(dms, date_as_timestamp=True, prefer_np_array_for_unknown=True):
+        return pd.DataFrame([[1, [7, 8]]])
+
+    monkeypatch.setattr("odsbox.bulk_reader.to_pandas", fake_to_pandas2)
+
+    br = BulkReader(FakeConI4())
+    merged = br.query({"submatrix": 10})
+    assert "generation_parameters" not in merged.columns
+
+
+def test_add_column_filters_exact_only_case_sensitive():
+    conditions = {}
+    BulkReader.add_column_filters(conditions, ["ColA", "ColB"], False)
+    assert "name" in conditions
+    assert "$in" in conditions["name"]
+    assert conditions["name"]["$in"] == ["ColA", "ColB"]
+
+
+def test_add_column_filters_exact_only_case_insensitive():
+    conditions = {}
+    BulkReader.add_column_filters(conditions, ["ColA"], True)
+    assert "name" in conditions
+    assert conditions["name"].get("$options") == "i"
+    assert conditions["name"]["$in"] == ["ColA"]
+
+
+def test_add_column_filters_like_single():
+    conditions = {}
+    BulkReader.add_column_filters(conditions, ["Col*"], False)
+    assert "name" in conditions
+    assert "$like" in conditions["name"]
+    assert conditions["name"]["$like"] == "Col*"
+
+
+def test_add_column_filters_like_multiple():
+    conditions = {}
+    BulkReader.add_column_filters(conditions, ["A*", "B?"], False)
+    assert "$or" in conditions
+    clauses = conditions["$or"]
+    assert len(clauses) == 2
+    assert all("$like" in c["name"] for c in clauses)
+
+
+def test_add_column_filters_mix_inset_like_case_insensitive():
+    conditions = {}
+    BulkReader.add_column_filters(conditions, ["Exact", "Pat*"], True)
+    assert "$or" in conditions
+    clauses = conditions["$or"]
+    # there should be two clauses and each should include $options == 'i'
+    assert len(clauses) == 2
+    assert all(c["name"].get("$options") == "i" for c in clauses)
+
+
+def test_add_column_filters_skips_wildcards_and_empty():
+    conditions = {"submatrix": 42}
+    BulkReader.add_column_filters(conditions, ["*", ""], False)
+    # nothing should be added
+    assert conditions == {"submatrix": 42}
