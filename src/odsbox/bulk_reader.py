@@ -217,7 +217,9 @@ class BulkReader:
                 },
             }
         )
-        localcolumn_bulk_df = to_pandas(localcolumn_bulk_dms, date_as_timestamp=date_as_timestamp)
+        localcolumn_bulk_df = to_pandas(
+            localcolumn_bulk_dms, date_as_timestamp=date_as_timestamp, prefer_np_array_for_unknown=True
+        )
         localcolumn_bulk_dms = None  # free memory
         localcolumn_bulk_df.columns = [attr for attr in attributes]
 
@@ -321,6 +323,7 @@ class BulkReader:
                 )
             ),
             date_as_timestamp=date_as_timestamp,
+            prefer_np_array_for_unknown=True,
         )
         df.columns = ["name", "values"]
         return pd.DataFrame({name: values for name, values in zip(df["name"].values, df["values"].values)})

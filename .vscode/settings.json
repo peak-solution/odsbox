@@ -41,6 +41,7 @@
         "dataframe",
         "datamatrices",
         "datamatrix",
+        "DCOMPLEX",
         "DCOUNT",
         "EXTERNALREFERENCE",
         "groupby",
