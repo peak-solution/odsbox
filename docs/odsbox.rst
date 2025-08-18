@@ -68,3 +68,10 @@ security
 .. automodule:: odsbox.security
    :members:
    :show-inheritance:
+
+bulk_reader
+---------
+
+.. automodule:: odsbox.bulk_reader
+   :members:
+   :show-inheritance:

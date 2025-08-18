@@ -14,41 +14,72 @@ from odsbox.asam_time import to_pd_timestamp
 def unknown_array_values(
     unknown_array: ods.DataMatrix.Column.UnknownArray,
     date_as_timestamp: bool = False,
-) -> list:
+    prefer_np_array: bool = False,
+) -> list | np.ndarray:
     """
-    Get the values of an UnknownArray as list
+    Get the values of an UnknownArray as list or numpy array
 
     :param ods.DataMatrix.Column.UnknownArray unknown_array: ASAM ODS unknown array to transport array of any
     :param bool date_as_timestamp: columns of type DT_DATE or DS_DATE are returned as string.
                                    If this is set to True the strings are converted to pandas Timestamp.
+    :param bool prefer_np_array: If set to True, prefer returning numpy arrays instead of lists.
 
     :raises ValueError: If standard is extended by new types
-    :return list | np.array: list containing the values of the Unknown array.
+    :return list | np.array: list or numpy array containing the values of the Unknown array.
     """
     if unknown_array.WhichOneof("UnknownOneOf") is None:
-        return []
+        return np.array([]) if prefer_np_array else []
 
     if unknown_array.HasField("string_array"):
+        # stays list because there is no advantage in using np.array
         if date_as_timestamp and ods.DT_DATE == unknown_array.data_type:
             return list(map(lambda x: to_pd_timestamp(x), unknown_array.string_array.values))
         return list(unknown_array.string_array.values)
     if unknown_array.HasField("long_array"):
-        return list(unknown_array.long_array.values)
+        return (
+            np.array(
+                unknown_array.long_array.values,
+                dtype=(np.int16 if unknown_array.data_type == ods.DataTypeEnum.DT_SHORT else np.int32),
+            )
+            if prefer_np_array
+            else list(unknown_array.long_array.values)
+        )
     if unknown_array.HasField("float_array"):
         if ods.DT_COMPLEX == unknown_array.data_type:
             return np.array(unknown_array.float_array.values, dtype=np.float32).view(np.complex64)
-        return list(unknown_array.float_array.values)
+        return (
+            np.array(unknown_array.float_array.values, dtype=np.float32)
+            if prefer_np_array
+            else list(unknown_array.float_array.values)
+        )
     if unknown_array.HasField("boolean_array"):
-        return list(unknown_array.boolean_array.values)
+        return (
+            np.array(unknown_array.boolean_array.values, dtype=np.bool_)
+            if prefer_np_array
+            else list(unknown_array.boolean_array.values)
+        )
     if unknown_array.HasField("byte_array"):
-        return list(unknown_array.byte_array.values)
+        return (
+            np.frombuffer(unknown_array.byte_array.values, dtype=np.uint8)
+            if prefer_np_array
+            else list(unknown_array.byte_array.values)
+        )
     if unknown_array.HasField("double_array"):
         if ods.DT_DCOMPLEX == unknown_array.data_type:
             return np.array(unknown_array.double_array.values, dtype=np.float64).view(np.complex128)
-        return list(unknown_array.double_array.values)
+        return (
+            np.array(unknown_array.double_array.values, dtype=np.float64)
+            if prefer_np_array
+            else list(unknown_array.double_array.values)
+        )
     if unknown_array.HasField("longlong_array"):
-        return list(unknown_array.longlong_array.values)
+        return (
+            np.array(unknown_array.longlong_array.values, dtype=np.int64)
+            if prefer_np_array
+            else list(unknown_array.longlong_array.values)
+        )
     if unknown_array.HasField("bytestr_array"):
+        # stays list because there is no advantage in using np.array
         return list(unknown_array.bytestr_array.values)
 
     raise ValueError(f"DataType {unknown_array.WhichOneof('UnknownOneOf')} not handled in python code!")
@@ -68,6 +99,7 @@ def __get_datamatrix_column_values(
     model_cache: ModelCache | None,
     enumeration: ods.Model.Enumeration | None,
     date_as_timestamp: bool,
+    prefer_np_array_for_unknown: bool,
 ) -> list | None:
     if column.WhichOneof("ValuesOneOf") is None:
         return None
@@ -132,7 +164,10 @@ def __get_datamatrix_column_values(
     if column.HasField("bytestr_arrays"):
         return [list(item.values) for item in column.bytestr_arrays.values]
     if column.HasField("unknown_arrays"):
-        return [unknown_array_values(item, date_as_timestamp) for item in column.unknown_arrays.values]
+        return [
+            unknown_array_values(item, date_as_timestamp, prefer_np_array_for_unknown)
+            for item in column.unknown_arrays.values
+        ]
 
     raise ValueError(f"DataType '{column.WhichOneof('ValuesOneOf')}' not handled!")
 
@@ -143,6 +178,7 @@ def __get_datamatrix_column_values_ex(
     enum_as_string: bool,
     entity: ods.Model.Entity | None,
     date_as_timestamp: bool,
+    prefer_np_array_for_unknown: bool,
 ) -> list:
     enumeration = None
     if (
@@ -156,7 +192,9 @@ def __get_datamatrix_column_values_ex(
             if attribute.enumeration is not None:
                 enumeration = model_cache.model().enumerations[attribute.enumeration]
 
-    values = __get_datamatrix_column_values(column, model_cache, enumeration, date_as_timestamp)
+    values = __get_datamatrix_column_values(
+        column, model_cache, enumeration, date_as_timestamp, prefer_np_array_for_unknown
+    )
     return_values = [] if values is None else values
 
     return return_values
@@ -168,6 +206,7 @@ def to_pandas(
     enum_as_string: bool = False,
     date_as_timestamp: bool = False,
     name_separator: str = ".",
+    prefer_np_array_for_unknown: bool = False,
 ) -> pd.DataFrame:
     """
     Converts data in an ASAM ODS DataMatrices into a pandas DataFrame.
@@ -179,7 +218,10 @@ def to_pandas(
                                 to the corresponding string values.
     :param bool date_as_timestamp: columns of type DT_DATE or DS_DATE are returned as string.
                                    If this is set to True the strings are converted to pandas Timestamp.
-    :param str name_separator: separator used to concatenate entity and attribute names to define column name.
+    :param str name_separator: separator used to concatenate entity and attribute names to define
+                               column name.
+    :param bool prefer_np_array_for_unknown: If set to True, prefer returning numpy arrays instead
+                                            of lists for unknown data types.
 
     :return pd.DataFrame: A pandas DataFrame containing all the single matrices in a single frame. The
                           columns are named by the schema `ENTITY_NAME.ATTRIBUTE_NAME[.AGGREGATE]`.
@@ -203,7 +245,7 @@ def to_pandas(
             column_name = f"{matrix.name}{name_separator}{column.name}{aggregate_postfix}"
             # The flags are ignored here. There might be NULL in here. Check `column.is_null` for this.
             column_dict[column_name] = __get_datamatrix_column_values_ex(
-                column, model_cache, enum_as_string, entity, date_as_timestamp
+                column, model_cache, enum_as_string, entity, date_as_timestamp, prefer_np_array_for_unknown
             )
 
     return pd.DataFrame(column_dict)

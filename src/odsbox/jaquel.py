@@ -56,7 +56,7 @@ _jo_operators_ci_map = {
 }
 
 
-def __model_get_relation_by_base_name(
+def _model_get_relation_by_base_name(
     model: ods.Model, entity: ods.Model.Entity, relation_base_name: str
 ) -> ods.Model.Relation | None:
     for rel in entity.relations:
@@ -65,7 +65,7 @@ def __model_get_relation_by_base_name(
     return None
 
 
-def __model_get_relation_by_application_name(
+def _model_get_relation_by_application_name(
     model: ods.Model, entity: ods.Model.Entity, relation_application_name: str
 ) -> ods.Model.Relation | None:
     for rel in entity.relations:
@@ -74,17 +74,17 @@ def __model_get_relation_by_application_name(
     return None
 
 
-def __model_get_relation(model: ods.Model, entity: ods.Model.Entity, relation_name: str) -> ods.Model.Relation | None:
-    rv = __model_get_relation_by_application_name(model, entity, relation_name)
+def _model_get_relation(model: ods.Model, entity: ods.Model.Entity, relation_name: str) -> ods.Model.Relation | None:
+    rv = _model_get_relation_by_application_name(model, entity, relation_name)
     if rv is None:
-        rv = __model_get_relation_by_base_name(model, entity, relation_name)
+        rv = _model_get_relation_by_base_name(model, entity, relation_name)
     if rv is not None:
         return rv
 
     return None
 
 
-def __model_get_attribute_by_base_name(
+def _model_get_attribute_by_base_name(
     model: ods.Model, entity: ods.Model.Entity, attribute_base_name: str
 ) -> ods.Model.Attribute | None:
     for attr in entity.attributes:
@@ -93,7 +93,7 @@ def __model_get_attribute_by_base_name(
     return None
 
 
-def __model_get_attribute_by_application_name(
+def _model_get_attribute_by_application_name(
     model: ods.Model, entity: ods.Model.Entity, attribute_name: str
 ) -> ods.Model.Attribute | None:
     for attr in entity.attributes:
@@ -102,19 +102,17 @@ def __model_get_attribute_by_application_name(
     return None
 
 
-def __model_get_attribute(
-    model: ods.Model, entity: ods.Model.Entity, attribute_name: str
-) -> ods.Model.Attribute | None:
-    rv = __model_get_attribute_by_application_name(model, entity, attribute_name)
+def _model_get_attribute(model: ods.Model, entity: ods.Model.Entity, attribute_name: str) -> ods.Model.Attribute | None:
+    rv = _model_get_attribute_by_application_name(model, entity, attribute_name)
     if rv is None:
-        rv = __model_get_attribute_by_base_name(model, entity, attribute_name)
+        rv = _model_get_attribute_by_base_name(model, entity, attribute_name)
     if rv is not None:
         return rv
 
     return None
 
 
-def __model_get_entity_ex(model: ods.Model, entity_name_or_aid: str | int) -> ods.Model.Entity:
+def _model_get_entity_ex(model: ods.Model, entity_name_or_aid: str | int) -> ods.Model.Entity:
     if isinstance(entity_name_or_aid, int) or entity_name_or_aid.isdigit():
         entity_aid = int(entity_name_or_aid)
         for key in model.entities:
@@ -129,11 +127,11 @@ def __model_get_entity_ex(model: ods.Model, entity_name_or_aid: str | int) -> od
             return entity
 
     raise SyntaxError(
-        f"Entity '{entity_name_or_aid}' is unknown in model.{__model_get_suggestion_entity(model, entity_name_or_aid)}"
+        f"Entity '{entity_name_or_aid}' is unknown in model.{_model_get_suggestion_entity(model, entity_name_or_aid)}"
     )
 
 
-def __model_get_suggestion(lower_case_dict: dict, str_val: str) -> str:
+def _model_get_suggestion(lower_case_dict: dict, str_val: str) -> str:
     suggestions = get_close_matches(
         str_val.lower(),
         lower_case_dict,
@@ -146,52 +144,52 @@ def __model_get_suggestion(lower_case_dict: dict, str_val: str) -> str:
     return ""
 
 
-def __model_get_enum_suggestion(enumeration: ods.Model.Enumeration, str_val: str) -> str:
+def _model_get_enum_suggestion(enumeration: ods.Model.Enumeration, str_val: str) -> str:
     available = {key.lower(): key for key in enumeration.items}
-    return __model_get_suggestion(available, str_val)
+    return _model_get_suggestion(available, str_val)
 
 
-def __model_get_suggestion_attribute(entity: ods.Model.Entity, attribute_or_relation_name: str) -> str:
+def _model_get_suggestion_attribute(entity: ods.Model.Entity, attribute_or_relation_name: str) -> str:
     available = {}
     available.update({relation.base_name.lower(): relation.base_name for key, relation in entity.relations.items()})
     available.update({attribute.base_name.lower(): attribute.base_name for key, attribute in entity.attributes.items()})
     available.update({relation.name.lower(): relation.name for key, relation in entity.relations.items()})
     available.update({attribute.name.lower(): attribute.name for key, attribute in entity.attributes.items()})
-    return __model_get_suggestion(available, attribute_or_relation_name)
+    return _model_get_suggestion(available, attribute_or_relation_name)
 
 
-def __model_get_suggestion_relation(entity: ods.Model.Entity, relation_name: str) -> str:
+def _model_get_suggestion_relation(entity: ods.Model.Entity, relation_name: str) -> str:
     available = {}
     available.update({relation.base_name.lower(): relation.base_name for key, relation in entity.relations.items()})
     available.update({relation.name.lower(): relation.name for key, relation in entity.relations.items()})
-    return __model_get_suggestion(available, relation_name)
+    return _model_get_suggestion(available, relation_name)
 
 
-def __model_get_suggestion_entity(model: ods.Model, entity_name: str) -> str:
+def _model_get_suggestion_entity(model: ods.Model, entity_name: str) -> str:
     available = {}
     available.update({entity.base_name.lower(): entity.base_name for key, entity in model.entities.items()})
     available.update({entity.name.lower(): entity.name for key, entity in model.entities.items()})
-    return __model_get_suggestion(available, entity_name)
+    return _model_get_suggestion(available, entity_name)
 
 
-def __model_get_suggestion_aggregate(aggregate_name: str) -> str:
+def _model_get_suggestion_aggregate(aggregate_name: str) -> str:
     available = {key.lower(): key for key in _jo_aggregates}
-    return __model_get_suggestion(available, aggregate_name)
+    return _model_get_suggestion(available, aggregate_name)
 
 
-def __model_get_suggestion_operators(operator_name: str) -> str:
+def _model_get_suggestion_operators(operator_name: str) -> str:
     available = {key.lower(): key for key in _jo_operators}
-    return __model_get_suggestion(available, operator_name)
+    return _model_get_suggestion(available, operator_name)
 
 
-def __model_get_enum_index(model: ods.Model, entity: ods.Model.Entity, attribute_name: str, str_val: str) -> int:
+def _model_get_enum_index(model: ods.Model, entity: ods.Model.Entity, attribute_name: str, str_val: str) -> int:
     attr = entity.attributes[attribute_name]
     enum = model.enumerations[attr.enumeration]
     for key in enum.items:
         if key.lower() == str_val.lower():
             return enum.items[key]
 
-    raise SyntaxError(f"Enum entry for '{str_val}' does not exist.{__model_get_enum_suggestion(enum, str_val)}")
+    raise SyntaxError(f"Enum entry for '{str_val}' does not exist.{_model_get_enum_suggestion(enum, str_val)}")
 
 
 def _jo_enum_get_numeric_value(
@@ -201,12 +199,12 @@ def _jo_enum_get_numeric_value(
     name_or_number: str | int,
 ) -> int:
     if isinstance(name_or_number, str):
-        return int(__model_get_enum_index(model, attribute_entity, attribute_name, name_or_number))
+        return int(_model_get_enum_index(model, attribute_entity, attribute_name, name_or_number))
 
     return int(name_or_number)
 
 
-def __jo_date(date_value: str | datetime) -> str:
+def _jo_date(date_value: str | datetime) -> str:
     tv = None
     if isinstance(date_value, str):
         if "T" in date_value:
@@ -223,7 +221,7 @@ def __jo_date(date_value: str | datetime) -> str:
     return re.sub(r"(?<=[^\s]{14})0+$", "", tv.strftime("%Y%m%d%H%M%S%f"))
 
 
-def __parse_path_and_add_joins(
+def _parse_path_and_add_joins(
     model: ods.Model,
     entity: ods.Model.Entity,
     attribute_path: str,
@@ -243,9 +241,9 @@ def __parse_path_and_add_joins(
 
         if i != path_part_length - 1:
             # Must be a relation
-            relation = __model_get_relation(model, attribute_entity, path_part)
+            relation = _model_get_relation(model, attribute_entity, path_part)
             if relation is None:
-                suggestion_text = __model_get_suggestion_relation(attribute_entity, path_part)
+                suggestion_text = _model_get_suggestion_relation(attribute_entity, path_part)
                 raise SyntaxError(f"'{path_part}' is no relation of entity '{attribute_entity.name}'.{suggestion_text}")
             attribute_name = relation.name
 
@@ -258,9 +256,9 @@ def __parse_path_and_add_joins(
                 # in case of OUTER join the direction is important and must be like addressed
                 inverse_entity = model.entities[relation.entity_name]
                 inverse_relation = inverse_entity.relations[relation.inverse_name]
-                __add_join_to_seq(model, inverse_entity, inverse_relation, joins, join_type)
+                _add_join_to_seq(model, inverse_entity, inverse_relation, joins, join_type)
             else:
-                __add_join_to_seq(model, attribute_entity, relation, joins, join_type)
+                _add_join_to_seq(model, attribute_entity, relation, joins, join_type)
 
             attribute_entity = model.entities[relation.entity_name]
         else:
@@ -269,14 +267,14 @@ def __parse_path_and_add_joins(
                 attribute_type = ods.DataTypeEnum.DT_UNKNOWN
             else:
                 # maybe relation or attribute
-                attribute = __model_get_attribute(model, attribute_entity, path_part)
+                attribute = _model_get_attribute(model, attribute_entity, path_part)
                 if attribute is not None:
                     attribute_name = attribute.name
                     attribute_type = attribute.data_type
                 else:
-                    relation = __model_get_relation(model, attribute_entity, path_part)
+                    relation = _model_get_relation(model, attribute_entity, path_part)
                     if relation is None:
-                        suggestion_text = __model_get_suggestion_attribute(attribute_entity, path_part)
+                        suggestion_text = _model_get_suggestion_attribute(attribute_entity, path_part)
                         raise SyntaxError(
                             f"'{path_part}' is neither attribute nor relation of entity '{attribute_entity.name}'.{suggestion_text}"  # noqa: E501
                         )
@@ -285,7 +283,7 @@ def __parse_path_and_add_joins(
     return attribute_type, attribute_name, attribute_entity
 
 
-def __add_join_to_seq(
+def _add_join_to_seq(
     model: ods.Model,
     entity_from: ods.Model.Entity,
     relation: ods.Model.Relation,
@@ -306,7 +304,7 @@ def __add_join_to_seq(
     )
 
 
-def __parse_global_options(elem_dict: dict, target: ods.SelectStatement) -> None:
+def _parse_global_options(elem_dict: dict, target: ods.SelectStatement) -> None:
     for elem in elem_dict:
         if elem.startswith("$"):
             if "$rowlimit" == elem:
@@ -323,7 +321,7 @@ def __parse_global_options(elem_dict: dict, target: ods.SelectStatement) -> None
             raise SyntaxError('No undefined options allowed "' + elem + '"')
 
 
-def __parse_attributes(
+def _parse_attributes(
     model: ods.Model,
     entity: ods.Model.Entity,
     target: ods.SelectStatement,
@@ -342,18 +340,18 @@ def __parse_attributes(
             elif "$options" == element:
                 raise SyntaxError("Actually no $options defined for attributes")
             else:
-                raise SyntaxError(f"Unknown aggregate '{element}'.{__model_get_suggestion_aggregate(element)}")
+                raise SyntaxError(f"Unknown aggregate '{element}'.{_model_get_suggestion_aggregate(element)}")
         else:
             if element_attribute["path"]:
                 element_attribute["path"] += "."
             element_attribute["path"] += element
 
         if isinstance(element_dict[element], dict):
-            __parse_attributes(model, entity, target, element_dict[element], element_attribute)
+            _parse_attributes(model, entity, target, element_dict[element], element_attribute)
         elif isinstance(element_dict[element], list):
             raise SyntaxError("attributes is not allowed to contain arrays")
         else:
-            _attribute_type, attribute_name, attribute_entity = __parse_path_and_add_joins(
+            _attribute_type, attribute_name, attribute_entity = _parse_path_and_add_joins(
                 model, entity, element_attribute["path"], target.joins
             )
             if "*" == attribute_name:
@@ -367,7 +365,7 @@ def __parse_attributes(
                 )
 
 
-def __parse_orderby(
+def _parse_orderby(
     model: ods.Model,
     entity: ods.Model.Entity,
     target: ods.SelectStatement,
@@ -383,11 +381,11 @@ def __parse_orderby(
         elem_attribute["path"] += elem
 
         if isinstance(element_dict[elem], dict):
-            __parse_orderby(model, entity, target, element_dict[elem], elem_attribute)
+            _parse_orderby(model, entity, target, element_dict[elem], elem_attribute)
         elif isinstance(element_dict[elem], list):
             raise SyntaxError("attributes is not allowed to contain arrays")
         else:
-            _attribute_type, attribute_name, attribute_entity = __parse_path_and_add_joins(
+            _attribute_type, attribute_name, attribute_entity = _parse_path_and_add_joins(
                 model, entity, elem_attribute["path"], target.joins
             )
             order = ods.SelectStatement.OrderByItem.OD_ASCENDING
@@ -400,7 +398,7 @@ def __parse_orderby(
             target.order_by.add(aid=attribute_entity.aid, attribute=attribute_name, order=order)
 
 
-def __parse_groupby(
+def _parse_groupby(
     model: ods.Model,
     entity: ods.Model.Entity,
     target: ods.SelectStatement,
@@ -415,19 +413,19 @@ def __parse_groupby(
             elem_attribute["path"] += "."
         elem_attribute["path"] += elem
         if isinstance(element_dict[elem], dict):
-            __parse_groupby(model, entity, target, element_dict[elem], elem_attribute)
+            _parse_groupby(model, entity, target, element_dict[elem], elem_attribute)
         elif isinstance(element_dict[elem], list):
             raise SyntaxError("attributes is not allowed to contain arrays")
         else:
             if 1 != element_dict[elem]:
                 raise SyntaxError(str(element_dict[elem]) + " only 1 supported in groupby")
-            _attribute_type, attribute_name, attribute_entity = __parse_path_and_add_joins(
+            _attribute_type, attribute_name, attribute_entity = _parse_path_and_add_joins(
                 model, entity, elem_attribute["path"], target.joins
             )
             target.group_by.add(aid=attribute_entity.aid, attribute=attribute_name)
 
 
-def __parse_conditions_conjunction(
+def _parse_conditions_conjunction(
     model: ods.Model,
     entity: ods.Model.Entity,
     conjunction: ods.SelectStatement.ConditionItem.ConjuctionEnum,
@@ -457,7 +455,7 @@ def __parse_conditions_conjunction(
         elem_attribute["conjunction_count"] = 0
         elem_attribute["conjunction"] = ods.SelectStatement.ConditionItem.ConjuctionEnum.CO_AND
         elem_attribute["options"] = ""
-        __parse_conditions(model, entity, target, elem, elem_attribute)
+        _parse_conditions(model, entity, target, elem, elem_attribute)
         target.where.add().conjunction = ods.SelectStatement.ConditionItem.ConjuctionEnum.CO_CLOSE
         first_time = False
 
@@ -465,7 +463,7 @@ def __parse_conditions_conjunction(
         target.where.add().conjunction = ods.SelectStatement.ConditionItem.ConjuctionEnum.CO_CLOSE
 
 
-def __parse_conditions_not(
+def _parse_conditions_not(
     model: ods.Model,
     entity: ods.Model.Entity,
     target: ods.SelectStatement,
@@ -485,11 +483,11 @@ def __parse_conditions_not(
 
     target.where.add().conjunction = ods.SelectStatement.ConditionItem.ConjuctionEnum.CO_NOT
     target.where.add().conjunction = ods.SelectStatement.ConditionItem.ConjuctionEnum.CO_OPEN
-    __parse_conditions(model, entity, target, element_dict, elem_attribute)
+    _parse_conditions(model, entity, target, element_dict, elem_attribute)
     target.where.add().conjunction = ods.SelectStatement.ConditionItem.ConjuctionEnum.CO_CLOSE
 
 
-def __set_condition_value(
+def _set_condition_value(
     model: ods.Model,
     attribute_entity: ods.Model.Entity,
     attribute_name: str,
@@ -529,7 +527,7 @@ def __set_condition_value(
                 condition_item.double_array.values.append(float(src_value))
         elif attribute_type in (ods.DataTypeEnum.DT_DATE, ods.DataTypeEnum.DS_DATE):
             for src_value in src_values:
-                condition_item.string_array.values.append(__jo_date(src_value))
+                condition_item.string_array.values.append(_jo_date(src_value))
         elif attribute_type in (ods.DataTypeEnum.DT_STRING, ods.DataTypeEnum.DS_STRING):
             for src_value in src_values:
                 condition_item.string_array.values.append(str(src_value))
@@ -574,7 +572,7 @@ def __set_condition_value(
         elif attribute_type == ods.DataTypeEnum.DT_DOUBLE:
             condition_item.double_array.values.append(float(src_values))
         elif attribute_type == ods.DataTypeEnum.DT_DATE:
-            condition_item.string_array.values.append(__jo_date(src_values))
+            condition_item.string_array.values.append(_jo_date(src_values))
         elif attribute_type == ods.DataTypeEnum.DT_STRING:
             condition_item.string_array.values.append(str(src_values))
         elif attribute_type == ods.DataTypeEnum.DT_ENUM:
@@ -585,7 +583,7 @@ def __set_condition_value(
             raise ValueError(f"Unknown how to attach '{src_values}' does not exist as {attribute_type} union.")
 
 
-def __get_ods_operator(
+def _get_ods_operator(
     attribute_type: ods.DataTypeEnum,
     condition_operator: OperatorEnum,
     condition_options: str,
@@ -599,7 +597,7 @@ def __get_ods_operator(
     return condition_operator
 
 
-def __add_condition(
+def _add_condition(
     model: ods.Model,
     entity: ods.Model.Entity,
     target: ods.SelectStatement,
@@ -609,19 +607,19 @@ def __add_condition(
     condition_unit_id: int,
     condition_options: str,
 ) -> None:
-    attribute_type, attribute_name, attribute_entity = __parse_path_and_add_joins(
+    attribute_type, attribute_name, attribute_entity = _parse_path_and_add_joins(
         model, entity, condition_path, target.joins
     )
     condition_item = target.where.add()
     condition_item.condition.aid = attribute_entity.aid
     condition_item.condition.attribute = attribute_name
-    condition_item.condition.operator = __get_ods_operator(attribute_type, condition_operator, condition_options)
+    condition_item.condition.operator = _get_ods_operator(attribute_type, condition_operator, condition_options)
     condition_item.condition.unit_id = int(condition_unit_id)
     if condition_item.condition.operator not in (
         OperatorEnum.OP_IS_NULL,
         OperatorEnum.OP_IS_NOT_NULL,
     ):
-        __set_condition_value(
+        _set_condition_value(
             model,
             attribute_entity,
             attribute_name,
@@ -631,7 +629,7 @@ def __add_condition(
         )
 
 
-def __parse_conditions(
+def _parse_conditions(
     model: ods.Model,
     entity: ods.Model.Entity,
     target: ods.SelectStatement,
@@ -649,7 +647,7 @@ def __parse_conditions(
             elif "$unit" == elem:
                 elem_attribute["unit"] = element_dict[elem]
             elif "$and" == elem:
-                __parse_conditions_conjunction(
+                _parse_conditions_conjunction(
                     model,
                     entity,
                     ods.SelectStatement.ConditionItem.ConjuctionEnum.CO_AND,
@@ -660,7 +658,7 @@ def __parse_conditions(
                 attribute_dict["conjunction_count"] = attribute_dict["conjunction_count"] + 1
                 continue
             elif "$or" == elem:
-                __parse_conditions_conjunction(
+                _parse_conditions_conjunction(
                     model,
                     entity,
                     ods.SelectStatement.ConditionItem.ConjuctionEnum.CO_OR,
@@ -671,13 +669,13 @@ def __parse_conditions(
                 attribute_dict["conjunction_count"] = attribute_dict["conjunction_count"] + 1
                 continue
             elif "$not" == elem:
-                __parse_conditions_not(model, entity, target, element_dict[elem], attribute_dict)
+                _parse_conditions_not(model, entity, target, element_dict[elem], attribute_dict)
                 attribute_dict["conjunction_count"] = attribute_dict["conjunction_count"] + 1
                 continue
             elif "$options" == elem:
                 continue
             else:
-                raise SyntaxError(f"Unknown operator '{elem}'.{__model_get_suggestion_operators(elem)}")
+                raise SyntaxError(f"Unknown operator '{elem}'.{_model_get_suggestion_operators(elem)}")
         else:
             if elem_attribute["path"]:
                 elem_attribute["path"] += "."
@@ -685,7 +683,7 @@ def __parse_conditions(
 
         if isinstance(element_dict[elem], dict):
             old_conjunction_count = elem_attribute["conjunction_count"]
-            __parse_conditions(model, entity, target, element_dict[elem], elem_attribute)
+            _parse_conditions(model, entity, target, element_dict[elem], elem_attribute)
             if old_conjunction_count != elem_attribute["conjunction_count"]:
                 attribute_dict["conjunction_count"] = attribute_dict["conjunction_count"] + 1
         else:
@@ -698,7 +696,7 @@ def __parse_conditions(
             condition_options = elem_attribute["options"]
             condition_unit_id = elem_attribute["unit"]
 
-            __add_condition(
+            _add_condition(
                 model,
                 entity,
                 target,
@@ -739,10 +737,10 @@ def jaquel_to_ods(model: ods.Model, jaquel_query: str | dict) -> Tuple[ods.Model
             if entity is not None:
                 raise SyntaxError('Only one start point allowed "' + elem + '"')
 
-            entity = __model_get_entity_ex(model, elem)
+            entity = _model_get_entity_ex(model, elem)
             aid = entity.aid
             if isinstance(query[elem], dict):
-                __parse_conditions(
+                _parse_conditions(
                     model,
                     entity,
                     qse,
@@ -761,7 +759,7 @@ def jaquel_to_ods(model: ods.Model, jaquel_query: str | dict) -> Tuple[ods.Model
                 if isinstance(_id_value, str) and not _id_value.isdigit():
                     raise SyntaxError(f"Only id value can be assigned directly. But '{_id_value}' was assigned.")
                 # id given
-                __add_condition(
+                _add_condition(
                     model,
                     entity,
                     qse,
@@ -779,7 +777,7 @@ def jaquel_to_ods(model: ods.Model, jaquel_query: str | dict) -> Tuple[ods.Model
     for elem in query:
         if elem.startswith("$"):
             if "$attributes" == elem:
-                __parse_attributes(
+                _parse_attributes(
                     model,
                     entity,
                     qse,
@@ -787,11 +785,11 @@ def jaquel_to_ods(model: ods.Model, jaquel_query: str | dict) -> Tuple[ods.Model
                     {"path": "", "aggregate": ods.AggregateEnum.AG_NONE, "unit": 0},
                 )
             elif "$orderby" == elem:
-                __parse_orderby(model, entity, qse, query[elem], {"path": ""})
+                _parse_orderby(model, entity, qse, query[elem], {"path": ""})
             elif "$groupby" == elem:
-                __parse_groupby(model, entity, qse, query[elem], {"path": ""})
+                _parse_groupby(model, entity, qse, query[elem], {"path": ""})
             elif "$options" == elem:
-                __parse_global_options(query[elem], qse)
+                _parse_global_options(query[elem], qse)
             else:
                 raise SyntaxError('unknown first level define "' + elem + '"')
 
