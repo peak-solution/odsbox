@@ -31,6 +31,7 @@ from odsbox.jaquel import jaquel_to_ods
 from odsbox.model_cache import ModelCache
 from odsbox.transaction import Transaction
 from odsbox.security import Security
+from odsbox.bulk_reader import BulkReader
 
 
 class ConI:
@@ -114,6 +115,7 @@ class ConI:
         self.__security: Security | None = None
         self.__mc: ModelCache | None = None
         self.__allow_redirects: bool = allow_redirects
+        self.__bulk_reader: BulkReader | None = None
 
         session = requests.Session()
         session.auth = auth
@@ -185,6 +187,7 @@ class ConI:
             self.__session = None
             self.__con_i = None
             self.__security = None
+            self.__bulk_reader = None
             self.__mc = None
             self.check_requests_response(response)
 
@@ -739,3 +742,17 @@ class ConI:
         if self.__security is None:
             self.__security = Security(self)
         return self.__security
+
+    @property
+    def bulk(self) -> BulkReader:
+        """
+        Get the bulk reader for the current session.
+
+        :return ods.BulkReader: BulkReader object for reading data in bulk.
+        """
+        if self.__session is None:
+            raise ValueError("No open session!")
+
+        if self.__bulk_reader is None:
+            self.__bulk_reader = BulkReader(self)
+        return self.__bulk_reader

@@ -278,48 +278,6 @@ class BulkReader:
 
         return rv
 
-    @staticmethod
-    def add_column_filters(
-        conditions: dict,
-        column_patterns: list[str] | None,
-        column_patterns_case_insensitive: bool,
-    ) -> None:
-        """
-        Add filter conditions for AoLocalColumn to match column patterns.
-        :param dict conditions: The conditions dictionary to update.
-        :param list[str] | None column_patterns: List of column name patterns to filter the columns.
-                                                Wildcards `*` and `?` are supported.
-        :param bool column_patterns_case_insensitive: Whether to treat column name patterns as case insensitive.
-        """
-        if not column_patterns:
-            return
-
-        inset_names = []
-        like_names = []
-        for p in column_patterns:
-            if not p or p == "*":
-                continue
-            if "*" in p or "?" in p:
-                like_names.append(p)
-            else:
-                inset_names.append(p)
-
-        if not (inset_names or like_names):
-            return
-
-        opt = {"$options": "i"} if column_patterns_case_insensitive else {}
-
-        clauses = []
-        if inset_names:
-            clauses.append({"name": {"$in": inset_names, **opt}})
-        for pattern in like_names:
-            clauses.append({"name": {"$like": pattern, **opt}})
-
-        if len(clauses) == 1:
-            conditions.update(clauses[0])
-        else:
-            conditions["$or"] = clauses
-
     def valuematrix_read(
         self,
         submatrix_iid: int,
@@ -361,3 +319,45 @@ class BulkReader:
         )
         df.columns = ["name", "values"]
         return pd.DataFrame({name: values for name, values in zip(df["name"].values, df["values"].values)})
+
+    @staticmethod
+    def add_column_filters(
+        conditions: dict,
+        column_patterns: list[str] | None,
+        column_patterns_case_insensitive: bool,
+    ) -> None:
+        """
+        Add filter conditions for AoLocalColumn to match column patterns.
+        :param dict conditions: The conditions dictionary to update.
+        :param list[str] | None column_patterns: List of column name patterns to filter the columns.
+                                                Wildcards `*` and `?` are supported.
+        :param bool column_patterns_case_insensitive: Whether to treat column name patterns as case insensitive.
+        """
+        if not column_patterns:
+            return
+
+        inset_names = []
+        like_names = []
+        for p in column_patterns:
+            if not p or p == "*":
+                continue
+            if "*" in p or "?" in p:
+                like_names.append(p)
+            else:
+                inset_names.append(p)
+
+        if not (inset_names or like_names):
+            return
+
+        opt = {"$options": "i"} if column_patterns_case_insensitive else {}
+
+        clauses = []
+        if inset_names:
+            clauses.append({"name": {"$in": inset_names, **opt}})
+        for pattern in like_names:
+            clauses.append({"name": {"$like": pattern, **opt}})
+
+        if len(clauses) == 1:
+            conditions.update(clauses[0])
+        else:
+            conditions["$or"] = clauses
