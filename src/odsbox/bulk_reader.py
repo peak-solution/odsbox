@@ -76,7 +76,11 @@ class BulkReader:
         """
         for index, r in localcolumn_df.iterrows():
             name = r.get("name")
+            if name is None:
+                raise ValueError(f"Missing 'name' field for row at index {index}")
             vals = r.get("values")
+            if vals is None:
+                raise ValueError(f"Missing 'values' field for column '{name}' at index {index}")
             sequence_representation = int(r.get("sequence_representation", SeqRepEnum.explicit.value))
             number_of_rows = int(r.get("number_of_rows", 0))
             if values_start > number_of_rows:
@@ -94,12 +98,12 @@ class BulkReader:
                 pass  # explicit values are already correctly stored in vals
             elif sequence_representation == SeqRepEnum.implicit_constant:
                 # generation parameters expected to be stored in vals as [offset, factor, ...]
-                if isinstance(vals, (list, tuple)) and len(vals) >= 2:
+                if len(vals) >= 1:
                     localcolumn_df.at[index, "values"] = [vals[0]] * values_count
                 else:
                     raise ValueError(f"Generation parameters missing for {name}")
             elif sequence_representation == SeqRepEnum.implicit_linear:
-                if isinstance(vals, (list)) and len(vals) >= 1:
+                if len(vals) >= 2:
                     localcolumn_df.at[index, "values"] = [
                         vals[0] + x * vals[1] for x in range(0 + values_start, values_count + values_start)
                     ]
@@ -248,7 +252,7 @@ class BulkReader:
         column_patterns: list[str] | None = None,
         column_patterns_case_insensitive: bool = False,
         date_as_timestamp: bool = True,
-        set_independent_as_index: bool = False,
+        set_independent_as_index: bool = True,
         values_start: int = 0,
         values_limit: int = 0,
     ) -> pd.DataFrame:
