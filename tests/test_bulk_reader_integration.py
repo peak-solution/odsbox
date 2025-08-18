@@ -52,7 +52,6 @@ def test_bulk_reader_simple():
 @pytest.mark.integration
 def test_bulk_reader_query():
     with __create_con_i() as con_i:
-
         conditions = {"submatrix.measurement.name": {"$like": "Profile_5?"}}
         con_i.bulk.add_column_filters(conditions, ["Time", "Coolant"], column_patterns_case_insensitive=False)
 
