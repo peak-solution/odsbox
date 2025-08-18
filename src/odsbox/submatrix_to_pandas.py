@@ -87,6 +87,9 @@ def submatrix_to_pandas(
     """
     Loads an ASAM ODS SubMatrix and returns it as a pandas DataFrame.
 
+    .. deprecated:: 1.8.0
+        Use ConI.bulk.data_read instead. Stays because of compatibility reasons.
+
     :param ConI con_i: ASAM ODS server session.
     :param int submatrix_iid: id of an submatrix to be retrieved.
     :param bool date_as_timestamp: columns of type DT_DATE or DS_DATE are returned as string.
