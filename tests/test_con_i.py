@@ -375,3 +375,20 @@ def test_do_not_load_model():
         # Access the cached model
         assert con_i.mc is not None
         con_i.model()
+
+
+@pytest.mark.integration
+def test_nested_query(request: FixtureRequest):
+    with __create_con_i() as con_i:
+        df = con_i.query_data(
+            {"AoTest": {"name": {"$in": {"$nested": {"AoTest": {}, "$attributes": {"name": {"$distinct": 1}}}}}}}
+        )
+
+        assert df is not None
+        assert not df.empty
+
+        _, s = jaquel_to_ods(
+            con_i.model(),
+            {"AoTest": {"name": {"$in": {"$nested": {"AoTest": {}, "$attributes": {"name": {"$distinct": 1}}}}}}},
+        )
+        assert s.where[0].condition.nested_statement.columns[0].attribute is not None

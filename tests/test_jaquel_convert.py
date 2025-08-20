@@ -292,7 +292,7 @@ def test_suggestions_aggregate():
     with pytest.raises(SyntaxError, match="Unknown aggregate '\\$stev'. Did you mean '\\$stddev'?"):
         jaquel_to_ods(model, {"AoUnit": {}, "$attributes": {"factor": {"$stev": 1}}})
 
-    with pytest.raises(SyntaxError, match="Unknown aggregate '\\$regexp'. Did you mean '\\$max'?"):
+    with pytest.raises(SyntaxError, match="Unknown aggregate '\\$regexp'. Did you mean '\\$nested'?"):
         jaquel_to_ods(model, {"AoUnit": {}, "$attributes": {"factor": {"$regexp": "a.*"}}})
 
     with pytest.raises(SyntaxError, match="Unknown operator '\\$GTEQ'. Did you mean '\\$gte'?"):
@@ -331,3 +331,79 @@ def test_issue_127_null():
     assert entity.name == "MeaResult"
     assert ss is not None
     assert ss.where[0].condition.operator == ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_IS_NULL
+
+
+def test_nested_statements():
+    """Test the new $nested functionality with real model"""
+    model = __get_model("application_model.json")
+
+    # Test basic nested statement functionality
+    nested_query = {"AoMeasurementQuantity": {}, "$attributes": {"name": {"$distinct": 1}}}
+    query = {"AoMeasurementQuantity": {"name": {"$in": {"$nested": nested_query}}}}
+
+    entity, ss = jaquel_to_ods(model, query)
+    logging.getLogger().info("Nested statement query result:")
+    logging.getLogger().info(MessageToJson(ss))
+
+    assert entity is not None
+    assert entity.name == "MeaQuantity"
+    assert ss is not None
+    assert len(ss.where) > 0
+
+    # Verify that a nested statement was created
+    has_nested = False
+    for where_item in ss.where:
+        if hasattr(where_item, "condition") and hasattr(where_item.condition, "nested_statement"):
+            if where_item.condition.nested_statement.ByteSize() > 0:
+                has_nested = True
+                # Verify the nested statement structure
+                nested_stmt = where_item.condition.nested_statement
+                assert len(nested_stmt.columns) > 0
+                assert nested_stmt.columns[0].attribute in ["name", "Name"]  # Handle case sensitivity
+                assert nested_stmt.columns[0].aggregate == ods.AggregateEnum.AG_DISTINCT
+                break
+
+    assert has_nested, "Expected to find a condition with nested statement"
+
+
+def test_nested_statements_error_cases():
+    """Test error cases for $nested functionality"""
+    model = __get_model("application_model.json")
+
+    # Test that $nested cannot be used with $null and $notnull
+    nested_query = {"AoMeasurementQuantity": {}, "$attributes": {"name": {"$distinct": 1}}}
+
+    with pytest.raises(SyntaxError, match=r"\$nested cannot be used with \$null or \$notnull operators"):
+        query = {"AoMeasurementQuantity": {"name": {"$null": {"$nested": nested_query}}}}
+        jaquel_to_ods(model, query)
+
+    with pytest.raises(SyntaxError, match=r"\$nested cannot be used with \$null or \$notnull operators"):
+        query = {"AoMeasurementQuantity": {"name": {"$notnull": {"$nested": nested_query}}}}
+        jaquel_to_ods(model, query)
+
+
+def test_nested_statements_with_different_operators():
+    """Test $nested with different valid operators"""
+    model = __get_model("application_model.json")
+
+    nested_query = {"AoMeasurementQuantity": {}, "$attributes": {"name": {"$distinct": 1}}}
+
+    test_operators = ["$eq", "$neq", "$lt", "$gt", "$lte", "$gte", "$in", "$notinset", "$like", "$notlike"]
+
+    for operator in test_operators:
+        query = {"AoMeasurementQuantity": {"name": {operator: {"$nested": nested_query}}}}
+
+        # This should not raise an exception
+        entity, ss = jaquel_to_ods(model, query)
+        assert entity is not None
+        assert ss is not None
+
+        # Verify that a nested statement was created
+        has_nested = False
+        for where_item in ss.where:
+            if hasattr(where_item, "condition") and hasattr(where_item.condition, "nested_statement"):
+                if where_item.condition.nested_statement.ByteSize() > 0:
+                    has_nested = True
+                    break
+
+        assert has_nested, f"Expected to find a nested statement for operator {operator}"

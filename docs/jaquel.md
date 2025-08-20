@@ -485,6 +485,7 @@ r = con_i.query_data({
 | $point     | used for query on bulk data. returning indices of local column values |
 | $ia        | Retrieve an instance attribute |
 | $unit      | define the unit by its id that should be used for the return values |
+| $nested    | used to assign another jaquel query to an condition |
 
 | global options | description                                |
 |----------------|--------------------------------------------|

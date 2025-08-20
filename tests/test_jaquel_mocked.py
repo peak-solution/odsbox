@@ -1476,3 +1476,175 @@ class TestJaquelToOdsEdgeCases:
             assert len(select_statement.columns) == 1
             assert select_statement.columns[0].attribute == "*"
             assert select_statement.columns[0].aid == 1
+
+
+class TestNestedStatements:
+    """Test nested statement functionality ($nested operator)"""
+
+    def test_nested_statement_basic(self):
+        """Test basic nested statement with $in and $nested"""
+        mock_model = Mock()
+        mock_entity = Mock()
+        mock_entity.aid = 1
+        mock_entity.name = "TestEntity"
+
+        # Mock attribute
+        mock_attribute = Mock()
+        mock_attribute.name = "test_attr"
+        mock_attribute.data_type = ods.DataTypeEnum.DT_STRING
+        mock_entity.attributes = {"test_attr": mock_attribute}
+
+        # Mock joins and path parsing
+        with (
+            patch("odsbox.jaquel._model_get_entity_ex", return_value=mock_entity),
+            patch(
+                "odsbox.jaquel._parse_path_and_add_joins",
+                return_value=(ods.DataTypeEnum.DT_STRING, "test_attr", mock_entity),
+            ),
+        ):
+            nested_query = {"TestEntity": {}, "$attributes": {"test_attr": {"$distinct": 1}}}
+            query = {"TestEntity": {"test_attr": {"$in": {"$nested": nested_query}}}}
+
+            entity, select_statement = jaquel_to_ods(mock_model, query)
+
+            # Check that the entity is correct
+            assert entity == mock_entity
+
+            # Check that a condition with nested statement was added
+            assert len(select_statement.where) > 0
+
+            # Find the condition with nested statement
+            nested_condition = None
+            for where_item in select_statement.where:
+                if hasattr(where_item, "condition") and hasattr(where_item.condition, "nested_statement"):
+                    if where_item.condition.nested_statement.ByteSize() > 0:
+                        nested_condition = where_item.condition
+                        break
+
+            assert nested_condition is not None
+            assert nested_condition.operator == ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_INSET
+            assert nested_condition.aid == mock_entity.aid
+            assert nested_condition.attribute == "test_attr"
+
+    def test_nested_statement_wrong_operator_error(self):
+        """Test that $nested cannot be used with $null and $notnull operators"""
+        mock_model = Mock()
+        mock_entity = Mock()
+        mock_entity.aid = 1
+        mock_entity.name = "TestEntity"
+
+        # Mock attribute
+        mock_attribute = Mock()
+        mock_attribute.name = "test_attr"
+        mock_attribute.data_type = ods.DataTypeEnum.DT_STRING
+        mock_entity.attributes = {"test_attr": mock_attribute}
+
+        with (
+            patch("odsbox.jaquel._model_get_entity_ex", return_value=mock_entity),
+            patch(
+                "odsbox.jaquel._parse_path_and_add_joins",
+                return_value=(ods.DataTypeEnum.DT_STRING, "test_attr", mock_entity),
+            ),
+        ):
+            nested_query = {"TestEntity": {}, "$attributes": {"test_attr": {"$distinct": 1}}}
+
+            # Test with $null operator
+            query = {"TestEntity": {"test_attr": {"$null": {"$nested": nested_query}}}}
+            with pytest.raises(SyntaxError, match="\\$nested cannot be used with \\$null or \\$notnull operators"):
+                jaquel_to_ods(mock_model, query)
+
+            # Test with $notnull operator
+            query = {"TestEntity": {"test_attr": {"$notnull": {"$nested": nested_query}}}}
+            with pytest.raises(SyntaxError, match="\\$nested cannot be used with \\$null or \\$notnull operators"):
+                jaquel_to_ods(mock_model, query)
+
+    def test_nested_statement_with_different_operators(self):
+        """Test nested statement functionality with different valid operators."""
+        mock_model = Mock()
+        mock_entity = Mock()
+        mock_entity.aid = 1
+        mock_entity.name = "TestEntity"
+
+        # Mock attribute
+        mock_attribute = Mock()
+        mock_attribute.name = "test_attr"
+        mock_attribute.data_type = ods.DataTypeEnum.DT_STRING
+        mock_entity.attributes = {"test_attr": mock_attribute}
+
+        test_cases = [
+            ("$eq", ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_EQ),
+            ("$neq", ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_NEQ),
+            ("$lt", ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_LT),
+            ("$gt", ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_GT),
+            ("$lte", ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_LTE),
+            ("$gte", ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_GTE),
+            ("$in", ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_INSET),
+            ("$notinset", ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_NOTINSET),
+            ("$like", ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_LIKE),
+            ("$notlike", ods.SelectStatement.ConditionItem.Condition.OperatorEnum.OP_NOTLIKE),
+        ]
+
+        with (
+            patch("odsbox.jaquel._model_get_entity_ex", return_value=mock_entity),
+            patch(
+                "odsbox.jaquel._parse_path_and_add_joins",
+                return_value=(ods.DataTypeEnum.DT_STRING, "test_attr", mock_entity),
+            ),
+        ):
+            nested_query = {"TestEntity": {}, "$attributes": {"test_attr": {"$distinct": 1}}}
+
+            for operator_name, expected_operator in test_cases:
+                query = {"TestEntity": {"test_attr": {operator_name: {"$nested": nested_query}}}}
+
+                entity, select_statement = jaquel_to_ods(mock_model, query)
+
+                # Check that we have a condition with nested statement and correct operator
+                nested_condition = None
+                for where_item in select_statement.where:
+                    if hasattr(where_item, "condition") and hasattr(where_item.condition, "nested_statement"):
+                        if where_item.condition.nested_statement.ByteSize() > 0:
+                            nested_condition = where_item.condition
+                            break
+
+                assert nested_condition is not None, f"No nested condition found for operator {operator_name}"
+                assert nested_condition.operator == expected_operator, f"Wrong operator for {operator_name}"
+
+    def test_nested_statement_complex(self):
+        """Test more complex nested statement scenario"""
+        mock_model = Mock()
+        mock_entity = Mock()
+        mock_entity.aid = 1
+        mock_entity.name = "AoTest"
+
+        # Mock attribute
+        mock_attribute = Mock()
+        mock_attribute.name = "name"
+        mock_attribute.data_type = ods.DataTypeEnum.DT_STRING
+        mock_entity.attributes = {"name": mock_attribute}
+
+        with (
+            patch("odsbox.jaquel._model_get_entity_ex", return_value=mock_entity),
+            patch(
+                "odsbox.jaquel._parse_path_and_add_joins",
+                return_value=(ods.DataTypeEnum.DT_STRING, "name", mock_entity),
+            ),
+        ):
+            # Test the example from the feature request
+            nested_query = {"AoTest": {}, "$attributes": {"name": {"$distinct": 1}}}
+            query = {"AoTest": {"name": {"$in": {"$nested": nested_query}}}}
+
+            entity, select_statement = jaquel_to_ods(mock_model, query)
+
+            # Verify the structure
+            assert entity == mock_entity
+            assert len(select_statement.where) > 0
+
+            # Check that we have a nested statement condition
+            has_nested = False
+            for where_item in select_statement.where:
+                if hasattr(where_item, "condition") and hasattr(where_item.condition, "nested_statement"):
+                    if where_item.condition.nested_statement.ByteSize() > 0:
+                        has_nested = True
+                        break
+
+            assert has_nested, "Expected to find a condition with nested statement"

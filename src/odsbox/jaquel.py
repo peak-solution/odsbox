@@ -174,6 +174,7 @@ def _model_get_suggestion_entity(model: ods.Model, entity_name: str) -> str:
 
 def _model_get_suggestion_aggregate(aggregate_name: str) -> str:
     available = {key.lower(): key for key in _jo_aggregates}
+    available["$nested"] = "$nested"
     return _model_get_suggestion(available, aggregate_name)
 
 
@@ -487,6 +488,45 @@ def _parse_conditions_not(
     target.where.add().conjunction = ods.SelectStatement.ConditionItem.ConjuctionEnum.CO_CLOSE
 
 
+def _handle_nested_statement(
+    model: ods.Model,
+    entity: ods.Model.Entity,
+    target: ods.SelectStatement,
+    condition_path: str,
+    nested_query_dict: dict,
+    condition_unit_id: int,
+    condition_options: str,
+    condition_operator: OperatorEnum = OperatorEnum.OP_INSET,
+) -> None:
+    """
+    Handle $nested operator by creating a nested SelectStatement.
+
+    :param ods.Model model: application model to be used for conversion.
+    :param ods.Model.Entity entity: current entity context
+    :param ods.SelectStatement target: target SelectStatement to add condition to
+    :param str condition_path: path to the attribute
+    :param dict nested_query_dict: nested jaquel query dictionary
+    :param int condition_unit_id: unit id for the condition
+    :param str condition_options: condition options
+    :param OperatorEnum condition_operator: operator to use with the nested statement
+    """
+    # Create nested SelectStatement from the nested query
+    nested_entity, nested_statement = jaquel_to_ods(model, nested_query_dict)
+
+    # Get attribute information for the condition
+    attribute_type, attribute_name, attribute_entity = _parse_path_and_add_joins(
+        model, entity, condition_path, target.joins
+    )
+
+    # Create condition item with nested statement
+    condition_item = target.where.add()
+    condition_item.condition.aid = attribute_entity.aid
+    condition_item.condition.attribute = attribute_name
+    condition_item.condition.operator = _get_ods_operator(attribute_type, condition_operator, condition_options)
+    condition_item.condition.unit_id = int(condition_unit_id)
+    condition_item.condition.nested_statement.CopyFrom(nested_statement)
+
+
 def _set_condition_value(
     model: ods.Model,
     attribute_entity: ods.Model.Entity,
@@ -682,10 +722,33 @@ def _parse_conditions(
             elem_attribute["path"] += elem
 
         if isinstance(element_dict[elem], dict):
-            old_conjunction_count = elem_attribute["conjunction_count"]
-            _parse_conditions(model, entity, target, element_dict[elem], elem_attribute)
-            if old_conjunction_count != elem_attribute["conjunction_count"]:
+            # Check if this is a nested statement structure before recursion
+            if len(element_dict[elem]) == 1 and "$nested" in element_dict[elem]:
+                # This is a nested statement, handle it specially
+                current_operator = elem_attribute.get("operator")
+                if current_operator in (OperatorEnum.OP_IS_NULL, OperatorEnum.OP_IS_NOT_NULL):
+                    raise SyntaxError("$nested cannot be used with $null or $notnull operators")
+
+                if 0 != attribute_dict["conjunction_count"]:
+                    target.where.add().conjunction = elem_attribute["conjunction"]
+
+                _handle_nested_statement(
+                    model,
+                    entity,
+                    target,
+                    elem_attribute["path"],
+                    element_dict[elem]["$nested"],
+                    elem_attribute["unit"],
+                    elem_attribute["options"],
+                    elem_attribute.get("operator", OperatorEnum.OP_EQ),
+                )
                 attribute_dict["conjunction_count"] = attribute_dict["conjunction_count"] + 1
+            else:
+                # Regular dictionary processing
+                old_conjunction_count = elem_attribute["conjunction_count"]
+                _parse_conditions(model, entity, target, element_dict[elem], elem_attribute)
+                if old_conjunction_count != elem_attribute["conjunction_count"]:
+                    attribute_dict["conjunction_count"] = attribute_dict["conjunction_count"] + 1
         else:
             if 0 != attribute_dict["conjunction_count"]:
                 target.where.add().conjunction = elem_attribute["conjunction"]
