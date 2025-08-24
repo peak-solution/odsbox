@@ -196,6 +196,7 @@ class ConI:
         query: str | dict | ods.SelectStatement,
         enum_as_string: bool = False,
         date_as_timestamp: bool = False,
+        is_null_to_nan: bool = False,
         **kwargs,
     ) -> DataFrame:
         """
@@ -208,6 +209,8 @@ class ConI:
                                     to the corresponding string values.
         :param bool date_as_timestamp: columns of type DT_DATE or DS_DATE are returned as string.
                                        If this is set to True the strings are converted to pandas Timestamp.
+        :param bool is_null_to_nan: If set to True, the is_null flags are used to set corresponding values to pd.NA.
+                                    This uses pandas native nullable data types for better type preservation.
         :param kwargs: additional arguments passed to `to_pandas`.
         :raises requests.HTTPError: If query fails.
         :return DataFrame: The DataMatrices as Pandas.DataFrame. The columns are named as `ENTITY_NAME.ATTRIBUTE_NAME`.
@@ -221,6 +224,7 @@ class ConI:
             model_cache=self.mc,
             enum_as_string=enum_as_string,
             date_as_timestamp=date_as_timestamp,
+            is_null_to_nan=is_null_to_nan,
             **kwargs,
         )
 
