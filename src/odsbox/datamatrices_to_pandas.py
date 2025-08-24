@@ -207,6 +207,7 @@ def to_pandas(
     date_as_timestamp: bool = False,
     name_separator: str = ".",
     prefer_np_array_for_unknown: bool = False,
+    is_null_to_nan: bool = False,
 ) -> pd.DataFrame:
     """
     Converts data in an ASAM ODS DataMatrices into a pandas DataFrame.
@@ -222,6 +223,8 @@ def to_pandas(
                                column name.
     :param bool prefer_np_array_for_unknown: If set to True, prefer returning numpy arrays instead
                                             of lists for unknown data types.
+    :param bool is_null_to_nan: If set to True, the is_null flags are used to set corresponding values to pd.NA.
+                               This uses pandas native nullable data types for better type preservation.
 
     :return pd.DataFrame: A pandas DataFrame containing all the single matrices in a single frame. The
                           columns are named by the schema `ENTITY_NAME.ATTRIBUTE_NAME[.AGGREGATE]`.
@@ -233,6 +236,7 @@ def to_pandas(
         return pd.DataFrame()
 
     column_dict = {}
+    null_masks = {}  # Store null masks for post-processing
 
     for matrix in data_matrices.matrices:
         entity = model_cache.entity(matrix.name) if model_cache is not None else None
@@ -243,9 +247,33 @@ def to_pandas(
                 else name_separator + ods.AggregateEnum.Name(column.aggregate)
             )
             column_name = f"{matrix.name}{name_separator}{column.name}{aggregate_postfix}"
-            # The flags are ignored here. There might be NULL in here. Check `column.is_null` for this.
             column_dict[column_name] = __get_datamatrix_column_values_ex(
                 column, model_cache, enum_as_string, entity, date_as_timestamp, prefer_np_array_for_unknown
             )
 
-    return pd.DataFrame(column_dict)
+            if is_null_to_nan and column.is_null is not None and len(column.is_null) > 0:
+                if any(column.is_null):  # Only store if there are actual null values
+                    target_length = len(column_dict[column_name])
+                    null_mask_length = len(column.is_null)
+                    if null_mask_length > target_length:
+                        # Truncate to target length
+                        null_masks[column_name] = column.is_null[:target_length]
+                    elif null_mask_length < target_length:
+                        # Extend with False values
+                        null_masks[column_name] = list(column.is_null) + [False] * (target_length - null_mask_length)
+                    else:
+                        null_masks[column_name] = column.is_null
+
+    rv = pd.DataFrame(column_dict)
+
+    # Apply null masks after DataFrame creation for better efficiency and type handling
+    if is_null_to_nan and null_masks:
+        for column_name, null_mask in null_masks.items():
+            mask_array = np.array(null_mask)
+
+            if rv[column_name].dtype == bool:
+                rv[column_name] = rv[column_name].astype(object)
+
+            rv.loc[mask_array, column_name] = pd.NA
+
+    return rv
