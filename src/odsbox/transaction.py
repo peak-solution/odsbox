@@ -14,7 +14,7 @@ class Transaction:
 
     __con_i: "ConI | None" = None
 
-    def __init__(self, con_i: ConI):
+    def __init__(self, con_i: "ConI"):
         con_i.transaction_create()
         self.__con_i = con_i
 
