@@ -43,6 +43,16 @@ class BulkReader:
     BulkReader is a class for reading data in bulk from a ConI instance.
     It contains some convenient methods for querying and retrieving bulk data.
 
+    Example::
+        from odsbox.con_i import ConI
+
+        with ConI(
+            url="https://MYSERVER/api",
+            auth=("USER", "PASSWORD"),
+        ) as con_i:
+            submatrix_id = 1234
+            df = con_i.bulk.data_read(submatrix_id, ["Time", "Co*"])
+
     Remark: If the provided methods do not work for a client the source code can be used
     to create customer specific code to retrieve bulk data.
     """
@@ -153,6 +163,18 @@ class BulkReader:
         """
         Query bulk data for local columns based on the provided Jaquel query condition.
         This method can be used to retrieve local columns bulk data based on a Jaquel query.
+
+        Example::
+            from odsbox.con_i import ConI
+
+            with ConI(
+                url="https://MYSERVER/api",
+                auth=("USER", "PASSWORD"),
+            ) as con_i:
+                conditions = {"submatrix.measurement.name": {"$like": "Profile_5?"}}
+                con_i.bulk.add_column_filters(conditions, ["Time", "Coolant"], column_patterns_case_insensitive=False)
+                df = con_i.bulk.query(conditions)
+
         :param dict localcolumn_jaquel_condition: Jaquel query condition for local columns.
                                                 `{"AoLocalColumn": localcolumn_jaquel_condition}`
                                                 is used to determine the local columns to load.
@@ -163,6 +185,8 @@ class BulkReader:
         :param int values_start: Zero-based starting index for the values to be processed. Used for chunk loading.
         :param int values_limit: Maximum number of values to be retrieved in this chunk. 0 means all remaining values.
         :param bool calculate_raw: Whether to calculate raw values for certain raw sequence representations.
+        :raises requests.HTTPError: If access fails.
+        :return DataFrame: The Pandas.DataFrame contains the local_column.values as DataFrame column.
         """
 
         lc_meta_df: pd.DataFrame = self.__con_i.query_data(
@@ -260,6 +284,16 @@ class BulkReader:
         Loads an ASAM ODS SubMatrix and returns it as a pandas DataFrame. The method uses the HTTP API method
         `data_read` to retrieve the data.
 
+        Example::
+            from odsbox.con_i import ConI
+
+            with ConI(
+                url="https://MYSERVER/api",
+                auth=("USER", "PASSWORD"),
+            ) as con_i:
+                submatrix_id = 1234
+                df = con_i.bulk.data_read(submatrix_id, ["Time", "Co*"])
+
         :param int submatrix_iid: The ID of the submatrix to load.
         :param list[str] | None column_patterns: List of column name patterns to filter the columns.
                                                  If None, all columns are loaded. `*?` is used as a wildcard.
@@ -268,6 +302,8 @@ class BulkReader:
         :param bool set_independent_as_index: Whether to set the independent column as the index.
         :param int values_start: Zero-based starting index for the values to be processed. Used for chunk loading.
         :param int values_limit: Maximum number of values to be retrieved in this chunk. 0 means all remaining values.
+        :raises requests.HTTPError: If access fails.
+        :return DataFrame: The Pandas.DataFrame contains the local_column.values as DataFrame column.
         """
 
         conditions = {"submatrix": submatrix_iid}
@@ -302,13 +338,25 @@ class BulkReader:
     ) -> pd.DataFrame:
         """
         Loads an ASAM ODS SubMatrix and returns it as a pandas DataFrame.
+
+        Example::
+            from odsbox.con_i import ConI
+
+            with ConI(
+                url="https://MYSERVER/api",
+                auth=("USER", "PASSWORD"),
+            ) as con_i:
+                submatrix_id = 1234
+                df = con_i.bulk.valuematrix_read(submatrix_id, ["Time", "Co*"])
+
         :param int submatrix_iid: The ID of the submatrix to load.
         :param list[str] | None column_patterns: List of column name patterns to filter the columns.
                                                  If None, all columns are loaded. `*?` is used as a wildcard.
-        :param bool column_patterns_case_insensitive: Whether to treat column name patterns as case insensitive.
         :param bool date_as_timestamp: Whether to treat date columns as timestamps.
         :param int values_start: Zero-based starting index for the values to be processed. Used for chunk loading.
         :param int values_limit: Maximum number of values to be retrieved in this chunk. 0 means all remaining values.
+        :raises requests.HTTPError: If access fails.
+        :return DataFrame: The Pandas.DataFrame contains the local_column.values as DataFrame column.
         """
         sm_e = self.__con_i.mc.entity_by_base_name("AoSubmatrix")
         lc_e = self.__con_i.mc.entity_by_base_name("AoLocalColumn")
@@ -342,7 +390,9 @@ class BulkReader:
         column_patterns_case_insensitive: bool,
     ) -> None:
         """
-        Add filter conditions for AoLocalColumn to match column patterns.
+        Add filter conditions for AoLocalColumn to match column patterns. This is just a helper method
+        to create the Jaquel conditions for local columns names based on the column patterns.
+
         :param dict conditions: The conditions dictionary to update.
         :param list[str] | None column_patterns: List of column name patterns to filter the columns.
                                                 Wildcards `*` and `?` are supported.
