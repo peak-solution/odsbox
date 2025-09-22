@@ -753,6 +753,7 @@ class ConI:
         Get the bulk reader for the current session.
 
         Example::
+
             from odsbox.con_i import ConI
 
             with ConI(
