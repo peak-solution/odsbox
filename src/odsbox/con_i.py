@@ -752,6 +752,16 @@ class ConI:
         """
         Get the bulk reader for the current session.
 
+        Example::
+            from odsbox.con_i import ConI
+
+            with ConI(
+                url="https://MYSERVER/api",
+                auth=("USER", "PASSWORD"),
+            ) as con_i:
+                submatrix_id = 1234
+                df = con_i.bulk.data_read(submatrix_id, ["Time", "Co*"])
+
         :return ods.BulkReader: BulkReader object for reading data in bulk.
         """
         if self.__session is None:
