@@ -57,7 +57,7 @@ class BulkReader:
     to create customer specific code to retrieve bulk data.
     """
 
-    def __init__(self, con_i: "ConI"):
+    def __init__(self, con_i: ConI):
         """Initialize the BulkReader with a ConI instance."""
         self.__con_i = con_i
 
