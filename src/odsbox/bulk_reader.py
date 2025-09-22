@@ -44,6 +44,7 @@ class BulkReader:
     It contains some convenient methods for querying and retrieving bulk data.
 
     Example::
+
         from odsbox.con_i import ConI
 
         with ConI(
@@ -165,6 +166,7 @@ class BulkReader:
         This method can be used to retrieve local columns bulk data based on a Jaquel query.
 
         Example::
+
             from odsbox.con_i import ConI
 
             with ConI(
@@ -285,6 +287,7 @@ class BulkReader:
         `data_read` to retrieve the data.
 
         Example::
+
             from odsbox.con_i import ConI
 
             with ConI(

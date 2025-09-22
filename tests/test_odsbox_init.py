@@ -51,7 +51,10 @@ def test_odsbox_version_attribute():
 
     assert hasattr(odsbox, "__version__")
     assert isinstance(odsbox.__version__, str)
-    assert odsbox.__version__ == "1.0.11"
+    version_parts = odsbox.__version__.split(".")
+    assert len(version_parts) == 3
+    for part in version_parts:
+        assert part.isdigit()
 
 
 def test_odsbox_lazy_loading_behavior():
