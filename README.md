@@ -1,8 +1,7 @@
 # ASAM ODSBox
 
 The [*ODSBox*](https://peak-solution.github.io/odsbox) is a lightweight Python wrapper on the standardized [ASAM ODS REST API](https://www.asam.net/standards/detail/ods/wiki/).
-Using intuitive JAQuel queries and [pandas.DataFrames](https://pandas.pydata.org/) the *ODSBox* makes dealing with ASAM ODS
-data in Python more fun.
+It simplifies the handling of ASAM ODS data in Python by utilizing intuitive [JAQuel](https://peak-solution.github.io/odsbox/jaquel.html#examples) queries and [pandas DataFrames](https://pandas.pydata.org/).
 
 ``` python
 from odsbox.con_i import ConI
@@ -31,7 +30,7 @@ The messages are encode/decoded using ASAM ODS [protobuf](https://protobuf.dev/p
 
 ## JAQuel Queries
 
-JAQuel allows you to query your data in a simple and intuitive way inspired
+[JAQuel](https://peak-solution.github.io/odsbox/jaquel.html#examples) allows you to query your data in a simple and intuitive way inspired
 by [MongoDB Query Language (MQL)](https://www.mongodb.com/docs/manual/tutorial/query-documents/).
 The definition of query expression as JSON easily integrates with the Python language – a win-win situation.
 
