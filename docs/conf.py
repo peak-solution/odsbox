@@ -77,3 +77,9 @@ templates_path = ["_templates"]
 # Napoleon settings
 napoleon_include_init_with_doc = True
 napoleon_include_private_with_doc = True
+
+# Autodoc settings
+autodoc_typehints = "description"
+
+# Suppress warnings for multiple targets (e.g., ConI available both as odsbox.ConI and odsbox.con_i.ConI)
+suppress_warnings = ["ref.python"]
