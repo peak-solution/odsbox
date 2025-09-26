@@ -42,6 +42,7 @@ extensions = [
     "sphinx.ext.githubpages",
     "sphinx_sitemap",
     "myst_parser",
+    "sphinx_design",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
