@@ -11,6 +11,7 @@ Welcome to ASAM ODSBox docs's documentation!
    overview
    odsbox
    jaquel
+   jaquel_examples
    repository_rules
 
 Indices and tables
