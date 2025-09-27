@@ -4,3 +4,4 @@ sphinx-design
 sphinx-rtd-theme
 sphinx-sitemap
 myst_parser
+nbsphinx

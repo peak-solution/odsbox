@@ -43,6 +43,7 @@ extensions = [
     "sphinx_sitemap",
     "myst_parser",
     "sphinx_design",
+    "nbsphinx",  # Jupyter notebook support
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -83,3 +84,7 @@ autodoc_typehints = "description"
 
 # Suppress warnings for multiple targets (e.g., ConI available both as odsbox.ConI and odsbox.con_i.ConI)
 suppress_warnings = ["ref.python"]
+
+# NBSphinx settings
+nbsphinx_execute = "never"  # Don't execute notebooks during build (they contain connection examples)
+nbsphinx_allow_errors = True  # Allow errors in notebook cells (useful for examples that need server connection)
