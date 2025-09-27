@@ -343,6 +343,7 @@ class BulkReader:
         Loads an ASAM ODS SubMatrix and returns it as a pandas DataFrame.
 
         Example::
+
             from odsbox.con_i import ConI
 
             with ConI(
