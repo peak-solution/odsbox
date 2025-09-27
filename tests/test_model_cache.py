@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-import pytest
 
+import pytest
 from google.protobuf.json_format import Parse
 
 from odsbox.model_cache import ModelCache

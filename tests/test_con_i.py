@@ -1,19 +1,21 @@
 """Integration test for ASAM ODS session"""
 
-from _pytest.fixtures import FixtureRequest
-from odsbox.con_i import ConI
-from odsbox.submatrix_to_pandas import submatrix_to_pandas
-from odsbox.jaquel import jaquel_to_ods
-from odsbox.security import Security
-import odsbox.proto.ods_pb2 as ods
-import odsbox.proto.ods_security_pb2 as ods_security
-
-from google.protobuf.json_format import MessageToJson
+from __future__ import annotations
 
 import logging
-import pytest
 import os
 import tempfile
+
+import pytest
+from _pytest.fixtures import FixtureRequest
+from google.protobuf.json_format import MessageToJson
+
+import odsbox.proto.ods_pb2 as ods
+import odsbox.proto.ods_security_pb2 as ods_security
+from odsbox.con_i import ConI
+from odsbox.jaquel import jaquel_to_ods
+from odsbox.security import Security
+from odsbox.submatrix_to_pandas import submatrix_to_pandas
 
 
 def __create_con_i(load_model: bool = True) -> ConI:

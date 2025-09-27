@@ -1,15 +1,17 @@
 # pylint: disable=C0114, C0115, C0116, E1101
-import os
+from __future__ import annotations
+
 import json
+import logging
+import os
 from datetime import datetime
 from pathlib import Path
-import logging
-import pytest
 
+import pytest
 from google.protobuf.json_format import MessageToJson, Parse
 
-from odsbox.jaquel import jaquel_to_ods
 import odsbox.proto.ods_pb2 as ods
+from odsbox.jaquel import jaquel_to_ods
 
 
 def __get_model(model_file_name):

@@ -3,14 +3,23 @@
 This module provides convenient access to ASAM ODS protobuf definitions
 with lazy loading for better performance.
 
-Example:
+Example::
+
     from odsbox.proto import ods, ods_security
 
     # Create a model instance
     model = ods.Model()
+
 """
 
 from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from . import ods_notification_pb2 as ods_notification
+    from . import ods_pb2 as ods
+    from . import ods_security_pb2 as ods_security
 
 
 def __getattr__(name: str):

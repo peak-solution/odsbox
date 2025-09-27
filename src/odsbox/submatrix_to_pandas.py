@@ -1,5 +1,7 @@
 """converts a submatrix delivered as a datamatrix protobuf object into a pandas DataFrame."""
 
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 import pandas as pd
@@ -22,7 +24,7 @@ def __get_column_from_dms(dms: ods.DataMatrices, entity: ods.Model.Entity, name:
 
 
 def __convert_bulk_to_pandas_data_frame(
-    con_i: "ConI",
+    con_i: ConI,
     local_column_id_lookup: dict,
     localcolumn_bulk: ods.DataMatrices,
     date_as_timestamp: bool,
@@ -80,14 +82,14 @@ def __convert_bulk_to_pandas_data_frame(
 
 
 def submatrix_to_pandas(
-    con_i: "ConI",
+    con_i: ConI,
     submatrix_iid: int,
     date_as_timestamp: bool = False,
 ) -> pd.DataFrame:
     """
     Loads an ASAM ODS SubMatrix and returns it as a pandas DataFrame.
 
-    .. deprecated:: 1.8.0
+    .. deprecated:: 1.0.8
         Use ConI.bulk.data_read instead. Stays because of compatibility reasons.
 
     :param ConI con_i: ASAM ODS server session.

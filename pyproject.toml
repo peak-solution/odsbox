@@ -112,7 +112,7 @@ venv = "env37"
 reportMissingImports = true
 reportMissingTypeStubs = false
 
-pythonVersion = "3.7"
+pythonVersion = "3.10"
 pythonPlatform = "Linux"
 
 executionEnvironments = [{ root = "src" }]

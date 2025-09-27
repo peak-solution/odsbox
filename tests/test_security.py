@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 from unittest import mock
-from odsbox.security import Security
 
 import odsbox.proto.ods_security_pb2 as ods_security
+from odsbox.security import Security
 
 
 class DummyResponse:

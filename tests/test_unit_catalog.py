@@ -1,9 +1,11 @@
 """Integration test for ASAM ODS session"""
 
-from odsbox.con_i import ConI
-from odsbox.unit_catalog import UnitCatalog
+from __future__ import annotations
 
 import pytest
+
+from odsbox.con_i import ConI
+from odsbox.unit_catalog import UnitCatalog
 
 
 def __create_con_i():

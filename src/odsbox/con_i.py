@@ -17,7 +17,6 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import List, Tuple
 
 import requests
 import requests.auth
@@ -26,12 +25,12 @@ from google.protobuf.message import Message
 from pandas import DataFrame
 
 import odsbox.proto.ods_pb2 as ods
+from odsbox.bulk_reader import BulkReader
 from odsbox.datamatrices_to_pandas import to_pandas
 from odsbox.jaquel import jaquel_to_ods
 from odsbox.model_cache import ModelCache
-from odsbox.transaction import Transaction
 from odsbox.security import Security
-from odsbox.bulk_reader import BulkReader
+from odsbox.transaction import Transaction
 
 
 class ConI:
@@ -59,12 +58,12 @@ class ConI:
     def __init__(
         self,
         url: str = "http://localhost:8080/api",
-        auth: requests.auth.AuthBase | Tuple[str, str] = ("sa", "sa"),
+        auth: requests.auth.AuthBase | tuple[str, str] = ("sa", "sa"),
         context_variables: ods.ContextVariables | dict | None = None,
         verify_certificate: bool = True,
         load_model: bool = True,
         allow_redirects: bool = False,
-    ):
+    ) -> None:
         """
         Create a session object keeping track of ASAM ODS session URL named `conI`.
 
@@ -147,14 +146,16 @@ class ConI:
             # lets cache the model
             self.model_read()
 
-    def __del__(self):
+    def __del__(self) -> None:
         if self.__session is not None:
             self.logout()
 
-    def __enter__(self):
+    def __enter__(self) -> ConI:
         return self
 
-    def __exit__(self, exc_type, exc_value, exc_traceback):
+    def __exit__(
+        self, exc_type: type[BaseException] | None, exc_value: BaseException | None, exc_traceback: object
+    ) -> None:
         self.logout()
 
     def con_i_url(self) -> str:
@@ -167,7 +168,7 @@ class ConI:
             raise ValueError("ConI already closed")
         return self.__con_i
 
-    def logout(self):
+    def logout(self) -> None:
         """
         Close the attached session at the ODS server by calling delete on the session URL
         and closing the requests session.
@@ -265,7 +266,7 @@ class ConI:
         return_value.ParseFromString(response.content)
         return return_value
 
-    def data_create(self, data: ods.DataMatrices) -> List[int]:
+    def data_create(self, data: ods.DataMatrices) -> list[int]:
         """
         Create new ASAM ODS instances or write bulk data.
 
@@ -518,7 +519,7 @@ class ConI:
         return_value.ParseFromString(response.content)
         return return_value
 
-    def context_update(self, context_variables: ods.ContextVariables):
+    def context_update(self, context_variables: ods.ContextVariables) -> None:
         """
         Set context variables for current session. This will set context variables for the given session.
         If new session is created they will fall back to their default.
@@ -706,7 +707,7 @@ class ConI:
         return response
 
     @staticmethod
-    def check_requests_response(response: requests.Response):
+    def check_requests_response(response: requests.Response) -> None:
         if response.status_code not in (200, 201):
             response.headers
             if (
