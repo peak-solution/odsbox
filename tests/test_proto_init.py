@@ -1,7 +1,10 @@
 """Tests for odsbox.proto lazy loading functionality"""
 
-import pytest
+from __future__ import annotations
+
 import sys
+
+import pytest
 
 
 def test_proto_lazy_import_ods():
@@ -37,7 +40,7 @@ def test_proto_lazy_import_ods_notification():
 
 def test_proto_lazy_import_multiple():
     """Test importing multiple modules at once"""
-    from odsbox.proto import ods, ods_security, ods_notification
+    from odsbox.proto import ods, ods_notification, ods_security
 
     assert hasattr(ods, "Model")
     assert hasattr(ods_security, "SecurityInfo")
@@ -77,6 +80,7 @@ def test_proto_all_contains_expected_modules():
 def test_proto_lazy_loading_behavior():
     """Test that modules are only loaded when accessed"""
     import importlib
+
     import odsbox.proto as proto
 
     # Force reload of the proto module to clear any caching

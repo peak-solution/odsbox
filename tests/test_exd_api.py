@@ -1,5 +1,7 @@
 """Check if import of ext data works"""
 
+from __future__ import annotations
+
 import odsbox.proto.ods_external_data_pb2 as exd_data
 
 

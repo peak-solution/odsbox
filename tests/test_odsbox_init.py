@@ -1,7 +1,10 @@
 """Tests for odsbox.__init__ lazy loading functionality"""
 
-import pytest
+from __future__ import annotations
+
 import sys
+
+import pytest
 
 
 def test_odsbox_lazy_import_coni():
@@ -60,6 +63,7 @@ def test_odsbox_version_attribute():
 def test_odsbox_lazy_loading_behavior():
     """Test that modules are only loaded when accessed"""
     import importlib
+
     import odsbox
 
     # Force reload to clear any caching
@@ -105,10 +109,9 @@ def test_odsbox_import_from_star():
 def test_odsbox_backwards_compatibility():
     """Test that old import style still works"""
     # Old style imports should still work
-    from odsbox.con_i import ConI as ConI_old
-
     # New style imports
     from odsbox import ConI
+    from odsbox.con_i import ConI as ConI_old
 
     # Should be the same object
     assert ConI is ConI_old

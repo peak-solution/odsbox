@@ -13,12 +13,13 @@ Example::
 """
 
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from . import ods_notification_pb2 as ods_notification
     from . import ods_pb2 as ods
     from . import ods_security_pb2 as ods_security
-    from . import ods_notification_pb2 as ods_notification
 
 
 def __getattr__(name: str):

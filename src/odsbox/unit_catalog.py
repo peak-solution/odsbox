@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import logging
-
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .con_i import ConI
+
 import odsbox.proto.ods_pb2 as ods
 
 
@@ -19,7 +19,7 @@ class UnitCatalog:
 
     __log: logging.Logger = logging.getLogger(__name__)
 
-    def __init__(self, con_i: "ConI"):
+    def __init__(self, con_i: ConI):
         self.__con_i = con_i
         units_df = con_i.query_data({"AoUnit": {}, "$attributes": {"name": 1, "id": 1}})
         self.__unit_map = {}

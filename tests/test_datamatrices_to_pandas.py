@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import logging
+
 import numpy as np
 
 import odsbox.proto.ods_pb2 as ods

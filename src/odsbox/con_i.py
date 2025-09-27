@@ -17,7 +17,6 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import List, Tuple
 
 import requests
 import requests.auth
@@ -26,12 +25,12 @@ from google.protobuf.message import Message
 from pandas import DataFrame
 
 import odsbox.proto.ods_pb2 as ods
+from odsbox.bulk_reader import BulkReader
 from odsbox.datamatrices_to_pandas import to_pandas
 from odsbox.jaquel import jaquel_to_ods
 from odsbox.model_cache import ModelCache
-from odsbox.transaction import Transaction
 from odsbox.security import Security
-from odsbox.bulk_reader import BulkReader
+from odsbox.transaction import Transaction
 
 
 class ConI:
@@ -59,7 +58,7 @@ class ConI:
     def __init__(
         self,
         url: str = "http://localhost:8080/api",
-        auth: requests.auth.AuthBase | Tuple[str, str] = ("sa", "sa"),
+        auth: requests.auth.AuthBase | tuple[str, str] = ("sa", "sa"),
         context_variables: ods.ContextVariables | dict | None = None,
         verify_certificate: bool = True,
         load_model: bool = True,
@@ -265,7 +264,7 @@ class ConI:
         return_value.ParseFromString(response.content)
         return return_value
 
-    def data_create(self, data: ods.DataMatrices) -> List[int]:
+    def data_create(self, data: ods.DataMatrices) -> list[int]:
         """
         Create new ASAM ODS instances or write bulk data.
 

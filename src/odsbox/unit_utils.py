@@ -2,18 +2,22 @@
 Helps to access the unit catalog and find physical dimensions.
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from pandas import DataFrame
 
 import odsbox.proto.ods_pb2 as ods
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .con_i import ConI
+
 from odsbox.datamatrices_to_pandas import to_pandas
 
 
 def query_physical_dimensions(
-    con_i: "ConI",
+    con_i: ConI,
     length: int = 0,
     mass: int = 0,
     time: int = 0,
@@ -62,7 +66,7 @@ def query_physical_dimensions(
 
 
 def query_units(
-    con_i: "ConI",
+    con_i: ConI,
     length: int = 0,
     mass: int = 0,
     time: int = 0,
@@ -121,7 +125,7 @@ def query_units(
 
 
 def query_quantity(
-    con_i: "ConI",
+    con_i: ConI,
     length: int = 0,
     mass: int = 0,
     time: int = 0,

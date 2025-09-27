@@ -1,5 +1,7 @@
 """helper for handling transactions"""
 
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -12,9 +14,9 @@ class Transaction:
     If no commit is called it will abort the transaction if with sections is left.
     """
 
-    __con_i: "ConI | None" = None
+    __con_i: ConI | None = None
 
-    def __init__(self, con_i: "ConI"):
+    def __init__(self, con_i: ConI):
         con_i.transaction_create()
         self.__con_i = con_i
 

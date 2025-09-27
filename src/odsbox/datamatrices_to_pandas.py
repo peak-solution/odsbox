@@ -3,12 +3,12 @@ them to an pandas DataFrame for ease of use."""
 
 from __future__ import annotations
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 import odsbox.proto.ods_pb2 as ods
-from odsbox.model_cache import ModelCache
 from odsbox.asam_time import to_pd_timestamp
+from odsbox.model_cache import ModelCache
 
 
 def unknown_array_values(

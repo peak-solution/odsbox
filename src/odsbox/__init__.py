@@ -13,6 +13,7 @@ Example::
 """
 
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 __version__ = "1.0.12"

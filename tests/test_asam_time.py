@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from odsbox import asam_time
-
-import pytest
 import pandas as pd
+import pytest
+
+from odsbox import asam_time
 
 
 def test_from_pd_timestamp():

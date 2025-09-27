@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from datetime import datetime
 import json
 import re
-from typing import Tuple, List, Any
+from datetime import datetime
 from difflib import get_close_matches
+from typing import Any
 
 from google.protobuf.internal import containers as _containers
 
@@ -227,7 +227,7 @@ def _parse_path_and_add_joins(
     entity: ods.Model.Entity,
     attribute_path: str,
     joins: _containers.RepeatedCompositeFieldContainer[ods.SelectStatement.JoinItem],
-) -> Tuple["ods.DataTypeEnum", str, ods.Model.Entity]:
+) -> tuple[ods.DataTypeEnum, str, ods.Model.Entity]:
     attribute_type = ods.DataTypeEnum.DT_UNKNOWN
     attribute_name = ""
     attribute_entity = entity
@@ -532,7 +532,7 @@ def _set_condition_value(
     attribute_entity: ods.Model.Entity,
     attribute_name: str,
     attribute_type: ods.DataTypeEnum,
-    src_values: List[Any] | Any,
+    src_values: list[Any] | Any,
     condition_item: ods.SelectStatement.ConditionItem.Condition,
 ) -> None:
     if isinstance(src_values, list):
@@ -643,7 +643,7 @@ def _add_condition(
     target: ods.SelectStatement,
     condition_path: str,
     condition_operator: OperatorEnum,
-    condition_operand_value: List[Any] | Any,
+    condition_operand_value: list[Any] | Any,
     condition_unit_id: int,
     condition_options: str,
 ) -> None:
@@ -772,7 +772,7 @@ def _parse_conditions(
             attribute_dict["conjunction_count"] = attribute_dict["conjunction_count"] + 1
 
 
-def jaquel_to_ods(model: ods.Model, jaquel_query: str | dict) -> Tuple[ods.Model.Entity, ods.SelectStatement]:
+def jaquel_to_ods(model: ods.Model, jaquel_query: str | dict) -> tuple[ods.Model.Entity, ods.SelectStatement]:
     """
     Convert a given JAQueL query into an ASAM ODS SelectStatement.
 

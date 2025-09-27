@@ -1,5 +1,7 @@
 """Tests for the is_null_to_nan parameter in datamatrices_to_pandas.py"""
 
+from __future__ import annotations
+
 import pandas as pd
 
 import odsbox.proto.ods_pb2 as ods
