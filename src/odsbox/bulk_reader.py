@@ -9,8 +9,7 @@ import numpy as np
 import pandas as pd
 
 from odsbox.datamatrices_to_pandas import to_pandas
-from odsbox.proto.ods_pb2 import \
-    ValueMatrixRequestStruct  # pylint: disable=E0611
+from odsbox.proto.ods_pb2 import ValueMatrixRequestStruct  # pylint: disable=E0611
 
 if TYPE_CHECKING:
     from .con_i import ConI
