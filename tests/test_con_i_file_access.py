@@ -1,12 +1,15 @@
 """Integration test for ASAM ODS session"""
 
-import requests
-from odsbox.con_i import ConI
+from __future__ import annotations
+
+import os
+import tempfile
+from unittest import mock
 
 import pytest
-import os
-from unittest import mock
-import tempfile
+import requests
+
+from odsbox.con_i import ConI
 from odsbox.proto.ods_pb2 import FileIdentifier
 
 

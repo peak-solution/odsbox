@@ -3,16 +3,23 @@
 This package provides convenient access to ASAM ODS servers with lazy loading
 for better performance.
 
-Example:
+Example::
+
     from odsbox import ConI
 
     with ConI(url="http://localhost:8087/api", auth=("sa", "sa")) as con_i:
         units = con_i.query_data({"AoUnit": {}})
+
 """
 
 from __future__ import annotations
 
-__version__ = "1.0.11"
+from typing import TYPE_CHECKING
+
+__version__ = "1.0.12"
+
+if TYPE_CHECKING:
+    from .con_i import ConI
 
 
 def __getattr__(name: str):

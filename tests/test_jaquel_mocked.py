@@ -5,13 +5,16 @@ This file focuses on testing edge cases and error paths that aren't covered
 by the existing integration tests.
 """
 
-import pytest
-from unittest.mock import Mock, patch
-from datetime import datetime
+from __future__ import annotations
 
-from odsbox.jaquel import jaquel_to_ods
-import odsbox.proto.ods_pb2 as ods
+from datetime import datetime
+from unittest.mock import Mock, patch
+
+import pytest
+
 import odsbox.jaquel as jaquel
+import odsbox.proto.ods_pb2 as ods
+from odsbox.jaquel import jaquel_to_ods
 
 
 class TestJaquelEdgeCases:

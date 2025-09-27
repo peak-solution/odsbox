@@ -5,7 +5,7 @@ from __future__ import annotations
 import pandas as pd
 
 
-def __normalize_datetime_string(asam_time):
+def __normalize_datetime_string(asam_time: str) -> str:
     asam_time_len = len(asam_time)
     if asam_time_len < 8:
         raise SyntaxError("Time value mus at least contain year, month, day")

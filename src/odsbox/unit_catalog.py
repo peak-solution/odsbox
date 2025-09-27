@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import logging
-
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .con_i import ConI
+
 import odsbox.proto.ods_pb2 as ods
 
 
@@ -19,7 +19,7 @@ class UnitCatalog:
 
     __log: logging.Logger = logging.getLogger(__name__)
 
-    def __init__(self, con_i: "ConI"):
+    def __init__(self, con_i: ConI) -> None:
         self.__con_i = con_i
         units_df = con_i.query_data({"AoUnit": {}, "$attributes": {"name": 1, "id": 1}})
         self.__unit_map = {}
@@ -28,7 +28,7 @@ class UnitCatalog:
             unit_id = row.iloc[1]
             self.__unit_map[unit_name] = unit_id
 
-        self.unknown_physical_dimension = None
+        self.unknown_physical_dimension: int | None = None
 
     def get(self, unit_name: str) -> int | None:
         """
@@ -69,7 +69,7 @@ class UnitCatalog:
         unit_id = self.__create_auto_unit(unit_name, physical_dimension_id)
         return unit_id
 
-    def __get_or_create_unknown_physical_dimension(self):
+    def __get_or_create_unknown_physical_dimension(self) -> int:
         if self.unknown_physical_dimension is None:
             self.unknown_physical_dimension = self.__get_or_create_unknown_phys_dim("unknown")
 

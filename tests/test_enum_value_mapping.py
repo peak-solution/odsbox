@@ -5,9 +5,9 @@ from pathlib import Path
 
 from google.protobuf.json_format import Parse
 
-from odsbox.model_cache import ModelCache
-from odsbox.proto.ods_pb2 import Model, DataMatrices
 from odsbox.datamatrices_to_pandas import to_pandas
+from odsbox.model_cache import ModelCache
+from odsbox.proto.ods_pb2 import DataMatrices, Model
 
 
 def __get_model(model_file_name):

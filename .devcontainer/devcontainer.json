@@ -20,6 +20,7 @@
 				"ms-python.flake8",
 				"ms-python.black-formatter",
 				"ms-vsliveshare.vsliveshare",
+				"ms-vscode.live-server",
 				"ryanluker.vscode-coverage-gutters",
 				"tamasfe.even-better-toml",
 				"streetsidesoftware.code-spell-checker",

@@ -4,8 +4,9 @@
 # list see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
-# -- Path setup --------------------------------------------------------------
+from __future__ import annotations
 
+# -- Path setup --------------------------------------------------------------
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
@@ -15,7 +16,7 @@ import sys
 
 sys.path.insert(0, os.path.abspath("../src/"))
 
-import odsbox  # noqa
+import odsbox  # noqa: E402
 
 # -- Project information -----------------------------------------------------
 
@@ -42,6 +43,8 @@ extensions = [
     "sphinx.ext.githubpages",
     "sphinx_sitemap",
     "myst_parser",
+    "sphinx_design",
+    "nbsphinx",  # Jupyter notebook support
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -76,3 +79,13 @@ templates_path = ["_templates"]
 # Napoleon settings
 napoleon_include_init_with_doc = True
 napoleon_include_private_with_doc = True
+
+# Autodoc settings
+autodoc_typehints = "description"
+
+# Suppress warnings for multiple targets (e.g., ConI available both as odsbox.ConI and odsbox.con_i.ConI)
+suppress_warnings = ["ref.python"]
+
+# NBSphinx settings
+nbsphinx_execute = "never"  # Don't execute notebooks during build (they contain connection examples)
+nbsphinx_allow_errors = True  # Allow errors in notebook cells (useful for examples that need server connection)

@@ -70,7 +70,7 @@ security
    :show-inheritance:
 
 bulk_reader
----------
+-----------
 
 .. automodule:: odsbox.bulk_reader
    :members:

@@ -13,6 +13,13 @@ Welcome to ASAM ODSBox docs's documentation!
    jaquel
    repository_rules
 
+.. toctree::
+   :maxdepth: 2
+   :caption: Examples:
+
+   JAQuel/SelectStatement <jaquel_examples>
+   JAQuel Notebook <jaquel_examples_notebook.ipynb>
+
 Indices and tables
 ==================
 

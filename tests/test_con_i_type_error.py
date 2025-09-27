@@ -1,5 +1,8 @@
 # Negative type-check tests for ConI methods
+from __future__ import annotations
+
 import pytest
+
 from odsbox.con_i import ConI
 from odsbox.proto.ods_pb2 import DataMatrix
 

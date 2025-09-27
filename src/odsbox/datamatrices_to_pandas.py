@@ -3,12 +3,12 @@ them to an pandas DataFrame for ease of use."""
 
 from __future__ import annotations
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 import odsbox.proto.ods_pb2 as ods
-from odsbox.model_cache import ModelCache
 from odsbox.asam_time import to_pd_timestamp
+from odsbox.model_cache import ModelCache
 
 
 def unknown_array_values(
@@ -100,7 +100,7 @@ def __get_datamatrix_column_values(
     enumeration: ods.Model.Enumeration | None,
     date_as_timestamp: bool,
     prefer_np_array_for_unknown: bool,
-) -> list | None:
+) -> list | np.ndarray | None:
     if column.WhichOneof("ValuesOneOf") is None:
         return None
 
@@ -179,7 +179,7 @@ def __get_datamatrix_column_values_ex(
     entity: ods.Model.Entity | None,
     date_as_timestamp: bool,
     prefer_np_array_for_unknown: bool,
-) -> list:
+) -> list | np.ndarray:
     enumeration = None
     if (
         enum_as_string

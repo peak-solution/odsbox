@@ -73,7 +73,7 @@ pip install odsbox[exd-data]
 
 ## Contributing
 
-We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+We welcome contributions! See CONTRIBUTING.md for guidelines.
 
 ## License
 

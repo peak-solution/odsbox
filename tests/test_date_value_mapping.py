@@ -4,12 +4,12 @@ import os
 from pathlib import Path
 
 from google.protobuf.json_format import Parse
+from pandas import NaT, Timestamp
 
-from odsbox.model_cache import ModelCache
-from odsbox.proto.ods_pb2 import Model, DataMatrices
 import odsbox.proto.ods_pb2 as ods
 from odsbox.datamatrices_to_pandas import to_pandas
-from pandas import Timestamp, NaT
+from odsbox.model_cache import ModelCache
+from odsbox.proto.ods_pb2 import DataMatrices, Model
 
 
 def __get_model(model_file_name):
