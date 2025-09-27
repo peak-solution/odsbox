@@ -328,7 +328,7 @@ def _parse_attributes(
     target: ods.SelectStatement,
     element_dict: dict,
     attribute_dict: dict,
-):
+) -> None:
     for element in element_dict:
         element_attribute = attribute_dict.copy()
 

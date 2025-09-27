@@ -16,7 +16,7 @@ class ModelCache:
     __model: ods.Model
     __log: logging.Logger = logging.getLogger(__name__)
 
-    def __init__(self, model: ods.Model):
+    def __init__(self, model: ods.Model) -> None:
         self.__model = model
 
     def model(self) -> ods.Model:

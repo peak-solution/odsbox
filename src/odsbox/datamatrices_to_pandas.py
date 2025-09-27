@@ -100,7 +100,7 @@ def __get_datamatrix_column_values(
     enumeration: ods.Model.Enumeration | None,
     date_as_timestamp: bool,
     prefer_np_array_for_unknown: bool,
-) -> list | None:
+) -> list | np.ndarray | None:
     if column.WhichOneof("ValuesOneOf") is None:
         return None
 
@@ -179,7 +179,7 @@ def __get_datamatrix_column_values_ex(
     entity: ods.Model.Entity | None,
     date_as_timestamp: bool,
     prefer_np_array_for_unknown: bool,
-) -> list:
+) -> list | np.ndarray:
     enumeration = None
     if (
         enum_as_string

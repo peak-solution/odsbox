@@ -17,7 +17,7 @@ class Security:
     This class offers the ASAM ODS server security API
     """
 
-    def __init__(self, con_i: ConI):
+    def __init__(self, con_i: ConI) -> None:
         self.__con_i = con_i
 
     def security_read(self, security_read_request: ods_security.SecurityReadRequest) -> ods_security.SecurityInfo:
