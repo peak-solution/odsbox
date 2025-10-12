@@ -63,6 +63,8 @@ class ConI:
         verify_certificate: bool = True,
         load_model: bool = True,
         allow_redirects: bool = False,
+        connection_timeout: float = 60.0,
+        request_timeout: float = 600.0,
     ) -> None:
         """
         Create a session object keeping track of ASAM ODS session URL named `conI`.
@@ -107,6 +109,8 @@ class ConI:
             It defaults to True.
         :param bool load_model: If the model should be read after connection is established. It defaults to True.
         :param bool allow_redirects: If redirects should be allowed in requests calls. It defaults to False.
+        :param float connection_timeout: Timeout in seconds for establishing connections. It defaults to 60.0.
+        :param float request_timeout: Timeout in seconds for individual requests. It defaults to 600.0.
         :raises requests.HTTPError: If connection to ASAM ODS server fails.
         """
         self.__session: requests.Session | None = None
@@ -115,6 +119,8 @@ class ConI:
         self.__mc: ModelCache | None = None
         self.__allow_redirects: bool = allow_redirects
         self.__bulk_reader: BulkReader | None = None
+        self.__connection_timeout: float = connection_timeout
+        self.__request_timeout: float = request_timeout
 
         session = requests.Session()
         session.auth = auth
@@ -132,7 +138,7 @@ class ConI:
         response = session.post(
             url + "/ods",
             data=_context_variables.SerializeToString(),
-            timeout=60.0,
+            timeout=self.__connection_timeout,
             headers=self.__default_http_headers,
             allow_redirects=self.__allow_redirects,
         )
@@ -180,7 +186,7 @@ class ConI:
                 raise ValueError("ConI already closed")
             response = self.__session.delete(
                 self.__con_i,
-                timeout=60.0,
+                timeout=self.__connection_timeout,
                 headers={"Accept": "application/x-asamods+protobuf"},
                 allow_redirects=self.__allow_redirects,
             )
@@ -293,17 +299,19 @@ class ConI:
             raise TypeError(f"data_update expects 'ods.DataMatrices', got '{type(data).__name__}'")
         self.ods_post_request("data-update", data)
 
-    def data_delete(self, data: ods.DataMatrices) -> None:
+    def data_delete(self, data: ods.DataMatrices, timeout: float | None = None) -> None:
         """
         Delete existing instances.
 
         :param ods.DataMatrices data: Matrices containing columns for instances to be deleted.
             The `id` column is used to identify the instances to be deleted.
+        :param float | None timeout: maximal time to wait for response. Delete might take longer time.
+                                     Uses the request_timeout from constructor if None.
         :raises requests.HTTPError: If delete fails.
         """
         if not isinstance(data, ods.DataMatrices):
             raise TypeError(f"data_delete expects 'ods.DataMatrices', got '{type(data).__name__}'")
-        self.ods_post_request("data-delete", data)
+        self.ods_post_request("data-delete", data, timeout=timeout)
 
     def data_copy(self, copy_request: ods.CopyRequest) -> ods.Instance:
         """
@@ -594,6 +602,7 @@ class ConI:
             headers={
                 "Accept": "application/octet-stream, application/x-asamods+protobuf, */*",
             },
+            timeout=self.__request_timeout,
             allow_redirects=self.__allow_redirects,
         )
         self.check_requests_response(file_response)
@@ -647,6 +656,7 @@ class ConI:
                 server_file_url,
                 data=file,
                 headers={"Content-Type": "application/octet-stream", "Accept": "application/x-asamods+protobuf"},
+                timeout=self.__request_timeout,
                 allow_redirects=self.__allow_redirects,
             )
             self.check_requests_response(put_response)
@@ -672,6 +682,7 @@ class ConI:
         delete_response = self.__session.delete(
             server_file_url,
             headers={"Accept": "application/x-asamods+protobuf"},
+            timeout=self.__request_timeout,
             allow_redirects=self.__allow_redirects,
         )
         self.check_requests_response(delete_response)
@@ -680,7 +691,7 @@ class ConI:
         self,
         relative_url_part: str,
         message: Message | None = None,
-        timeout: float = 600.0,
+        timeout: float | None = None,
         headers: dict[str, str] | None = None,
     ) -> requests.Response:
         """
@@ -688,7 +699,8 @@ class ConI:
 
         :param str relative_url_part: url part that is joined to conI URL using `/`.
         :param Message | None message: protobuf message to be send, defaults to None.
-        :param float timeout: maximal time to wait for response.
+        :param float | None timeout: maximal time to wait for response.
+            If None, uses the request_timeout from constructor.
         :raises requests.HTTPError: If status code is not 200 or 201.
         :return requests.Response: requests response if successful.
         """
@@ -699,7 +711,7 @@ class ConI:
         response = self.__session.post(
             self.__con_i + "/" + relative_url_part,
             data=message.SerializeToString() if message is not None else None,
-            timeout=timeout,
+            timeout=timeout if timeout is not None else self.__request_timeout,
             headers=(headers if headers is not None else self.__default_http_headers),
             allow_redirects=self.__allow_redirects,
         )
