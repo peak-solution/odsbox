@@ -119,7 +119,7 @@ def _model_get_entity_ex(model: ods.Model, entity_name_or_aid: str | int) -> ods
             entity = model.entities[key]
             if entity.aid == entity_aid:
                 return entity
-        raise SyntaxError(f"{entity_aid} is no valid entity aid.")
+        raise SyntaxError(f"'{entity_aid}' is not a valid entity aid.")
 
     for key in model.entities:
         entity = model.entities[key]
@@ -305,6 +305,11 @@ def _add_join_to_seq(
     )
 
 
+def _suggestion_for_options(option_name: str) -> str:
+    available = {key.lower(): key for key in ["$rowlimit", "$rowskip", "$seqlimit", "$seqskip"]}
+    return _model_get_suggestion(available, option_name)
+
+
 def _parse_global_options(elem_dict: dict, target: ods.SelectStatement) -> None:
     for elem in elem_dict:
         if elem.startswith("$"):
@@ -317,9 +322,9 @@ def _parse_global_options(elem_dict: dict, target: ods.SelectStatement) -> None:
             elif "$seqskip" == elem:
                 target.values_start = int(elem_dict[elem])
             else:
-                raise SyntaxError('Undefined options "' + elem + '"')
+                raise SyntaxError(f"Unknown option '{elem}'.{_suggestion_for_options(elem)}")
         else:
-            raise SyntaxError('No undefined options allowed "' + elem + '"')
+            raise SyntaxError(f"No undefined options allowed '{elem}'.{_suggestion_for_options(elem)}")
 
 
 def _parse_attributes(
@@ -339,7 +344,7 @@ def _parse_attributes(
                 element_attribute["unit"] = element_dict[element]
                 continue
             elif "$options" == element:
-                raise SyntaxError("Actually no $options defined for attributes")
+                raise SyntaxError("No $options are defined for attributes.")
             else:
                 raise SyntaxError(f"Unknown aggregate '{element}'.{_model_get_suggestion_aggregate(element)}")
         else:
@@ -350,7 +355,7 @@ def _parse_attributes(
         if isinstance(element_dict[element], dict):
             _parse_attributes(model, entity, target, element_dict[element], element_attribute)
         elif isinstance(element_dict[element], list):
-            raise SyntaxError("attributes is not allowed to contain arrays")
+            raise SyntaxError("Attributes are not allowed to contain arrays. Use dictionary setting value to 1.")
         else:
             _attribute_type, attribute_name, attribute_entity = _parse_path_and_add_joins(
                 model, entity, element_attribute["path"], target.joins
@@ -375,7 +380,7 @@ def _parse_orderby(
 ) -> None:
     for elem in element_dict:
         if elem.startswith("$"):
-            raise SyntaxError(f"no predefined element '{elem}' defined in orderby")
+            raise SyntaxError(f"No predefined element '{elem}' defined in orderby.")
         elem_attribute = attribute_dict.copy()
         if elem_attribute["path"]:
             elem_attribute["path"] += "."
@@ -384,7 +389,7 @@ def _parse_orderby(
         if isinstance(element_dict[elem], dict):
             _parse_orderby(model, entity, target, element_dict[elem], elem_attribute)
         elif isinstance(element_dict[elem], list):
-            raise SyntaxError("attributes is not allowed to contain arrays")
+            raise SyntaxError("Attributes are not allowed to contain arrays. Use dictionary setting value to 1.")
         else:
             _attribute_type, attribute_name, attribute_entity = _parse_path_and_add_joins(
                 model, entity, elem_attribute["path"], target.joins
@@ -395,7 +400,7 @@ def _parse_orderby(
             elif 1 == element_dict[elem]:
                 order = ods.SelectStatement.OrderByItem.OD_ASCENDING
             else:
-                raise SyntaxError(str(element_dict[elem]) + " not supported for orderby")
+                raise SyntaxError(f"'{element_dict[elem]}' is not supported for orderby.")
             target.order_by.add(aid=attribute_entity.aid, attribute=attribute_name, order=order)
 
 
@@ -408,7 +413,7 @@ def _parse_groupby(
 ) -> None:
     for elem in element_dict:
         if elem.startswith("$"):
-            raise SyntaxError(f"no predefined element '{elem}' defined in orderby")
+            raise SyntaxError(f"No predefined element '{elem}' defined in orderby.")
         elem_attribute = attribute_dict.copy()
         if elem_attribute["path"]:
             elem_attribute["path"] += "."
@@ -416,10 +421,10 @@ def _parse_groupby(
         if isinstance(element_dict[elem], dict):
             _parse_groupby(model, entity, target, element_dict[elem], elem_attribute)
         elif isinstance(element_dict[elem], list):
-            raise SyntaxError("attributes is not allowed to contain arrays")
+            raise SyntaxError("Attributes are not allowed to contain arrays. Use dictionary setting value to 1.")
         else:
             if 1 != element_dict[elem]:
-                raise SyntaxError(str(element_dict[elem]) + " only 1 supported in groupby")
+                raise SyntaxError(f"Only 1 is supported in groupby, but '{element_dict[elem]}' was provided.")
             _attribute_type, attribute_name, attribute_entity = _parse_path_and_add_joins(
                 model, entity, elem_attribute["path"], target.joins
             )
@@ -431,22 +436,22 @@ def _parse_conditions_conjunction(
     entity: ods.Model.Entity,
     conjunction: ods.SelectStatement.ConditionItem.ConjuctionEnum,
     target: ods.SelectStatement,
-    element_dict: dict,
+    element_list: list,
     attribute_dict: dict,
 ) -> None:
-    if not isinstance(element_dict, list):
-        raise SyntaxError("$and and $or must always contain array")
+    if not isinstance(element_list, list):
+        raise SyntaxError("$and and $or must always contain an array.")
 
     if attribute_dict["conjunction_count"] > 0:
         target.where.add().conjunction = attribute_dict["conjunction"]
 
-    if len(element_dict) > 1:
+    if len(element_list) > 1:
         target.where.add().conjunction = ods.SelectStatement.ConditionItem.ConjuctionEnum.CO_OPEN
 
     first_time = True
-    for elem in element_dict:
-        if not isinstance(element_dict, object):
-            raise SyntaxError("$and and $or array always contains objects")
+    for elem in element_list:
+        if not isinstance(elem, dict):
+            raise SyntaxError("$and and $or arrays must always contain dictionaries.")
 
         if not first_time:
             target.where.add().conjunction = conjunction
@@ -460,7 +465,7 @@ def _parse_conditions_conjunction(
         target.where.add().conjunction = ods.SelectStatement.ConditionItem.ConjuctionEnum.CO_CLOSE
         first_time = False
 
-    if len(element_dict) > 1:
+    if len(element_list) > 1:
         target.where.add().conjunction = ods.SelectStatement.ConditionItem.ConjuctionEnum.CO_CLOSE
 
 
@@ -471,8 +476,8 @@ def _parse_conditions_not(
     element_dict: dict,
     attribute_dict: dict,
 ) -> None:
-    if not isinstance(element_dict, object):
-        raise SyntaxError("$not must always contain object")
+    if not isinstance(element_dict, dict):
+        raise SyntaxError("$not must always contain a dictionary.")
 
     if attribute_dict["conjunction_count"] > 0:
         target.where.add().conjunction = attribute_dict["conjunction"]
@@ -595,7 +600,7 @@ def _set_condition_value(
             for src_value in src_values:
                 condition_item.string_array.values.append(str(src_value))
         else:
-            raise ValueError(f"Unknown how to attach array, does not exist as {attribute_type} union.")
+            raise SyntaxError(f"Unable to attach array value for data type '{attribute_type}'.")
     else:
         if attribute_type == ods.DataTypeEnum.DT_BYTE:
             condition_item.byte_array.values = bytes([int(src_values)])
@@ -620,7 +625,7 @@ def _set_condition_value(
                 _jo_enum_get_numeric_value(model, attribute_entity, attribute_name, src_values)
             )
         else:
-            raise ValueError(f"Unknown how to attach '{src_values}' does not exist as {attribute_type} union.")
+            raise SyntaxError(f"Unable to attach value '{src_values}' for data type '{attribute_type}'.")
 
 
 def _get_ods_operator(
@@ -727,7 +732,7 @@ def _parse_conditions(
                 # This is a nested statement, handle it specially
                 current_operator = elem_attribute.get("operator")
                 if current_operator in (OperatorEnum.OP_IS_NULL, OperatorEnum.OP_IS_NOT_NULL):
-                    raise SyntaxError("$nested cannot be used with $null or $notnull operators")
+                    raise SyntaxError("$nested cannot be used with $null or $notnull operators.")
 
                 if 0 != attribute_dict["conjunction_count"]:
                     target.where.add().conjunction = elem_attribute["conjunction"]
@@ -772,6 +777,11 @@ def _parse_conditions(
             attribute_dict["conjunction_count"] = attribute_dict["conjunction_count"] + 1
 
 
+def _top_elem_get_suggestion(str_val: str) -> str:
+    available = {k: k for k in ["$attributes", "$orderby", "$groupby", "$options"]}
+    return _model_get_suggestion(available, str_val)
+
+
 def jaquel_to_ods(model: ods.Model, jaquel_query: str | dict) -> tuple[ods.Model.Entity, ods.SelectStatement]:
     """
     Convert a given JAQueL query into an ASAM ODS SelectStatement.
@@ -789,6 +799,9 @@ def jaquel_to_ods(model: ods.Model, jaquel_query: str | dict) -> tuple[ods.Model
     else:
         query = json.loads(jaquel_query)
 
+    if not isinstance(query, dict):
+        raise SyntaxError(f"Invalid JAQueL query format '{type(query)}' only dict allowed.")
+
     entity = None
     aid = None
 
@@ -798,7 +811,7 @@ def jaquel_to_ods(model: ods.Model, jaquel_query: str | dict) -> tuple[ods.Model
     for elem in query:
         if not (isinstance(elem, str) and elem.startswith("$")):
             if entity is not None:
-                raise SyntaxError('Only one start point allowed "' + elem + '"')
+                raise SyntaxError(f"Only one start point allowed '{elem}'.{_top_elem_get_suggestion(elem)}")
 
             entity = _model_get_entity_ex(model, elem)
             aid = entity.aid
@@ -834,7 +847,9 @@ def jaquel_to_ods(model: ods.Model, jaquel_query: str | dict) -> tuple[ods.Model
                 )
 
     if entity is None:
-        raise SyntaxError("Does not define a target entity.")
+        raise SyntaxError(
+            "Does not define a target entity. Dictionary must contain at least one entity base or application name."
+        )
 
     # parse the others
     for elem in query:
@@ -854,7 +869,7 @@ def jaquel_to_ods(model: ods.Model, jaquel_query: str | dict) -> tuple[ods.Model
             elif "$options" == elem:
                 _parse_global_options(query[elem], qse)
             else:
-                raise SyntaxError('unknown first level define "' + elem + '"')
+                raise SyntaxError(f"Unknown first level define '{elem}'.{_top_elem_get_suggestion(elem)}")
 
     if 0 == len(qse.columns):
         qse.columns.add(aid=aid, attribute="*")

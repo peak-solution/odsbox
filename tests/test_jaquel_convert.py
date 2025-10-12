@@ -140,13 +140,13 @@ def test_syntax_errors():
     with pytest.raises(SyntaxError, match="Entity 'DoesNotExist' is unknown in model."):
         jaquel_to_ods(model, {"DoesNotExist": 1})
 
-    with pytest.raises(SyntaxError, match="47567 is no valid entity aid."):
+    with pytest.raises(SyntaxError, match="'47567' is not a valid entity aid."):
         jaquel_to_ods(model, {"47567": 1})
 
     with pytest.raises(SyntaxError, match="Only id value can be assigned directly. But 'abc' was assigned."):
         jaquel_to_ods(model, {26: "abc"})
 
-    with pytest.raises(SyntaxError, match="47567 is no valid entity aid."):
+    with pytest.raises(SyntaxError, match="'47567' is not a valid entity aid."):
         jaquel_to_ods(model, {47567: 1})
 
     with pytest.raises(SyntaxError, match=r"Does not define a target entity."):
