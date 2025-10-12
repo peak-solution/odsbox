@@ -153,8 +153,7 @@ class ConI:
             self.model_read()
 
     def __del__(self) -> None:
-        if self.__session is not None:
-            self.logout()
+        self.close()
 
     def __enter__(self) -> ConI:
         return self
@@ -162,7 +161,17 @@ class ConI:
     def __exit__(
         self, exc_type: type[BaseException] | None, exc_value: BaseException | None, exc_traceback: object
     ) -> None:
-        self.logout()
+        self.close()
+
+    def close(self) -> None:
+        """
+        Close the attached session at the ODS server by calling delete on the session URL
+        and closing the requests session. No exception is raised if logout fails.
+        """
+        try:
+            self.logout()
+        except Exception as e:
+            self.__log.exception("Exception during logout in close: %s", e)
 
     def con_i_url(self) -> str:
         """
@@ -182,21 +191,23 @@ class ConI:
         :raises requests.HTTPError: If delete the ASAM ODS session fails.
         """
         if self.__session is not None:
-            if self.__con_i is None:
-                raise ValueError("ConI already closed")
-            response = self.__session.delete(
-                self.__con_i,
-                timeout=self.__connection_timeout,
-                headers={"Accept": "application/x-asamods+protobuf"},
-                allow_redirects=self.__allow_redirects,
-            )
-            self.__session.close()
-            self.__session = None
-            self.__con_i = None
-            self.__security = None
-            self.__bulk_reader = None
-            self.__mc = None
-            self.check_requests_response(response)
+            try:
+                if self.__con_i is not None:
+                    response = self.__session.delete(
+                        self.__con_i,
+                        timeout=self.__connection_timeout,
+                        headers={"Accept": "application/x-asamods+protobuf"},
+                        allow_redirects=self.__allow_redirects,
+                    )
+                    self.check_requests_response(response)
+            finally:
+                self.__con_i = None
+
+                self.__session.close()
+                self.__session = None
+                self.__security = None
+                self.__bulk_reader = None
+                self.__mc = None
 
     def query_data(
         self,
@@ -742,6 +753,8 @@ class ConI:
         :return ods.ModelCache: ModelCache object containing the cached application model.
         """
         if self.__mc is None:
+            if self.__con_i is None:
+                raise ValueError("ConI already closed!")
             raise ValueError("Model not read! Call model_read() first.")
         return self.__mc
 
