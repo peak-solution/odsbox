@@ -35,6 +35,8 @@ class SeqRepEnum(IntEnum):
     raw_polynomial_external = 9
     raw_linear_calibrated = 10
     raw_linear_calibrated_external = 11
+    raw_rational = 12
+    raw_rational_external = 13
     # pylint: enable=C0103
 
 
@@ -145,6 +147,25 @@ class BulkReader:
                         p3 = generation_parameters[2]
                         double_vals = np.array(vals, dtype=float)
                         localcolumn_df.at[index, "values"] = (p1 + p2 * double_vals) * p3
+                    else:
+                        raise ValueError(f"Generation parameters missing for {name}")
+            elif sequence_representation in [
+                SeqRepEnum.raw_rational,
+                SeqRepEnum.raw_rational_external,
+            ]:
+                if calculate_raw:
+                    generation_parameters = r.get("generation_parameters")
+                    if isinstance(generation_parameters, (list, tuple)) and len(generation_parameters) >= 3:
+                        p1 = generation_parameters[0]
+                        p2 = generation_parameters[1]
+                        p3 = generation_parameters[2]
+                        p4 = generation_parameters[3]
+                        p5 = generation_parameters[4]
+                        p6 = generation_parameters[5]
+                        double_vals = np.array(vals, dtype=float)
+                        localcolumn_df.at[index, "values"] = (p1 * double_vals**2 + p2 * double_vals + p3) / (
+                            p4 * double_vals**2 + p5 * double_vals + p6
+                        )
                     else:
                         raise ValueError(f"Generation parameters missing for {name}")
             else:

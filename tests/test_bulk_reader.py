@@ -76,6 +76,13 @@ def test_apply_sequence_representation_various():
                 "generation_parameters": [1.0, 2.0, 3.0],
                 "number_of_rows": 2,
             },
+            {
+                "name": "rational",
+                "values": [1, 2],
+                "sequence_representation": SeqRepEnum.raw_rational.value,
+                "generation_parameters": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
+                "number_of_rows": 2,
+            },
         ]
     )
 
@@ -96,6 +103,12 @@ def test_apply_sequence_representation_various():
 
     # calibrated: (p1 + p2 * vals) * p3
     assert list(df.loc[4, "values"]) == [(1.0 + 2.0 * 1.0) * 3.0, (1.0 + 2.0 * 2.0) * 3.0]
+
+    # rational: (p1 * vals^2  + p2 * vals + p3) / (p4 * vals^2 + p5 * vals + p6)
+    assert list(df.loc[5, "values"]) == [
+        (1.0 * 1.0**2 + 2.0 * 1.0 + 3.0) / (4.0 * 1.0**2 + 5.0 * 1.0 + 6.0),
+        (1.0 * 2.0**2 + 2.0 * 2.0 + 3.0) / (4.0 * 2.0**2 + 5.0 * 2.0 + 6.0),
+    ]
 
 
 def test_apply_sequence_representation_errors():
