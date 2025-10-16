@@ -27,7 +27,7 @@ from pandas import DataFrame
 import odsbox.proto.ods_pb2 as ods
 from odsbox.bulk_reader import BulkReader
 from odsbox.datamatrices_to_pandas import to_pandas
-from odsbox.jaquel import jaquel_to_ods
+from odsbox.jaquel import jaquel_to_ods, jaquel_to_ods_ex
 from odsbox.model_cache import ModelCache
 from odsbox.security import Security
 from odsbox.transaction import Transaction
@@ -209,12 +209,52 @@ class ConI:
                 self.__bulk_reader = None
                 self.__mc = None
 
+    def query(
+        self,
+        query: str | dict,
+        enum_as_string: bool = True,
+        date_as_timestamp: bool = True,
+        is_null_to_nan: bool = True,
+        result_column_names_from_jaquel: bool = True,
+        **kwargs,
+    ) -> DataFrame:
+        """
+        Query ods server for content using JAQueL query and return the results as Pandas DataFrame
+
+        :param str | dict query: Query given as JAQueL query (dict or str).
+        :param bool enum_as_string: columns of type DT_ENUM or DS_ENUM are returned as int values.
+                                    If this is set to True the model_cache is used to map the int values
+                                    to the corresponding string values.
+        :param bool date_as_timestamp: columns of type DT_DATE or DS_DATE are returned as string.
+                                       If this is set to True the strings are converted to pandas Timestamp.
+        :param bool is_null_to_nan: If set to True, the is_null flags are used to set corresponding values to pd.NA.
+                                    This uses pandas native nullable data types for better type preservation.
+        :param bool result_column_names_from_jaquel: If set to True the column names are taken from the original
+                                    JAQueL query if no `*` was used.
+        :param kwargs: additional arguments passed to `to_pandas`.
+        :raises requests.HTTPError: If query fails.
+        :return DataFrame: The DataMatrices as Pandas.DataFrame. The columns are named as given in jaquel `$attributes`
+                           path or if an `*` was used as `ENTITY_NAME.ATTRIBUTE_NAME`.
+        """
+        jaquel_result = jaquel_to_ods_ex(self.model(), query)
+        data_matrices = self.data_read(jaquel_result.select_statement)
+        return to_pandas(
+            data_matrices,
+            model_cache=self.mc,
+            enum_as_string=enum_as_string,
+            date_as_timestamp=date_as_timestamp,
+            is_null_to_nan=is_null_to_nan,
+            jaquel_conversion_result=jaquel_result if result_column_names_from_jaquel else None,
+            **kwargs,
+        )
+
     def query_data(
         self,
         query: str | dict | ods.SelectStatement,
         enum_as_string: bool = False,
         date_as_timestamp: bool = False,
         is_null_to_nan: bool = False,
+        result_column_names_from_jaquel: bool = False,
         **kwargs,
     ) -> DataFrame:
         """
@@ -229,20 +269,29 @@ class ConI:
                                        If this is set to True the strings are converted to pandas Timestamp.
         :param bool is_null_to_nan: If set to True, the is_null flags are used to set corresponding values to pd.NA.
                                     This uses pandas native nullable data types for better type preservation.
+        :param bool result_column_names_from_jaquel: If set to True the column names are taken from the original
+                                    JAQueL query if no `*` was used.
         :param kwargs: additional arguments passed to `to_pandas`.
         :raises requests.HTTPError: If query fails.
         :return DataFrame: The DataMatrices as Pandas.DataFrame. The columns are named as `ENTITY_NAME.ATTRIBUTE_NAME`.
             `IsNull` values are not marked invalid.
         """
-        data_matrices = (
-            self.data_read(query) if isinstance(query, ods.SelectStatement) else self.data_read_jaquel(query)
-        )
+        if isinstance(query, ods.SelectStatement):
+            jaquel_result = None
+            select_statement = query
+        else:
+            jaquel_result = jaquel_to_ods_ex(self.model(), query)
+            select_statement = jaquel_result.select_statement
+
+        data_matrices = self.data_read(select_statement)
+
         return to_pandas(
             data_matrices,
             model_cache=self.mc,
             enum_as_string=enum_as_string,
             date_as_timestamp=date_as_timestamp,
             is_null_to_nan=is_null_to_nan,
+            jaquel_conversion_result=jaquel_result if result_column_names_from_jaquel else None,
             **kwargs,
         )
 
