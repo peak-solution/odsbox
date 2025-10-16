@@ -42,7 +42,7 @@ exd-data = ["grpcio>=1.59.3,<2.0.0"]
 test = [
     "bandit[toml]==1.8.6",
     "black==25.9.0",
-    "check-manifest==0.50",
+    "check-manifest==0.51",
     "flake8-bugbear==24.12.12",
     "flake8-docstrings",
     "flake8-formatter_junit_xml",
