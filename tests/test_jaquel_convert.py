@@ -431,24 +431,24 @@ def test_jaquel_to_ods_ex():
     assert jaquel_result.entity.name == "MeaResult"
     assert jaquel_result.select_statement is not None
     assert len(jaquel_result.column_lookup) == 2
-    assert jaquel_result.lookup(jaquel_result.entity.aid, ods.DataMatrix.Column(name="Id")).full_path == "id"
-    assert jaquel_result.lookup(jaquel_result.entity.aid, ods.DataMatrix.Column(name="Name")).full_path == "name"
+    assert jaquel_result.lookup(jaquel_result.entity.aid, ods.DataMatrix.Column(name="Id")).path == "id"
+    assert jaquel_result.lookup(jaquel_result.entity.aid, ods.DataMatrix.Column(name="Name")).path == "name"
 
     jaquel_result = jaquel_to_ods_ex(model, {"AoMeasurement": 1, "$attributes": {"Id": 1, "Name": 1}})
     assert jaquel_result is not None
     assert jaquel_result.entity.name == "MeaResult"
     assert jaquel_result.select_statement is not None
     assert len(jaquel_result.column_lookup) == 2
-    assert jaquel_result.lookup(jaquel_result.entity.aid, ods.DataMatrix.Column(name="Id")).full_path == "Id"
-    assert jaquel_result.lookup(jaquel_result.entity.aid, ods.DataMatrix.Column(name="Name")).full_path == "Name"
+    assert jaquel_result.lookup(jaquel_result.entity.aid, ods.DataMatrix.Column(name="Id")).path == "Id"
+    assert jaquel_result.lookup(jaquel_result.entity.aid, ods.DataMatrix.Column(name="Name")).path == "Name"
 
     jaquel_result = jaquel_to_ods_ex(model, {"AoMeasurement": 1, "$attributes": {"ID": 1, "NAME": 1}})
     assert jaquel_result is not None
     assert jaquel_result.entity.name == "MeaResult"
     assert jaquel_result.select_statement is not None
     assert len(jaquel_result.column_lookup) == 2
-    assert jaquel_result.lookup(jaquel_result.entity.aid, ods.DataMatrix.Column(name="Id")).full_path == "ID"
-    assert jaquel_result.lookup(jaquel_result.entity.aid, ods.DataMatrix.Column(name="Name")).full_path == "NAME"
+    assert jaquel_result.lookup(jaquel_result.entity.aid, ods.DataMatrix.Column(name="Id")).path == "ID"
+    assert jaquel_result.lookup(jaquel_result.entity.aid, ods.DataMatrix.Column(name="Name")).path == "NAME"
 
 
 def test_jaquel_to_ods_ex_dotted_path():
@@ -459,13 +459,9 @@ def test_jaquel_to_ods_ex_dotted_path():
     assert jaquel_result.entity.name == "MeaResult"
     assert jaquel_result.select_statement is not None
     assert len(jaquel_result.column_lookup) == 2
+    assert jaquel_result.lookup(model.entities.get("TestStep").aid, ods.DataMatrix.Column(name="Id")).path == "test.id"
     assert (
-        jaquel_result.lookup(model.entities.get("TestStep").aid, ods.DataMatrix.Column(name="Id")).full_path
-        == "test.id"
-    )
-    assert (
-        jaquel_result.lookup(model.entities.get("TestStep").aid, ods.DataMatrix.Column(name="Name")).full_path
-        == "test.name"
+        jaquel_result.lookup(model.entities.get("TestStep").aid, ods.DataMatrix.Column(name="Name")).path == "test.name"
     )
 
     jaquel_result = jaquel_to_ods_ex(model, {"AoMeasurement": 1, "$attributes": {"test.Id": 1, "test.Name": 1}})
@@ -473,13 +469,9 @@ def test_jaquel_to_ods_ex_dotted_path():
     assert jaquel_result.entity.name == "MeaResult"
     assert jaquel_result.select_statement is not None
     assert len(jaquel_result.column_lookup) == 2
+    assert jaquel_result.lookup(model.entities.get("TestStep").aid, ods.DataMatrix.Column(name="Id")).path == "test.Id"
     assert (
-        jaquel_result.lookup(model.entities.get("TestStep").aid, ods.DataMatrix.Column(name="Id")).full_path
-        == "test.Id"
-    )
-    assert (
-        jaquel_result.lookup(model.entities.get("TestStep").aid, ods.DataMatrix.Column(name="Name")).full_path
-        == "test.Name"
+        jaquel_result.lookup(model.entities.get("TestStep").aid, ods.DataMatrix.Column(name="Name")).path == "test.Name"
     )
 
     jaquel_result = jaquel_to_ods_ex(model, {"AoMeasurement": 1, "$attributes": {"test.ID": 1, "test.NAME": 1}})
@@ -487,13 +479,9 @@ def test_jaquel_to_ods_ex_dotted_path():
     assert jaquel_result.entity.name == "MeaResult"
     assert jaquel_result.select_statement is not None
     assert len(jaquel_result.column_lookup) == 2
+    assert jaquel_result.lookup(model.entities.get("TestStep").aid, ods.DataMatrix.Column(name="Id")).path == "test.ID"
     assert (
-        jaquel_result.lookup(model.entities.get("TestStep").aid, ods.DataMatrix.Column(name="Id")).full_path
-        == "test.ID"
-    )
-    assert (
-        jaquel_result.lookup(model.entities.get("TestStep").aid, ods.DataMatrix.Column(name="Name")).full_path
-        == "test.NAME"
+        jaquel_result.lookup(model.entities.get("TestStep").aid, ods.DataMatrix.Column(name="Name")).path == "test.NAME"
     )
 
     jaquel_result = jaquel_to_ods_ex(model, {"AoMeasurement": 1, "$attributes": {"TestStep.id": 1, "TestStep.name": 1}})
@@ -502,8 +490,7 @@ def test_jaquel_to_ods_ex_dotted_path():
     assert jaquel_result.select_statement is not None
     assert len(jaquel_result.column_lookup) == 2
     assert (
-        jaquel_result.lookup(model.entities.get("TestStep").aid, ods.DataMatrix.Column(name="Id")).full_path
-        == "TestStep.id"
+        jaquel_result.lookup(model.entities.get("TestStep").aid, ods.DataMatrix.Column(name="Id")).path == "TestStep.id"
     )
     assert (
         jaquel_result.lookup(model.entities.get("TestStep").aid, ods.DataMatrix.Column(name="Name")).path
@@ -516,8 +503,7 @@ def test_jaquel_to_ods_ex_dotted_path():
     assert jaquel_result.select_statement is not None
     assert len(jaquel_result.column_lookup) == 2
     assert (
-        jaquel_result.lookup(model.entities.get("TestStep").aid, ods.DataMatrix.Column(name="Id")).full_path
-        == "TestStep.Id"
+        jaquel_result.lookup(model.entities.get("TestStep").aid, ods.DataMatrix.Column(name="Id")).path == "TestStep.Id"
     )
     assert (
         jaquel_result.lookup(model.entities.get("TestStep").aid, ods.DataMatrix.Column(name="Name")).path
@@ -530,8 +516,7 @@ def test_jaquel_to_ods_ex_dotted_path():
     assert jaquel_result.select_statement is not None
     assert len(jaquel_result.column_lookup) == 2
     assert (
-        jaquel_result.lookup(model.entities.get("TestStep").aid, ods.DataMatrix.Column(name="Id")).full_path
-        == "TestStep.ID"
+        jaquel_result.lookup(model.entities.get("TestStep").aid, ods.DataMatrix.Column(name="Id")).path == "TestStep.ID"
     )
     assert (
         jaquel_result.lookup(model.entities.get("TestStep").aid, ods.DataMatrix.Column(name="Name")).path
@@ -544,11 +529,10 @@ def test_jaquel_to_ods_ex_dotted_path():
     assert jaquel_result.select_statement is not None
     assert len(jaquel_result.column_lookup) == 2
     assert (
-        jaquel_result.lookup(model.entities.get("TestStep").aid, ods.DataMatrix.Column(name="Id")).full_path
-        == "TESTSTEP.ID"
+        jaquel_result.lookup(model.entities.get("TestStep").aid, ods.DataMatrix.Column(name="Id")).path == "TESTSTEP.ID"
     )
     assert (
-        jaquel_result.lookup(model.entities.get("TestStep").aid, ods.DataMatrix.Column(name="Name")).full_path
+        jaquel_result.lookup(model.entities.get("TestStep").aid, ods.DataMatrix.Column(name="Name")).path
         == "TESTSTEP.NAME"
     )
 
@@ -573,24 +557,20 @@ def test_jaquel_to_ods_ex_special():
     assert jaquel_result.entity.name == "MeaResult"
     assert jaquel_result.select_statement is not None
     assert len(jaquel_result.column_lookup) == 5
+    assert jaquel_result.lookup(model.entities.get("TestStep").aid, ods.DataMatrix.Column(name="Id")).path == "test.id"
     assert (
-        jaquel_result.lookup(model.entities.get("TestStep").aid, ods.DataMatrix.Column(name="Id")).full_path
-        == "test.id"
+        jaquel_result.lookup(model.entities.get("TestStep").aid, ods.DataMatrix.Column(name="Name")).path == "test.name"
     )
     assert (
-        jaquel_result.lookup(model.entities.get("TestStep").aid, ods.DataMatrix.Column(name="Name")).full_path
-        == "test.name"
-    )
-    assert (
-        jaquel_result.lookup(model.entities.get("TestStep").aid, ods.DataMatrix.Column(name="Test")).full_path
+        jaquel_result.lookup(model.entities.get("TestStep").aid, ods.DataMatrix.Column(name="Test")).path
         == "test.parent_test"
     )
     assert (
-        jaquel_result.lookup(model.entities.get("Test").aid, ods.DataMatrix.Column(name="Id")).full_path
+        jaquel_result.lookup(model.entities.get("Test").aid, ods.DataMatrix.Column(name="Id")).path
         == "test.parent_test.id"
     )
     assert (
-        jaquel_result.lookup(model.entities.get("Test").aid, ods.DataMatrix.Column(name="Name")).full_path
+        jaquel_result.lookup(model.entities.get("Test").aid, ods.DataMatrix.Column(name="Name")).path
         == "test.parent_test.name"
     )
 
@@ -608,17 +588,5 @@ def test_jaquel_to_ods_ex_aggregate():
         jaquel_result.lookup(
             jaquel_result.entity.aid, ods.DataMatrix.Column(name="Id", aggregate=ods.AggregateEnum.AG_MIN)
         ).path
-        == "id"
-    )
-    assert (
-        jaquel_result.lookup(
-            jaquel_result.entity.aid, ods.DataMatrix.Column(name="Id", aggregate=ods.AggregateEnum.AG_MIN)
-        ).postfix
-        == ".$min"
-    )
-    assert (
-        jaquel_result.lookup(
-            jaquel_result.entity.aid, ods.DataMatrix.Column(name="Id", aggregate=ods.AggregateEnum.AG_MIN)
-        ).full_path
         == "id.$min"
     )

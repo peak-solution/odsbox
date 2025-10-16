@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import re
-from dataclasses import dataclass
 from datetime import datetime
 from difflib import get_close_matches
 from typing import Any
@@ -12,65 +11,9 @@ from typing import Any
 from google.protobuf.internal import containers as _containers
 
 import odsbox.proto.ods_pb2 as ods
+from odsbox.jaquel_conversion_result import JaquelConversionResult
 
 OperatorEnum = ods.SelectStatement.ConditionItem.Condition.OperatorEnum
-
-
-@dataclass(slots=True, frozen=True, unsafe_hash=False)
-class JaquelResultColumn:
-    """
-    Represents a column to be identified in the DataMatrices returned by `data-read`.
-
-    Members
-    ----------
-    aid : int
-        aid of the `ods.DataMatrix` the column belongs to.
-    name : str
-        Application attribute name returned in the column name.
-    aggregate : ods.AggregateEnum
-        The aggregation function of the column.
-    path : str
-        `.` separated path to the attribute as used in JAQueL. This will
-        contain exactly the names given in the query itself.
-    """
-
-    aid: int
-    name: str
-    aggregate: ods.AggregateEnum
-    path: str
-
-    @property
-    def full_path(self) -> str:
-        return f"{self.path}{self.postfix}"
-
-    @property
-    def postfix(self) -> str:
-        if self.aggregate == ods.AggregateEnum.AG_NONE:
-            return ""
-        for jaquel_name, enum_value in _jo_aggregates.items():
-            if enum_value == self.aggregate:
-                return f".{jaquel_name}"
-        return ""
-
-
-@dataclass(slots=True, frozen=True, unsafe_hash=False)
-class JaquelConversionResult:
-    """
-    Result of a JAQueL to ODS conversion.
-
-    Contains the target entity, the generated SelectStatement, and
-    a list of `JaquelResultColumn` instances to identify result columns.
-    """
-
-    entity: ods.Model.Entity
-    select_statement: ods.SelectStatement
-    column_lookup: list[JaquelResultColumn]
-
-    def lookup(self, aid: int, column: ods.DataMatrix.Column) -> JaquelResultColumn | None:
-        for col in self.column_lookup:
-            if col.aid == aid and col.name == column.name and col.aggregate == column.aggregate:
-                return col
-        return None
 
 
 _jo_aggregates = {
@@ -113,6 +56,17 @@ _jo_operators_ci_map = {
     OperatorEnum.OP_LIKE: OperatorEnum.OP_CI_LIKE,
     OperatorEnum.OP_NOTLIKE: OperatorEnum.OP_CI_NOTLIKE,
 }
+
+
+def _result_column_path(path: str, aggregate: ods.AggregateEnum) -> str:
+    if aggregate == ods.AggregateEnum.AG_NONE:
+        return path
+
+    for jaquel_name, enum_value in _jo_aggregates.items():
+        if enum_value == aggregate:
+            return f"{path}.{jaquel_name}"
+
+    return path
 
 
 def _model_get_relation_by_base_name(
@@ -392,7 +346,7 @@ def _parse_attributes(
     target: ods.SelectStatement,
     element_dict: dict,
     attribute_dict: dict,
-    result_column_lookup: list[JaquelResultColumn],
+    result_column_lookup: list[JaquelConversionResult.Column],
 ) -> None:
     for element in element_dict:
         element_attribute = attribute_dict.copy()
@@ -432,11 +386,11 @@ def _parse_attributes(
 
                 # Collect the tuple
                 result_column_lookup.append(
-                    JaquelResultColumn(
+                    JaquelConversionResult.Column(
                         aid=attribute_item.aid,
                         name=attribute_item.attribute,
                         aggregate=attribute_item.aggregate,
-                        path=element_attribute["path"],
+                        path=_result_column_path(element_attribute["path"], attribute_item.aggregate),
                     )
                 )
 
@@ -878,7 +832,7 @@ def _jaquel_to_ods_internal(model: ods.Model, jaquel_query: str | dict) -> Jaque
     select_statement = ods.SelectStatement()
 
     # Create a list to collect attribute path and attribute item tuples
-    result_column_lookup: list[JaquelResultColumn] = []
+    result_column_lookup: list[JaquelConversionResult.Column] = []
 
     # first parse conditions to get entity
     for elem in query:
