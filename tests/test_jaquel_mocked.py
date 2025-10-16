@@ -1234,7 +1234,10 @@ class TestParseAttributes:
             "odsbox.jaquel._parse_path_and_add_joins",
             return_value=(ods.DataTypeEnum.DT_STRING, "test_attr", mock_entity),
         ):
-            jaquel._parse_attributes(mock_model, mock_entity, mock_target, element_dict, attribute_dict)
+            result_column_lookup = []
+            jaquel._parse_attributes(
+                mock_model, mock_entity, mock_target, element_dict, attribute_dict, result_column_lookup
+            )
 
         # Should have added column to target
         assert mock_target.columns.add.called
@@ -1249,7 +1252,10 @@ class TestParseAttributes:
         attribute_dict = {"path": "", "aggregate": ods.AggregateEnum.AG_NONE, "unit": 0}
 
         with pytest.raises(SyntaxError, match="No \\$options are defined for attributes."):
-            jaquel._parse_attributes(mock_model, mock_entity, mock_target, element_dict, attribute_dict)
+            result_column_lookup = []
+            jaquel._parse_attributes(
+                mock_model, mock_entity, mock_target, element_dict, attribute_dict, result_column_lookup
+            )
 
     def test_parse_attributes_with_unknown_aggregate(self):
         """Test parsing attributes with unknown aggregate"""
@@ -1262,7 +1268,10 @@ class TestParseAttributes:
 
         with patch("odsbox.jaquel._model_get_suggestion_aggregate", return_value=" Did you mean '$max'?"):
             with pytest.raises(SyntaxError, match="Unknown aggregate '\\$unknown'"):
-                jaquel._parse_attributes(mock_model, mock_entity, mock_target, element_dict, attribute_dict)
+                result_column_lookup = []
+                jaquel._parse_attributes(
+                    mock_model, mock_entity, mock_target, element_dict, attribute_dict, result_column_lookup
+                )
 
     def test_parse_attributes_with_array(self):
         """Test parsing attributes with array (should raise error)"""
@@ -1276,7 +1285,10 @@ class TestParseAttributes:
         with pytest.raises(
             SyntaxError, match="Attributes are not allowed to contain arrays. Use dictionary setting value to 1."
         ):
-            jaquel._parse_attributes(mock_model, mock_entity, mock_target, element_dict, attribute_dict)
+            result_column_lookup = []
+            jaquel._parse_attributes(
+                mock_model, mock_entity, mock_target, element_dict, attribute_dict, result_column_lookup
+            )
 
 
 class TestParseOrderBy:

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+from dataclasses import dataclass
 from datetime import datetime
 from difflib import get_close_matches
 from typing import Any
@@ -13,6 +14,64 @@ from google.protobuf.internal import containers as _containers
 import odsbox.proto.ods_pb2 as ods
 
 OperatorEnum = ods.SelectStatement.ConditionItem.Condition.OperatorEnum
+
+
+@dataclass(slots=True, frozen=True, unsafe_hash=False)
+class JaquelResultColumn:
+    """
+    Represents a column to be identified in the DataMatrices returned by `data-read`.
+
+    Members
+    ----------
+    aid : int
+        aid of the `ods.DataMatrix` the column belongs to.
+    name : str
+        Application attribute name returned in the column name.
+    aggregate : ods.AggregateEnum
+        The aggregation function of the column.
+    path : str
+        `.` separated path to the attribute as used in JAQueL. This will
+        contain exactly the names given in the query itself.
+    """
+
+    aid: int
+    name: str
+    aggregate: ods.AggregateEnum
+    path: str
+
+    @property
+    def full_path(self) -> str:
+        return f"{self.path}{self.postfix}"
+
+    @property
+    def postfix(self) -> str:
+        if self.aggregate == ods.AggregateEnum.AG_NONE:
+            return ""
+        for jaquel_name, enum_value in _jo_aggregates.items():
+            if enum_value == self.aggregate:
+                return f".{jaquel_name}"
+        return ""
+
+
+@dataclass(slots=True, frozen=True, unsafe_hash=False)
+class JaquelConversionResult:
+    """
+    Result of a JAQueL to ODS conversion.
+
+    Contains the target entity, the generated SelectStatement, and
+    a list of `JaquelResultColumn` instances to identify result columns.
+    """
+
+    entity: ods.Model.Entity
+    select_statement: ods.SelectStatement
+    column_lookup: list[JaquelResultColumn]
+
+    def lookup(self, aid: int, column: ods.DataMatrix.Column) -> JaquelResultColumn | None:
+        for col in self.column_lookup:
+            if col.aid == aid and col.name == column.name and col.aggregate == column.aggregate:
+                return col
+        return None
+
 
 _jo_aggregates = {
     "$none": ods.AggregateEnum.AG_NONE,
@@ -333,6 +392,7 @@ def _parse_attributes(
     target: ods.SelectStatement,
     element_dict: dict,
     attribute_dict: dict,
+    result_column_lookup: list[JaquelResultColumn],
 ) -> None:
     for element in element_dict:
         element_attribute = attribute_dict.copy()
@@ -353,7 +413,7 @@ def _parse_attributes(
             element_attribute["path"] += element
 
         if isinstance(element_dict[element], dict):
-            _parse_attributes(model, entity, target, element_dict[element], element_attribute)
+            _parse_attributes(model, entity, target, element_dict[element], element_attribute, result_column_lookup)
         elif isinstance(element_dict[element], list):
             raise SyntaxError("Attributes are not allowed to contain arrays. Use dictionary setting value to 1.")
         else:
@@ -363,11 +423,21 @@ def _parse_attributes(
             if "*" == attribute_name:
                 target.columns.add(aid=attribute_entity.aid, attribute=attribute_name)
             else:
-                target.columns.add(
+                attribute_item = target.columns.add(
                     aid=attribute_entity.aid,
                     attribute=attribute_name,
                     unit_id=int(element_attribute["unit"]),
                     aggregate=element_attribute["aggregate"],
+                )
+
+                # Collect the tuple
+                result_column_lookup.append(
+                    JaquelResultColumn(
+                        aid=attribute_item.aid,
+                        name=attribute_item.attribute,
+                        aggregate=attribute_item.aggregate,
+                        path=element_attribute["path"],
+                    )
                 )
 
 
@@ -782,17 +852,17 @@ def _top_elem_get_suggestion(str_val: str) -> str:
     return _model_get_suggestion(available, str_val)
 
 
-def jaquel_to_ods(model: ods.Model, jaquel_query: str | dict) -> tuple[ods.Model.Entity, ods.SelectStatement]:
+def _jaquel_to_ods_internal(model: ods.Model, jaquel_query: str | dict) -> JaquelConversionResult:
     """
-    Convert a given JAQueL query into an ASAM ODS SelectStatement.
+    Convert a given JAQueL query into an ASAM ODS SelectStatement and collect attribute tuples.
 
     :param ods.Model model: application model to be used for conversion.
     :param str | dict jaquel_query: JAQueL query as dict or json string.
     :raises SyntaxError: If contains syntactical errors.
     :raises ValueError: If conversion fail.
     :raises json.decoder.JSONDecodeError: If JSON string contains syntax errors.
-    :return Tuple[ods.Model.Entity, ods.SelectStatement]: A tuple defining the target entity
-        and the ASAM ODS SelectStatement
+    :return JaquelConversionResult: A result object containing the target entity, the ASAM ODS SelectStatement,
+             and a list of tuples containing attribute paths and their corresponding AttributeItems
     """
     if isinstance(jaquel_query, dict):
         query = jaquel_query
@@ -805,7 +875,10 @@ def jaquel_to_ods(model: ods.Model, jaquel_query: str | dict) -> tuple[ods.Model
     entity = None
     aid = None
 
-    qse = ods.SelectStatement()
+    select_statement = ods.SelectStatement()
+
+    # Create a list to collect attribute path and attribute item tuples
+    result_column_lookup: list[JaquelResultColumn] = []
 
     # first parse conditions to get entity
     for elem in query:
@@ -819,7 +892,7 @@ def jaquel_to_ods(model: ods.Model, jaquel_query: str | dict) -> tuple[ods.Model
                 _parse_conditions(
                     model,
                     entity,
-                    qse,
+                    select_statement,
                     query[elem],
                     {
                         "conjunction": ods.SelectStatement.ConditionItem.ConjuctionEnum.CO_AND,
@@ -838,7 +911,7 @@ def jaquel_to_ods(model: ods.Model, jaquel_query: str | dict) -> tuple[ods.Model
                 _add_condition(
                     model,
                     entity,
-                    qse,
+                    select_statement,
                     "id",
                     OperatorEnum.OP_EQ,
                     int(_id_value),
@@ -858,20 +931,52 @@ def jaquel_to_ods(model: ods.Model, jaquel_query: str | dict) -> tuple[ods.Model
                 _parse_attributes(
                     model,
                     entity,
-                    qse,
+                    select_statement,
                     query[elem],
                     {"path": "", "aggregate": ods.AggregateEnum.AG_NONE, "unit": 0},
+                    result_column_lookup,
                 )
             elif "$orderby" == elem:
-                _parse_orderby(model, entity, qse, query[elem], {"path": ""})
+                _parse_orderby(model, entity, select_statement, query[elem], {"path": ""})
             elif "$groupby" == elem:
-                _parse_groupby(model, entity, qse, query[elem], {"path": ""})
+                _parse_groupby(model, entity, select_statement, query[elem], {"path": ""})
             elif "$options" == elem:
-                _parse_global_options(query[elem], qse)
+                _parse_global_options(query[elem], select_statement)
             else:
                 raise SyntaxError(f"Unknown first level define '{elem}'.{_top_elem_get_suggestion(elem)}")
 
-    if 0 == len(qse.columns):
-        qse.columns.add(aid=aid, attribute="*")
+    if 0 == len(select_statement.columns):
+        select_statement.columns.add(aid=aid, attribute="*")
 
-    return entity, qse
+    return JaquelConversionResult(entity=entity, select_statement=select_statement, column_lookup=result_column_lookup)
+
+
+def jaquel_to_ods(model: ods.Model, jaquel_query: str | dict) -> tuple[ods.Model.Entity, ods.SelectStatement]:
+    """
+    Convert a given JAQueL query into an ASAM ODS SelectStatement.
+
+    :param ods.Model model: application model to be used for conversion.
+    :param str | dict jaquel_query: JAQueL query as dict or json string.
+    :raises SyntaxError: If contains syntactical errors.
+    :raises ValueError: If conversion fail.
+    :raises json.decoder.JSONDecodeError: If JSON string contains syntax errors.
+    :return Tuple[ods.Model.Entity, ods.SelectStatement]: A tuple defining the target entity
+        and the ASAM ODS SelectStatement
+    """
+    result = _jaquel_to_ods_internal(model, jaquel_query)
+    return result.entity, result.select_statement
+
+
+def jaquel_to_ods_ex(model: ods.Model, jaquel_query: str | dict) -> JaquelConversionResult:
+    """
+    Convert a given JAQueL query into an ASAM ODS SelectStatement and collect attribute tuples.
+
+    :param ods.Model model: application model to be used for conversion.
+    :param str | dict jaquel_query: JAQueL query as dict or json string.
+    :raises SyntaxError: If contains syntactical errors.
+    :raises ValueError: If conversion fail.
+    :raises json.decoder.JSONDecodeError: If JSON string contains syntax errors.
+    :return JaquelConversionResult: A result object containing the target entity, the ASAM ODS SelectStatement,
+        and a list of tuples containing attribute paths and their corresponding AttributeItems
+    """
+    return _jaquel_to_ods_internal(model, jaquel_query)
