@@ -27,7 +27,7 @@ and [pandas DataFrames](https://pandas.pydata.org/).
     from odsbox.con_i import ConI
 
     with ConI(url="https://MY_SERVER/api", auth=("USERNAME", "PASSWORD")) as con_i:
-        measurements = con_i.query_data(
+        measurements = con_i.query(
             {
                 "AoMeasurement": {"name": {"$like": "*"}},
                 "$attributes": {"name": 1, "id": 1},
