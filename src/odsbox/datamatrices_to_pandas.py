@@ -2,6 +2,7 @@
 them to an pandas DataFrame for ease of use."""
 
 from __future__ import annotations
+import logging
 
 import numpy as np
 import pandas as pd
@@ -9,6 +10,7 @@ import pandas as pd
 import odsbox.proto.ods_pb2 as ods
 from odsbox.asam_time import to_pd_timestamp
 from odsbox.model_cache import ModelCache
+from odsbox.jaquel_conversion_result import JaquelConversionResult
 
 
 def unknown_array_values(
@@ -200,6 +202,20 @@ def __get_datamatrix_column_values_ex(
     return return_values
 
 
+def _determine_column_name(name_separator, jaquel_conversion_result, matrix, column):
+    jaquel_column = jaquel_conversion_result and jaquel_conversion_result.lookup(matrix.aid, column)
+    if jaquel_column:
+        column_name = jaquel_column.path.replace(".", name_separator) if name_separator != "." else jaquel_column.path
+    else:
+        aggregate_postfix = (
+            ""
+            if column.aggregate == ods.AggregateEnum.AG_NONE
+            else f"{name_separator}{ods.AggregateEnum.Name(column.aggregate)}"
+        )
+        column_name = f"{matrix.name}{name_separator}{column.name}{aggregate_postfix}"
+    return column_name
+
+
 def to_pandas(
     data_matrices: ods.DataMatrices,
     model_cache: ModelCache | None = None,
@@ -208,6 +224,7 @@ def to_pandas(
     name_separator: str = ".",
     prefer_np_array_for_unknown: bool = False,
     is_null_to_nan: bool = False,
+    jaquel_conversion_result: JaquelConversionResult | None = None,
 ) -> pd.DataFrame:
     """
     Converts data in an ASAM ODS DataMatrices into a pandas DataFrame.
@@ -225,7 +242,8 @@ def to_pandas(
                                             of lists for unknown data types.
     :param bool is_null_to_nan: If set to True, the is_null flags are used to set corresponding values to pd.NA.
                                This uses pandas native nullable data types for better type preservation.
-
+    :param JaquelConversionResult | None jaquel_conversion_result: If provided, this is used to determine
+                                 the column names based on the original JAQueL query.
     :return pd.DataFrame: A pandas DataFrame containing all the single matrices in a single frame. The
                           columns are named by the schema `ENTITY_NAME.ATTRIBUTE_NAME[.AGGREGATE]`.
     """
@@ -241,12 +259,11 @@ def to_pandas(
     for matrix in data_matrices.matrices:
         entity = model_cache.entity(matrix.name) if model_cache is not None else None
         for column in matrix.columns:
-            aggregate_postfix = (
-                ""
-                if ods.AggregateEnum.AG_NONE == column.aggregate
-                else name_separator + ods.AggregateEnum.Name(column.aggregate)
-            )
-            column_name = f"{matrix.name}{name_separator}{column.name}{aggregate_postfix}"
+            column_name = _determine_column_name(name_separator, jaquel_conversion_result, matrix, column)
+
+            if column_name in column_dict:
+                logging.warning(f"Duplicate column name '{column_name}' found. Overwriting previous column.")
+
             column_dict[column_name] = __get_datamatrix_column_values_ex(
                 column, model_cache, enum_as_string, entity, date_as_timestamp, prefer_np_array_for_unknown
             )
