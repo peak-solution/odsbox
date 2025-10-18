@@ -424,7 +424,7 @@ def test_jaquel_to_ods_ex():
     assert jaquel_result is not None
     assert jaquel_result.entity.name == "MeaResult"
     assert jaquel_result.select_statement is not None
-    assert len(jaquel_result.column_lookup) == 0
+    assert len(jaquel_result.column_lookup) == 1
 
     jaquel_result = jaquel_to_ods_ex(model, {"AoMeasurement": 1, "$attributes": {"id": 1, "name": 1}})
     assert jaquel_result is not None

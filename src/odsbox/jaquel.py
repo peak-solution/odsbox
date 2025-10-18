@@ -59,7 +59,7 @@ _jo_operators_ci_map = {
 
 
 def _result_column_path(path: str, aggregate: ods.AggregateEnum) -> str:
-    if aggregate == ods.AggregateEnum.AG_NONE:
+    if aggregate is None or aggregate == ods.AggregateEnum.AG_NONE:
         return path
 
     for jaquel_name, enum_value in _jo_aggregates.items():
@@ -343,7 +343,7 @@ def _parse_global_options(elem_dict: dict, target: ods.SelectStatement) -> None:
 def _parse_attributes(
     model: ods.Model,
     entity: ods.Model.Entity,
-    target: ods.SelectStatement,
+    select_statement: ods.SelectStatement,
     element_dict: dict,
     attribute_dict: dict,
     result_column_lookup: list[JaquelConversionResult.Column],
@@ -367,32 +367,36 @@ def _parse_attributes(
             element_attribute["path"] += element
 
         if isinstance(element_dict[element], dict):
-            _parse_attributes(model, entity, target, element_dict[element], element_attribute, result_column_lookup)
+            _parse_attributes(
+                model, entity, select_statement, element_dict[element], element_attribute, result_column_lookup
+            )
         elif isinstance(element_dict[element], list):
             raise SyntaxError("Attributes are not allowed to contain arrays. Use dictionary setting value to 1.")
         else:
+            attribute_path = element_attribute["path"]
+            attribute_aggregate = element_attribute["aggregate"]
             _attribute_type, attribute_name, attribute_entity = _parse_path_and_add_joins(
-                model, entity, element_attribute["path"], target.joins
+                model, entity, attribute_path, select_statement.joins
             )
+
             if "*" == attribute_name:
-                target.columns.add(aid=attribute_entity.aid, attribute=attribute_name)
+                select_statement.columns.add(aid=attribute_entity.aid, attribute=attribute_name)
             else:
-                attribute_item = target.columns.add(
+                select_statement.columns.add(
                     aid=attribute_entity.aid,
                     attribute=attribute_name,
                     unit_id=int(element_attribute["unit"]),
-                    aggregate=element_attribute["aggregate"],
+                    aggregate=attribute_aggregate,
                 )
 
-                # Collect the tuple
-                result_column_lookup.append(
-                    JaquelConversionResult.Column(
-                        aid=attribute_item.aid,
-                        name=attribute_item.attribute,
-                        aggregate=attribute_item.aggregate,
-                        path=_result_column_path(element_attribute["path"], attribute_item.aggregate),
-                    )
+            result_column_lookup.append(
+                JaquelConversionResult.Column(
+                    aid=attribute_entity.aid,
+                    name=attribute_name,
+                    aggregate=attribute_aggregate,
+                    path=_result_column_path(attribute_path, attribute_aggregate),
                 )
+            )
 
 
 def _parse_orderby(
@@ -873,7 +877,7 @@ def _jaquel_to_ods_internal(model: ods.Model, jaquel_query: str | dict) -> Jaque
                     "",
                 )
 
-    if entity is None:
+    if entity is None or aid is None:
         raise SyntaxError(
             "Does not define a target entity. Dictionary must contain at least one entity base or application name."
         )
@@ -901,6 +905,14 @@ def _jaquel_to_ods_internal(model: ods.Model, jaquel_query: str | dict) -> Jaque
 
     if 0 == len(select_statement.columns):
         select_statement.columns.add(aid=aid, attribute="*")
+        result_column_lookup.append(
+            JaquelConversionResult.Column(
+                aid=aid,
+                name="*",
+                aggregate=ods.AggregateEnum.AG_NONE,
+                path="*",
+            )
+        )
 
     return JaquelConversionResult(entity=entity, select_statement=select_statement, column_lookup=result_column_lookup)
 
