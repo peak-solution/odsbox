@@ -288,8 +288,19 @@ def to_pandas(
         for column_name, null_mask in null_masks.items():
             mask_array = np.array(null_mask)
 
-            if rv[column_name].dtype == bool:
-                rv[column_name] = rv[column_name].astype(object)
+            if rv[column_name].dtype == np.bool_:
+                rv[column_name] = rv[column_name].astype(pd.BooleanDtype())
+            elif pd.api.types.is_integer_dtype(rv[column_name].dtype):
+                if rv[column_name].dtype == np.uint8:
+                    rv[column_name] = rv[column_name].astype(pd.UInt8Dtype())
+                elif rv[column_name].dtype == np.int16:
+                    rv[column_name] = rv[column_name].astype(pd.Int16Dtype())
+                elif rv[column_name].dtype == np.int32:
+                    rv[column_name] = rv[column_name].astype(pd.Int32Dtype())
+                elif rv[column_name].dtype == np.int64:
+                    rv[column_name] = rv[column_name].astype(pd.Int64Dtype())
+                else:
+                    rv[column_name] = rv[column_name].astype(pd.Int64Dtype())  # fallback
 
             rv.loc[mask_array, column_name] = pd.NA
 

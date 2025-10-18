@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import numpy as np
 import pandas as pd
 
 import odsbox.proto.ods_pb2 as ods
@@ -52,13 +53,47 @@ class TestIsNullToNan:
         assert pd.isna(float_col.iloc[2]), "Index 2 should be null"
         assert abs(float_col.iloc[1] - 2.2) < 1e-6, "Index 1 should contain original value"
         assert abs(float_col.iloc[3] - 4.4) < 1e-6, "Index 3 should contain original value"
+        assert pd.api.types.is_float_dtype(float_col.dtype)
+
+        # Check double column nulls
+        double_col = df["TestEntity.double_attr"]
+        assert pd.isna(double_col.iloc[0]), "Index 0 should be null"
+        assert pd.isna(double_col.iloc[2]), "Index 2 should be null"
+        assert abs(double_col.iloc[1] - 2.2) < 1e-6, "Index 1 should contain original value"
+        assert abs(double_col.iloc[3] - 4.4) < 1e-6, "Index 3 should contain original value"
+        assert pd.api.types.is_float_dtype(double_col.dtype)
 
         # Check integer column nulls
-        int_col = df["TestEntity.int_attr"]
-        assert pd.isna(int_col.iloc[2]), "Index 2 should be null"
-        assert int_col.iloc[0] == 10, "Index 0 should contain original value"
-        assert int_col.iloc[1] == 20, "Index 1 should contain original value"
-        assert int_col.iloc[3] == 40, "Index 3 should contain original value"
+        byte_col = df["TestEntity.byte_attr"]
+        assert pd.isna(byte_col.iloc[2]), "Index 2 should be null"
+        assert byte_col.iloc[0] == 1, "Index 0 should contain original value"
+        assert byte_col.iloc[1] == 2, "Index 1 should contain original value"
+        assert byte_col.iloc[3] == 4, "Index 3 should contain original value"
+        assert pd.api.types.is_integer_dtype(byte_col.dtype)
+
+        # Check integer column nulls
+        int16_col = df["TestEntity.int16_attr"]
+        assert pd.isna(int16_col.iloc[2]), "Index 2 should be null"
+        assert int16_col.iloc[0] == 10, "Index 0 should contain original value"
+        assert int16_col.iloc[1] == 20, "Index 1 should contain original value"
+        assert int16_col.iloc[3] == 40, "Index 3 should contain original value"
+        assert pd.api.types.is_integer_dtype(int16_col.dtype)
+
+        # Check integer column nulls
+        int32_col = df["TestEntity.int32_attr"]
+        assert pd.isna(int32_col.iloc[2]), "Index 2 should be null"
+        assert int32_col.iloc[0] == 10, "Index 0 should contain original value"
+        assert int32_col.iloc[1] == 20, "Index 1 should contain original value"
+        assert int32_col.iloc[3] == 40, "Index 3 should contain original value"
+        assert pd.api.types.is_integer_dtype(int32_col.dtype)
+
+        # Check integer column nulls
+        int64_col = df["TestEntity.int64_attr"]
+        assert pd.isna(int64_col.iloc[2]), "Index 2 should be null"
+        assert int64_col.iloc[0] == 10, "Index 0 should contain original value"
+        assert int64_col.iloc[1] == 20, "Index 1 should contain original value"
+        assert int64_col.iloc[3] == 40, "Index 3 should contain original value"
+        assert pd.api.types.is_integer_dtype(int64_col.dtype)
 
     def test_is_null_to_nan_boolean_columns(self):
         """Test is_null_to_nan with boolean columns"""
@@ -67,13 +102,13 @@ class TestIsNullToNan:
 
         # Check boolean column nulls
         bool_col = df["TestEntity.bool_attr"]
+        assert pd.isna(bool_col.iloc[0]), "Index 0 should be null"
         assert pd.isna(bool_col.iloc[1]), "Index 1 should be null"
-        assert bool_col.iloc[0] is True, "Index 0 should contain original value"
-        assert bool_col.iloc[2] is True, "Index 2 should contain original value"
-        assert bool_col.iloc[3] is False, "Index 3 should contain original value"
+        assert bool_col.iloc[2] is np.True_, "Index 2 should contain original value"
+        assert bool_col.iloc[3] is np.False_, "Index 3 should contain original value"
 
-        # Boolean column should be converted to object to handle nulls
-        assert bool_col.dtype == object
+        # Boolean column should use nullable boolean dtype to handle nulls
+        assert bool_col.dtype == pd.BooleanDtype()
 
     def test_is_null_all_null_column(self):
         """Test column where all values are null"""
@@ -291,7 +326,11 @@ class TestIsNullToNan:
         expected_columns = [
             "TestEntity_string_attr",
             "TestEntity_float_attr",
-            "TestEntity_int_attr",
+            "TestEntity_double_attr",
+            "TestEntity_byte_attr",
+            "TestEntity_int16_attr",
+            "TestEntity_int32_attr",
+            "TestEntity_int64_attr",
             "TestEntity_bool_attr",
         ]
         assert list(df.columns) == expected_columns
@@ -299,8 +338,12 @@ class TestIsNullToNan:
         # Check that nulls are still applied correctly
         assert df["TestEntity_string_attr"].isna().sum() == 2
         assert df["TestEntity_float_attr"].isna().sum() == 2
-        assert df["TestEntity_int_attr"].isna().sum() == 1
-        assert df["TestEntity_bool_attr"].isna().sum() == 1
+        assert df["TestEntity_double_attr"].isna().sum() == 2
+        assert df["TestEntity_byte_attr"].isna().sum() == 1
+        assert df["TestEntity_int16_attr"].isna().sum() == 1
+        assert df["TestEntity_int32_attr"].isna().sum() == 1
+        assert df["TestEntity_int64_attr"].isna().sum() == 1
+        assert df["TestEntity_bool_attr"].isna().sum() == 2
 
     def _create_test_data_with_nulls(self) -> ods.DataMatrices:
         """Create test data with various data types and null values"""
@@ -322,11 +365,39 @@ class TestIsNullToNan:
         float_col.float_array.values.extend([1.1, 2.2, 3.3, 4.4])
         float_col.is_null.extend([True, False, True, False])
 
+        # Float column with nulls
+        float_col = matrix.columns.add()
+        float_col.name = "double_attr"
+        float_col.data_type = ods.DT_DOUBLE
+        float_col.double_array.values.extend([1.1, 2.2, 3.3, 4.4])
+        float_col.is_null.extend([True, False, True, False])
+
+        # Integer column with nulls
+        byte_col = matrix.columns.add()
+        byte_col.name = "byte_attr"
+        byte_col.data_type = ods.DT_BYTE
+        byte_col.byte_array.values = b"\x01\x02\x03\x04"
+        byte_col.is_null.extend([False, False, True, False])
+
         # Integer column with nulls
         int_col = matrix.columns.add()
-        int_col.name = "int_attr"
+        int_col.name = "int16_attr"
+        int_col.data_type = ods.DT_SHORT
+        int_col.long_array.values.extend([10, 20, 30, 40])
+        int_col.is_null.extend([False, False, True, False])
+
+        # Integer column with nulls
+        int_col = matrix.columns.add()
+        int_col.name = "int32_attr"
         int_col.data_type = ods.DT_LONG
         int_col.long_array.values.extend([10, 20, 30, 40])
+        int_col.is_null.extend([False, False, True, False])
+
+        # Integer column with nulls
+        int_col = matrix.columns.add()
+        int_col.name = "int64_attr"
+        int_col.data_type = ods.DT_LONGLONG
+        int_col.longlong_array.values.extend([10, 20, 30, 40])
         int_col.is_null.extend([False, False, True, False])
 
         # Boolean column with nulls
@@ -334,6 +405,6 @@ class TestIsNullToNan:
         bool_col.name = "bool_attr"
         bool_col.data_type = ods.DT_BOOLEAN
         bool_col.boolean_array.values.extend([True, False, True, False])
-        bool_col.is_null.extend([False, True, False, False])
+        bool_col.is_null.extend([True, True, False, False])
 
         return data_matrices
