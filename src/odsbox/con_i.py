@@ -211,7 +211,7 @@ class ConI:
 
     def query(
         self,
-        query: str | dict,
+        jaquel_query: str | dict,
         enum_as_string: bool = True,
         date_as_timestamp: bool = True,
         is_null_to_nan: bool = True,
@@ -254,7 +254,7 @@ class ConI:
             # Output: Index(['Unit.Name', 'Unit.Id', 'PhysDimension.Name'], ...)
 
 
-        :param str | dict query: Query given as JAQueL query (dict or str).
+        :param str | dict jaquel_query: JAQueL query as dict or str.
         :param bool enum_as_string: Columns of type DT_ENUM or DS_ENUM are returned as int values.
                                     If this is set to True the model_cache is used to map the int values
                                     to the corresponding string values. Defaults to True.
@@ -276,7 +276,7 @@ class ConI:
         if result_naming_mode not in ("query", "model"):
             raise ValueError(f"result_naming_mode must be 'query' or 'model', got '{result_naming_mode}'")
 
-        jaquel = Jaquel(self.model(), query)
+        jaquel = Jaquel(self.model(), jaquel_query)
         data_matrices = self.data_read(jaquel.select_statement)
         return to_pandas(
             data_matrices,
