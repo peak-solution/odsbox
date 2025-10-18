@@ -215,26 +215,106 @@ class ConI:
         enum_as_string: bool = True,
         date_as_timestamp: bool = True,
         is_null_to_nan: bool = True,
-        use_jaquel_columns: bool = True,
+        result_naming_mode: str = "query",  # "query" or "model"
         **kwargs,
     ) -> DataFrame:
         """
-        Query ods server for content using JAQueL query and return the results as Pandas DataFrame
+        Query ods server for content using JAQueL query and return the results as Pandas DataFrame.
+
+        This method combines the JAQUEL query language with pandas DataFrames for convenient data access.
+        Result column names can be controlled via the `result_naming_mode` parameter to match either
+        your query specification (JAQUEL mode) or the schema entity names (model mode).
+
+        Example - Basic Query::
+
+            result = con_i.query({"AoUnit": {}})
+            print(result.columns)
+            # Output: Index(['Name', 'Id', 'PhysDimension'], ...)
+
+        Example - Query with Column Selection::
+
+            # Select specific columns using query-based column names (default)
+            query = {
+                "AoUnit": {},
+                "$attributes": {
+                    "name": 1,
+                    "id": 1,
+                    "phys_dimension.name": 1
+                }
+            }
+            result = con_i.query(query)
+            print(result.columns)
+            # Output: Index(['name', 'id', 'phys_dimension.name'], ...)
+
+        Example - Same Query with Model Column Names::
+
+            # Same query but with model/schema column names
+            result = con_i.query(query, result_naming_mode="model")
+            print(result.columns)
+            # Output: Index(['Unit.Name', 'Unit.Id', 'PhysDimension.Name'], ...)
+
+        Result Column Names Comparison
+        ==============================
+
+        For the query::
+
+            {
+                "AoUnit": {
+                    "$attributes": {
+                        "name": 1,
+                        "id": 1,
+                        "factor": 1,
+                        "phys_dimension.name": 1
+                    }
+                }
+            }
+
+        The result DataFrame columns will be:
+
+        | Query Attribute | result_naming_mode="query" | result_naming_mode="model" |
+        |---|---|---|
+        | `"name"` | `name` | `Unit.Name` |
+        | `"id"` | `id` | `Unit.Id` |
+        | `"factor"` | `factor` | `Unit.Factor` |
+        | `"phys_dimension.name"` | `phys_dimension.name` | `PhysDimension.Name` |
+
+        Key Differences
+        ===============
+
+        **result_naming_mode="query" (Default):**
+            - Column names match your JAQUEL query specification exactly
+            - base names and case insensitivity of jaquel is reflected (e.g., `name`, `phys_dimension.name`)
+            - Best for: AI agents, generic programmatic workflows (ods base model usage)
+            - Self-documenting: query names tell you how to access them in the resulting dataframe
+
+        **result_naming_mode="model":**
+            - Column names use application names from the ods.Model (data model)
+            - Column names follow <entity_name>.<attribute_or_relation_name> like returned in ods.DataMatrices
+              (e.g., `Unit.Name`, `PhysDimension.Name`)
+            - Follows ods.Model application naming conventions
 
         :param str | dict query: Query given as JAQueL query (dict or str).
-        :param bool enum_as_string: columns of type DT_ENUM or DS_ENUM are returned as int values.
+        :param bool enum_as_string: Columns of type DT_ENUM or DS_ENUM are returned as int values.
                                     If this is set to True the model_cache is used to map the int values
-                                    to the corresponding string values.
-        :param bool date_as_timestamp: columns of type DT_DATE or DS_DATE are returned as string.
+                                    to the corresponding string values. Defaults to True.
+        :param bool date_as_timestamp: Columns of type DT_DATE or DS_DATE are returned as string.
                                        If this is set to True the strings are converted to pandas Timestamp.
+                                       Defaults to True.
         :param bool is_null_to_nan: If set to True, the is_null flags are used to set corresponding values to pd.NA.
                                     This uses pandas native nullable data types for better type preservation.
-        :param bool use_jaquel_columns: If set to True the result column names are taken from the original JAQueL query.
-        :param kwargs: additional arguments passed to `to_pandas`.
+                                    Defaults to True.
+        :param str result_naming_mode: Controls how result column names are generated.
+                                        "query" (default): Uses column names from the JAQUEL query
+                                                          (e.g., 'name', 'phys_dimension.name').
+                                        "model": Uses column names from the ods.Model schema
+                                                (e.g., 'Unit.Name', 'PhysDimension.Name').
+        :param kwargs: Additional arguments passed to `to_pandas`.
         :raises requests.HTTPError: If query fails.
-        :return DataFrame: The DataMatrices as Pandas.DataFrame. The columns are named as given in jaquel `$attributes`
-                           path or if an `*` was used as `ENTITY_NAME.ATTRIBUTE_NAME`.
+        :return DataFrame: The DataMatrices as Pandas.DataFrame with columns named according to `result_naming_mode`.
         """
+        if result_naming_mode not in ("query", "model"):
+            raise ValueError(f"result_naming_mode must be 'query' or 'model', got '{result_naming_mode}'")
+
         jaquel = Jaquel(self.model(), query)
         data_matrices = self.data_read(jaquel.select_statement)
         return to_pandas(
@@ -243,7 +323,7 @@ class ConI:
             enum_as_string=enum_as_string,
             date_as_timestamp=date_as_timestamp,
             is_null_to_nan=is_null_to_nan,
-            jaquel_conversion_result=jaquel if use_jaquel_columns else None,
+            jaquel_conversion_result=jaquel if result_naming_mode == "query" else None,
             **kwargs,
         )
 
@@ -253,27 +333,38 @@ class ConI:
         enum_as_string: bool = False,
         date_as_timestamp: bool = False,
         is_null_to_nan: bool = False,
-        use_jaquel_columns: bool = False,
+        result_naming_mode: str = "model",
         **kwargs,
     ) -> DataFrame:
         """
-        Query ods server for content and return the results as Pandas DataFrame
+        Query ods server for content and return the results as Pandas DataFrame.
+
+        This is a lower-level variant of query() with different defaults:
+        - Defaults to model column names (result_naming_mode="model")
+        - No automatic enum/date/null conversions by default
+        - Can accept raw ASAM ODS SelectStatement objects
 
         :param str | dict | ods.SelectStatement query: Query given as JAQueL query (dict or str)
             or as an ASAM ODS SelectStatement.
-        :param bool enum_as_string: columns of type DT_ENUM or DS_ENUM are returned as int values.
+        :param bool enum_as_string: Columns of type DT_ENUM or DS_ENUM are returned as int values.
                                     If this is set to True the model_cache is used to map the int values
-                                    to the corresponding string values.
-        :param bool date_as_timestamp: columns of type DT_DATE or DS_DATE are returned as string.
+                                    to the corresponding string values. Defaults to False.
+        :param bool date_as_timestamp: Columns of type DT_DATE or DS_DATE are returned as string.
                                        If this is set to True the strings are converted to pandas Timestamp.
+                                       Defaults to False.
         :param bool is_null_to_nan: If set to True, the is_null flags are used to set corresponding values to pd.NA.
                                     This uses pandas native nullable data types for better type preservation.
-        :param bool use_jaquel_columns: If set to True the result column names are taken from the original JAQueL query.
-        :param kwargs: additional arguments passed to `to_pandas`.
+                                    Defaults to False.
+        :param str result_naming_mode: Controls how result column names are generated.
+                                        "query": Uses column names from the JAQUEL query.
+                                        "model" (default): Uses column names from the ods.Model schema.
+        :param kwargs: Additional arguments passed to `to_pandas`.
         :raises requests.HTTPError: If query fails.
-        :return DataFrame: The DataMatrices as Pandas.DataFrame. The columns are named as `ENTITY_NAME.ATTRIBUTE_NAME`.
-            `IsNull` values are not marked invalid.
+        :return DataFrame: The DataMatrices as Pandas.DataFrame with columns named according to `result_naming_mode`.
         """
+        if result_naming_mode not in ("query", "model"):
+            raise ValueError(f"result_naming_mode must be 'query' or 'model', got '{result_naming_mode}'")
+
         if isinstance(query, ods.SelectStatement):
             jaquel = None
             select_statement = query
@@ -289,7 +380,7 @@ class ConI:
             enum_as_string=enum_as_string,
             date_as_timestamp=date_as_timestamp,
             is_null_to_nan=is_null_to_nan,
-            jaquel_conversion_result=jaquel if use_jaquel_columns else None,
+            jaquel_conversion_result=jaquel if result_naming_mode == "query" else None,
             **kwargs,
         )
 

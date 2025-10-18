@@ -453,10 +453,9 @@ def test_query_disable_jaquel_column_names():
         entity = con_i.mc.entity_by_base_name("AoUnit")
         name_attr = con_i.mc.attribute_by_base_name(entity, "name")
 
-        # Query with use_jaquel_columns=False
         r = con_i.query(
             {"AoUnit": {}, "$attributes": {"name": 1}, "$options": {"$rowlimit": 1}},
-            use_jaquel_columns=False,
+            result_naming_mode="model",
         )
         # Should use default naming (Entity.Attribute format)
         # The actual attribute name from the model is used (likely capitalized)
@@ -688,10 +687,9 @@ def test_query_with_kwargs():
         # JAQueL naming should take precedence
         assert "name" in r.columns
 
-        # Test with use_jaquel_columns=False and name_separator
         r = con_i.query(
             {"AoUnit": {}, "$attributes": {"name": 1}, "$options": {"$rowlimit": 1}},
-            use_jaquel_columns=False,
+            result_naming_mode="model",
             name_separator="::",
         )
         # Should use custom separator
