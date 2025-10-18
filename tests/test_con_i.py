@@ -453,10 +453,10 @@ def test_query_disable_jaquel_column_names():
         entity = con_i.mc.entity_by_base_name("AoUnit")
         name_attr = con_i.mc.attribute_by_base_name(entity, "name")
 
-        # Query with result_column_names_from_jaquel=False
+        # Query with use_jaquel_columns=False
         r = con_i.query(
             {"AoUnit": {}, "$attributes": {"name": 1}, "$options": {"$rowlimit": 1}},
-            result_column_names_from_jaquel=False,
+            use_jaquel_columns=False,
         )
         # Should use default naming (Entity.Attribute format)
         # The actual attribute name from the model is used (likely capitalized)
@@ -573,6 +573,84 @@ def test_query_with_joins():
         assert "measurement_quantities.name" in r.columns
 
 
+def test_query_with_asterisk():
+    """Test query method with join relationships"""
+    with __create_con_i() as con_i:
+        unit_e = con_i.mc.entity_by_base_name("AoUnit")
+        phys_dim_e = con_i.mc.entity_by_base_name("AoPhysicalDimension")
+
+        df = con_i.query(
+            {
+                "AoUnit": {},
+                "$options": {"$rowlimit": 1},
+            }
+        )
+        assert con_i.mc.attribute_by_base_name(unit_e, "name").name in df.columns
+        assert con_i.mc.attribute_by_base_name(unit_e, "id").name in df.columns
+        assert con_i.mc.relation_by_base_name(unit_e, "phys_dimension").name in df.columns
+
+        df = con_i.query(
+            {
+                "AoUnit": {},
+                "$attributes": {
+                    "*": 1,
+                },
+                "$options": {"$rowlimit": 1},
+            }
+        )
+        assert con_i.mc.attribute_by_base_name(unit_e, "name").name in df.columns
+        assert con_i.mc.attribute_by_base_name(unit_e, "id").name in df.columns
+        assert con_i.mc.relation_by_base_name(unit_e, "phys_dimension").name in df.columns
+
+        df = con_i.query(
+            {
+                "AoUnit": {},
+                "$attributes": {
+                    "*": 1,
+                    "phys_dimension.*": 1,
+                },
+                "$options": {"$rowlimit": 1},
+            }
+        )
+        assert con_i.mc.attribute_by_base_name(unit_e, "name").name in df.columns
+        assert con_i.mc.attribute_by_base_name(unit_e, "id").name in df.columns
+        assert con_i.mc.relation_by_base_name(unit_e, "phys_dimension").name in df.columns
+        assert "phys_dimension." + con_i.mc.attribute_by_base_name(phys_dim_e, "name").name in df.columns
+        assert "phys_dimension." + con_i.mc.attribute_by_base_name(phys_dim_e, "id").name in df.columns
+
+        df = con_i.query(
+            {
+                "AoUnit": {},
+                "$attributes": {
+                    "NAME": 1,
+                    "phys_dimension.*": 1,
+                },
+                "$options": {"$rowlimit": 1},
+            }
+        )
+        assert "NAME" in df.columns
+        assert con_i.mc.attribute_by_base_name(unit_e, "id").name not in df.columns
+        assert con_i.mc.relation_by_base_name(unit_e, "phys_dimension").name not in df.columns
+        assert "phys_dimension." + con_i.mc.attribute_by_base_name(phys_dim_e, "name").name in df.columns
+        assert "phys_dimension." + con_i.mc.attribute_by_base_name(phys_dim_e, "id").name in df.columns
+
+        df = con_i.query(
+            {
+                "AoUnit": {},
+                "$attributes": {
+                    "NAME": 1,
+                    "PHYS_DIMENSION.*": 1,
+                },
+                "$options": {"$rowlimit": 1},
+            }
+        )
+        assert "NAME" in df.columns
+        assert con_i.mc.attribute_by_base_name(unit_e, "id").name not in df.columns
+        assert con_i.mc.relation_by_base_name(unit_e, "phys_dimension").name not in df.columns
+        assert "PHYS_DIMENSION." + con_i.mc.attribute_by_base_name(phys_dim_e, "name").name in df.columns
+        assert "PHYS_DIMENSION." + con_i.mc.attribute_by_base_name(phys_dim_e, "id").name in df.columns
+
+
 def test_query_empty_result():
     """Test query method with query that returns no results"""
     with __create_con_i() as con_i:
@@ -610,10 +688,10 @@ def test_query_with_kwargs():
         # JAQueL naming should take precedence
         assert "name" in r.columns
 
-        # Test with result_column_names_from_jaquel=False and name_separator
+        # Test with use_jaquel_columns=False and name_separator
         r = con_i.query(
             {"AoUnit": {}, "$attributes": {"name": 1}, "$options": {"$rowlimit": 1}},
-            result_column_names_from_jaquel=False,
+            use_jaquel_columns=False,
             name_separator="::",
         )
         # Should use custom separator

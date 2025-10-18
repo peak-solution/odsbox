@@ -27,7 +27,7 @@ from pandas import DataFrame
 import odsbox.proto.ods_pb2 as ods
 from odsbox.bulk_reader import BulkReader
 from odsbox.datamatrices_to_pandas import to_pandas
-from odsbox.jaquel import jaquel_to_ods, jaquel_to_ods_ex
+from odsbox.jaquel import Jaquel
 from odsbox.model_cache import ModelCache
 from odsbox.security import Security
 from odsbox.transaction import Transaction
@@ -215,7 +215,7 @@ class ConI:
         enum_as_string: bool = True,
         date_as_timestamp: bool = True,
         is_null_to_nan: bool = True,
-        result_column_names_from_jaquel: bool = True,
+        use_jaquel_columns: bool = True,
         **kwargs,
     ) -> DataFrame:
         """
@@ -229,22 +229,21 @@ class ConI:
                                        If this is set to True the strings are converted to pandas Timestamp.
         :param bool is_null_to_nan: If set to True, the is_null flags are used to set corresponding values to pd.NA.
                                     This uses pandas native nullable data types for better type preservation.
-        :param bool result_column_names_from_jaquel: If set to True the column names are taken from the original
-                                    JAQueL query if no `*` was used.
+        :param bool use_jaquel_columns: If set to True the result column names are taken from the original JAQueL query.
         :param kwargs: additional arguments passed to `to_pandas`.
         :raises requests.HTTPError: If query fails.
         :return DataFrame: The DataMatrices as Pandas.DataFrame. The columns are named as given in jaquel `$attributes`
                            path or if an `*` was used as `ENTITY_NAME.ATTRIBUTE_NAME`.
         """
-        jaquel_result = jaquel_to_ods_ex(self.model(), query)
-        data_matrices = self.data_read(jaquel_result.select_statement)
+        jaquel = Jaquel(self.model(), query)
+        data_matrices = self.data_read(jaquel.select_statement)
         return to_pandas(
             data_matrices,
             model_cache=self.mc,
             enum_as_string=enum_as_string,
             date_as_timestamp=date_as_timestamp,
             is_null_to_nan=is_null_to_nan,
-            jaquel_conversion_result=jaquel_result if result_column_names_from_jaquel else None,
+            jaquel_conversion_result=jaquel if use_jaquel_columns else None,
             **kwargs,
         )
 
@@ -254,7 +253,7 @@ class ConI:
         enum_as_string: bool = False,
         date_as_timestamp: bool = False,
         is_null_to_nan: bool = False,
-        result_column_names_from_jaquel: bool = False,
+        use_jaquel_columns: bool = False,
         **kwargs,
     ) -> DataFrame:
         """
@@ -269,19 +268,18 @@ class ConI:
                                        If this is set to True the strings are converted to pandas Timestamp.
         :param bool is_null_to_nan: If set to True, the is_null flags are used to set corresponding values to pd.NA.
                                     This uses pandas native nullable data types for better type preservation.
-        :param bool result_column_names_from_jaquel: If set to True the column names are taken from the original
-                                    JAQueL query if no `*` was used.
+        :param bool use_jaquel_columns: If set to True the result column names are taken from the original JAQueL query.
         :param kwargs: additional arguments passed to `to_pandas`.
         :raises requests.HTTPError: If query fails.
         :return DataFrame: The DataMatrices as Pandas.DataFrame. The columns are named as `ENTITY_NAME.ATTRIBUTE_NAME`.
             `IsNull` values are not marked invalid.
         """
         if isinstance(query, ods.SelectStatement):
-            jaquel_result = None
+            jaquel = None
             select_statement = query
         else:
-            jaquel_result = jaquel_to_ods_ex(self.model(), query)
-            select_statement = jaquel_result.select_statement
+            jaquel = Jaquel(self.model(), query)
+            select_statement = jaquel.select_statement
 
         data_matrices = self.data_read(select_statement)
 
@@ -291,7 +289,7 @@ class ConI:
             enum_as_string=enum_as_string,
             date_as_timestamp=date_as_timestamp,
             is_null_to_nan=is_null_to_nan,
-            jaquel_conversion_result=jaquel_result if result_column_names_from_jaquel else None,
+            jaquel_conversion_result=jaquel if use_jaquel_columns else None,
             **kwargs,
         )
 
@@ -304,17 +302,17 @@ class ConI:
         """
         return self.mc.model()
 
-    def data_read_jaquel(self, jaquel: str | dict) -> ods.DataMatrices:
+    def data_read_jaquel(self, jaquel_query: str | dict) -> ods.DataMatrices:
         """
         Query ods server for content.
 
-        :param str | dict  jaquel: Query given as JAQueL query (dict or str).
+        :param str | dict  jaquel_query: Query given as JAQueL query (dict or str).
         :raises requests.HTTPError: If query fails.
         :return ods.DataMatrices: The DataMatrices representing the result.
             It will contain one ods.DataMatrix for each returned entity type.
         """
-        _, ods_query = jaquel_to_ods(self.model(), jaquel)
-        return self.data_read(ods_query)
+        jaquel = Jaquel(self.model(), jaquel_query)
+        return self.data_read(jaquel.select_statement)
 
     def data_read(self, select_statement: ods.SelectStatement) -> ods.DataMatrices:
         """

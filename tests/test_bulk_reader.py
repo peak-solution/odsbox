@@ -177,7 +177,7 @@ def test_query_merges_and_prefixes_duplicate_names(monkeypatch):
             )
             return df
 
-        def data_read_jaquel(self, jaquel):
+        def data_read_jaquel(self, jaquel_query):
             return object()  # ignored by our monkeypatched to_pandas
 
     fake = FakeConI()
@@ -249,7 +249,7 @@ def test_query_raises_on_missing_metadata(monkeypatch):
                 ]
             )
 
-        def data_read_jaquel(self, jaquel):
+        def data_read_jaquel(self, jaquel_query):
             return object()
 
     def fake_to_pandas_bulk(dms, date_as_timestamp=True, prefer_np_array_for_unknown=True):
@@ -315,7 +315,7 @@ def test_generation_parameters_requested_when_raw_seq(monkeypatch):
                 ]
             )
 
-        def data_read_jaquel(self, jaquel):
+        def data_read_jaquel(self, jaquel_query):
             return object()
 
     # to_pandas should return id, values, generation_parameters columns (will be renamed inside query)
@@ -347,7 +347,7 @@ def test_generation_parameters_not_requested_when_not_raw(monkeypatch):
                 ]
             )
 
-        def data_read_jaquel(self, jaquel):
+        def data_read_jaquel(self, jaquel_query):
             return object()
 
     def fake_to_pandas2(dms, date_as_timestamp=True, prefer_np_array_for_unknown=True):

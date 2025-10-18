@@ -202,18 +202,23 @@ def __get_datamatrix_column_values_ex(
     return return_values
 
 
-def _determine_column_name(name_separator, jaquel_conversion_result, matrix, column):
-    jaquel_column = jaquel_conversion_result and jaquel_conversion_result.lookup(matrix.aid, column)
-    if jaquel_column:
-        column_name = jaquel_column.path.replace(".", name_separator) if name_separator != "." else jaquel_column.path
-    else:
-        aggregate_postfix = (
-            ""
-            if column.aggregate == ods.AggregateEnum.AG_NONE
-            else f"{name_separator}{ods.AggregateEnum.Name(column.aggregate)}"
-        )
-        column_name = f"{matrix.name}{name_separator}{column.name}{aggregate_postfix}"
-    return column_name
+def _determine_column_name(
+    name_separator: str,
+    jaquel_conversion_result: JaquelConversionResult | None,
+    matrix: ods.DataMatrix,
+    column: ods.DataMatrix.Column,
+) -> str:
+    if jaquel_conversion_result:
+        jaquel_column = jaquel_conversion_result and jaquel_conversion_result.lookup(matrix.aid, column)
+        if jaquel_column:
+            return jaquel_column.column_name(name_separator, asterisk_name=column.name)
+
+    aggregate_postfix = (
+        ""
+        if column.aggregate == ods.AggregateEnum.AG_NONE
+        else f"{name_separator}{ods.AggregateEnum.Name(column.aggregate)}"
+    )
+    return f"{matrix.name}{name_separator}{column.name}{aggregate_postfix}"
 
 
 def to_pandas(

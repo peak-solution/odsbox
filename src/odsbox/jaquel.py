@@ -933,16 +933,28 @@ def jaquel_to_ods(model: ods.Model, jaquel_query: str | dict) -> tuple[ods.Model
     return result.entity, result.select_statement
 
 
-def jaquel_to_ods_ex(model: ods.Model, jaquel_query: str | dict) -> JaquelConversionResult:
+class Jaquel(JaquelConversionResult):
     """
-    Convert a given JAQueL query into an ASAM ODS SelectStatement and collect attribute tuples.
+    A class representing the result of converting a JAQueL query into an ASAM ODS SelectStatement.
 
-    :param ods.Model model: application model to be used for conversion.
-    :param str | dict jaquel_query: JAQueL query as dict or json string.
-    :raises SyntaxError: If contains syntactical errors.
-    :raises ValueError: If conversion fail.
-    :raises json.decoder.JSONDecodeError: If JSON string contains syntax errors.
-    :return JaquelConversionResult: A result object containing the target entity, the ASAM ODS SelectStatement,
-        and a list of tuples containing attribute paths and their corresponding AttributeItems
+    This class extends JaquelConversionResult and encapsulates the target entity,
+    the ASAM ODS SelectStatement, and a list of tuples containing attribute paths
+    and their corresponding AttributeItems.
     """
-    return _jaquel_to_ods_internal(model, jaquel_query)
+
+    def __init__(self, model: ods.Model, jaquel_query: str | dict) -> None:
+        """
+        Initialize the Jaquel object by converting the given JAQueL query.
+
+        :param ods.Model model: application model to be used for conversion.
+        :param str | dict jaquel_query: JAQueL query as dict or json string.
+        :raises SyntaxError: If contains syntactical errors.
+        :raises ValueError: If conversion fail.
+        :raises json.decoder.JSONDecodeError: If JSON string contains syntax errors.
+        """
+        result = _jaquel_to_ods_internal(model, jaquel_query)
+        super().__init__(
+            entity=result.entity,
+            select_statement=result.select_statement,
+            column_lookup=result.column_lookup,
+        )
