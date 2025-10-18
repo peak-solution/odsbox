@@ -13,12 +13,51 @@ The lookup order is:
 
 *Almost all examples use base names to make they work on any application model.*
 
+## Query example
+
+This section is a short explanation on the DataFrame content returned
+
+```python
+df = con_i.query({
+    "AoUnit": {},
+    "$attributes": {
+        "name": 1,
+        "id": 1,
+        "factor": 1,
+        "phys_dimension.name": 1
+    }
+}, result_naming_mode="query")
+```
+
+The result DataFrame `df` columns will be:
+
+| Query Attribute | result_naming_mode="query" (Default) | result_naming_mode="model" |
+|-----------------|--------------------------------------|----------------------------|
+| `"name"` | `name` | `Unit.Name` |
+| `"id"` | `id` | `Unit.Id` |
+| `"factor"` | `factor` | `Unit.Factor` |
+| `"phys_dimension.name"` | `phys_dimension.name` | `PhysDimension.Name` |
+
+Key Differences:
+
+- **result_naming_mode="query" (Default):**
+    - Column names match your JAQUEL query specification exactly
+    - base names and case insensitivity of jaquel is reflected (e.g., `name`, `phys_dimension.name`)
+    - Best for: AI agents, generic programmatic workflows (ods base model usage)
+    - Self-documenting: query names tell you how to access them in the resulting dataframe
+
+- **result_naming_mode="model":**
+    - Column names use application names from the ods.Model (data model)
+    - Column names follow `<entity_name>.<attribute_or_relation_name>` like returned in ods.DataMatrices (e.g., `Unit.Name`, `PhysDimension.Name`)
+    - Follows ods.Model application naming conventions
+
+
 ## Examples
 
 ### Get all AoTest instances
 
 ```python
-r = con_i.query_data({
+r = con_i.query({
     "AoTest": {}
 })
 ```
@@ -28,19 +67,19 @@ r = con_i.query_data({
 Get measurement with id 4711
 
 ```python
-r = con_i.query_data({
+r = con_i.query({
     "AoMeasurement": 4711
 })
 ```
 
 ```python
-r = con_i.query_data({
+r = con_i.query({
     "AoMeasurement": "4711"
 })
 ```
 
 ```python
-r = con_i.query_data({
+r = con_i.query({
     "AoMeasurement": {
         "id": 4711
     }
@@ -50,7 +89,7 @@ r = con_i.query_data({
 Using application names.
 
 ```python
-r = con_i.query_data({
+r = con_i.query({
     "MeaResult": {
         "Id": 4711
     }
@@ -62,7 +101,7 @@ r = con_i.query_data({
 
 
 ```python
-r = con_i.query_data({
+r = con_i.query({
     "AoMeasurement": {
         "test": 4611
     }
@@ -70,7 +109,7 @@ r = con_i.query_data({
 ```
 
 ```python
-r = con_i.query_data({
+r = con_i.query({
     "AoMeasurement": {
         "test.id": 4611
     }
@@ -82,7 +121,7 @@ TIP: `test.id` is a duplicate because the id is also stored in test column
 ### Use inverse to do the same job
 
 ```python
-r = con_i.query_data({
+r = con_i.query({
     "AoSubTest": "4611",
     "$attributes": {
         "children.name": 1,
@@ -92,7 +131,7 @@ r = con_i.query_data({
 ```
 
 ```python
-r = con_i.query_data({
+r = con_i.query({
     "AoSubTest": "4611",
     "$attributes": {
         "children": {
@@ -106,7 +145,7 @@ r = con_i.query_data({
 ### Search for a AoTestSequence by name and version
 
 ```python
-r = con_i.query_data({
+r = con_i.query({
     "AoTestSequence": {
         "name": "MyTestSequence",
         "version": "V1"
@@ -116,7 +155,7 @@ r = con_i.query_data({
 ### Case insensitive match
 
 ```python
-r = con_i.query_data({
+r = con_i.query({
     "AoTest": {
         "name": {
             "$eq": "MyTest",
@@ -128,7 +167,7 @@ r = con_i.query_data({
 ### Case insensitive match
 
 ```python
-r = con_i.query_data({
+r = con_i.query({
     "AoTest": {
         "name": {
             "$like": "My*",
@@ -141,7 +180,7 @@ r = con_i.query_data({
 ### Resolve asam path
 
 ```python
-r = con_i.query_data({
+r = con_i.query({
     "AoMeasurement": {
         "name": "MyMea",
         "version": "V1",
@@ -156,7 +195,7 @@ r = con_i.query_data({
 ```
 
 ```python
-r = con_i.query_data({
+r = con_i.query({
     "AoMeasurement": {
         "name": "MyMea",
         "version": "V1",
@@ -179,7 +218,7 @@ r = con_i.query_data({
 ### Use $in operator
 
 ```python
-r = con_i.query_data({
+r = con_i.query({
     "AoMeasurement": {
         "id": {
             "$in": [
@@ -195,7 +234,7 @@ r = con_i.query_data({
 ### Search for a time span
 
 ```python
-r = con_i.query_data({
+r = con_i.query({
     "AoMeasurement": {
         "measurement_begin": {
             "$gte": "2012-04-23T00:00:00.000Z",
@@ -208,7 +247,7 @@ r = con_i.query_data({
 ### Use between operator
 
 ```python
-r = con_i.query_data({
+r = con_i.query({
     "AoMeasurement": {
         "measurement_begin": {
             "$between": [
@@ -223,7 +262,7 @@ r = con_i.query_data({
 ### Simple $and example
 
 ```python
-r = con_i.query_data({
+r = con_i.query({
     "AoMeasurement": {
         "$and": [
             {
@@ -246,7 +285,7 @@ r = con_i.query_data({
 ### Simple or example
 
 ```python
-r = con_i.query_data({
+r = con_i.query({
     "AoMeasurement": {
         "$or": [
             {
@@ -275,7 +314,7 @@ r = con_i.query_data({
 ### Simple $not example
 
 ```python
-r = con_i.query_data({
+r = con_i.query({
     "AoTestSequence": {
         "$not": {
             "$and": [
@@ -294,7 +333,7 @@ r = con_i.query_data({
 ### Mixed case sensitive/insensitive
 
 ```python
-r = con_i.query_data({
+r = con_i.query({
     "AoTest": {
         "$and": [
             {
@@ -315,7 +354,7 @@ r = con_i.query_data({
 ### Define unit for attribute to be retrieved
 
 ```python
-r = con_i.query_data({
+r = con_i.query({
     "AoMeasurementQuantity": 4711,
     "$attributes": {
         "name": 1,
@@ -330,7 +369,7 @@ r = con_i.query_data({
 ### Define unit for attribute value in condition
 
 ```python
-r = con_i.query_data({
+r = con_i.query({
     "AoMeasurementQuantity": {
         "maximum": {
             "$unit": 3,
@@ -346,7 +385,7 @@ r = con_i.query_data({
 ### Access $min and $max from minimum and maximum
 
 ```python
-r = con_i.query_data({
+r = con_i.query({
     "AoMeasurementQuantity": {
         "name": "Revs"
     },
@@ -366,7 +405,7 @@ r = con_i.query_data({
 ### Do a full query filling some query elements
 
 ```python
-r = con_i.query_data({
+r = con_i.query({
     "AoMeasurement": {
         "$or": [
             {
@@ -412,7 +451,7 @@ r = con_i.query_data({
 ```
 
 ```python
-r = con_i.query_data({
+r = con_i.query({
     "AoMeasurement": {},
     "$attributes": {
         "name": {
@@ -425,7 +464,7 @@ r = con_i.query_data({
 ### Use outer join to retrieve sparse set unit names
 
 ```python
-r = con_i.query_data({
+r = con_i.query({
     "AoMeasurementQuantity": {
         "measurement": 4712
     },

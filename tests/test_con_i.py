@@ -6,6 +6,7 @@ import logging
 import os
 import tempfile
 
+import pandas as pd
 import pytest
 from _pytest.fixtures import FixtureRequest
 from google.protobuf.json_format import MessageToJson
@@ -42,6 +43,29 @@ def test_con_i():
             {"AoUnit": {}, "$attributes": {"name": 1}, "$options": {"$rowlimit": 1}}, name_separator="::"
         )
         assert f"{entity.name}::" in r.columns[0]
+
+
+def test_con_i_query():
+    with __create_con_i() as con_i:
+        model = con_i.model_read()
+        assert len(model.entities) > 0
+
+        r = con_i.query({"AoUnit": {}, "$attributes": {"name": 1, "id": 1}, "$options": {"$rowlimit": 1}})
+        assert "name" in r.columns
+        assert "id" in r.columns
+
+        r = con_i.query({"AoUnit": {}, "$attributes": {"Name": 1, "Id": 1}, "$options": {"$rowlimit": 1}})
+        assert "Name" in r.columns
+        assert "Id" in r.columns
+
+        r = con_i.query(
+            {"AoUnit": {}, "$attributes": {"name": 1, "phys_dimension.name": 1}, "$options": {"$rowlimit": 1}}
+        )
+        assert "name" in r.columns
+        assert "phys_dimension.name" in r.columns
+
+        r = con_i.query({"AoUnit": {}, "$attributes": {"name": {"$distinct": 1}}, "$options": {"$rowlimit": 1}})
+        assert "name.$distinct" in r.columns
 
 
 def test_query_data():
@@ -394,3 +418,279 @@ def test_nested_query(request: FixtureRequest):
             {"AoTest": {"name": {"$in": {"$nested": {"AoTest": {}, "$attributes": {"name": {"$distinct": 1}}}}}}},
         )
         assert s.where[0].condition.nested_statement.columns[0].attribute is not None
+
+
+def test_query_with_jaquel_column_names():
+    """Test that query method uses JAQueL column names by default"""
+    with __create_con_i() as con_i:
+        # Simple query with single attribute
+        r = con_i.query({"AoUnit": {}, "$attributes": {"name": 1}, "$options": {"$rowlimit": 1}})
+        assert "name" in r.columns
+        assert "AoUnit.name" not in r.columns
+
+        # Query with multiple attributes
+        r = con_i.query({"AoUnit": {}, "$attributes": {"name": 1, "id": 1}, "$options": {"$rowlimit": 1}})
+        assert "name" in r.columns
+        assert "id" in r.columns
+        assert len(r.columns) == 2
+
+        # Query with relationship path
+        r = con_i.query(
+            {
+                "AoUnit": {},
+                "$attributes": {"name": 1, "phys_dimension.name": 1, "phys_dimension.id": 1},
+                "$options": {"$rowlimit": 1},
+            }
+        )
+        assert "name" in r.columns
+        assert "phys_dimension.name" in r.columns
+        assert "phys_dimension.id" in r.columns
+
+
+def test_query_disable_jaquel_column_names():
+    """Test that query method can disable JAQueL column naming"""
+    with __create_con_i() as con_i:
+        entity = con_i.mc.entity_by_base_name("AoUnit")
+        name_attr = con_i.mc.attribute_by_base_name(entity, "name")
+
+        r = con_i.query(
+            {"AoUnit": {}, "$attributes": {"name": 1}, "$options": {"$rowlimit": 1}},
+            result_naming_mode="model",
+        )
+        # Should use default naming (Entity.Attribute format)
+        # The actual attribute name from the model is used (likely capitalized)
+        assert any(entity.name in col for col in r.columns)
+        assert f"{entity.name}.{name_attr.name}" in r.columns
+
+
+def test_query_with_aggregates():
+    """Test query method with aggregate functions"""
+    with __create_con_i() as con_i:
+        # Query with distinct
+        r = con_i.query({"AoUnit": {}, "$attributes": {"name": {"$distinct": 1}}, "$options": {"$rowlimit": 5}})
+        assert "name.$distinct" in r.columns
+
+        # Query with count
+        r = con_i.query({"AoUnit": {}, "$attributes": {"id": {"$count": 1}}})
+        assert "id.$count" in r.columns
+        assert len(r) == 1  # Aggregate should return single row
+
+
+def test_query_enum_as_string():
+    """Test query method with enum_as_string parameter"""
+    with __create_con_i() as con_i:
+        # Simply test that the parameter is accepted and queries execute
+        # Testing actual enum conversion would require knowing specific enum fields
+        r = con_i.query(
+            {"AoUnit": {}, "$attributes": {"id": 1, "name": 1}, "$options": {"$rowlimit": 5}}, enum_as_string=True
+        )
+        assert "id" in r.columns
+        assert "name" in r.columns
+        assert not r.empty
+
+        # Test with enum_as_string=False
+        r = con_i.query(
+            {"AoUnit": {}, "$attributes": {"id": 1, "name": 1}, "$options": {"$rowlimit": 5}}, enum_as_string=False
+        )
+        assert "id" in r.columns
+        assert "name" in r.columns
+        assert not r.empty
+
+
+def test_query_date_as_timestamp():
+    """Test query method with date_as_timestamp parameter"""
+    with __create_con_i() as con_i:
+        # Query with date fields
+        r = con_i.query(
+            {"AoMeasurement": {}, "$attributes": {"id": 1, "measurement_begin": 1}, "$options": {"$rowlimit": 5}},
+            date_as_timestamp=True,
+        )
+        assert "measurement_begin" in r.columns
+        # Check if date values are timestamps
+        if not r.empty and r["measurement_begin"].notna().any():
+            first_valid = r["measurement_begin"].dropna().iloc[0]
+            assert isinstance(first_valid, pd.Timestamp), f"Expected Timestamp, got {type(first_valid)}"
+
+        # Test with date_as_timestamp=False
+        r = con_i.query(
+            {"AoMeasurement": {}, "$attributes": {"id": 1, "measurement_begin": 1}, "$options": {"$rowlimit": 5}},
+            date_as_timestamp=False,
+        )
+        if not r.empty and r["measurement_begin"].notna().any():
+            first_valid = r["measurement_begin"].dropna().iloc[0]
+            # With date_as_timestamp=False, should be string
+            assert isinstance(first_valid, str), f"Expected string, got {type(first_valid)}"
+
+
+def test_query_is_null_to_nan():
+    """Test query method with is_null_to_nan parameter"""
+    with __create_con_i() as con_i:
+        # Query with is_null_to_nan=True (default)
+        r = con_i.query(
+            {"AoUnit": {}, "$attributes": {"name": 1, "description": 1}, "$options": {"$rowlimit": 10}},
+            is_null_to_nan=True,
+        )
+        assert "description" in r.columns
+        # Check if any null values are marked as pd.NA
+        if r["description"].isna().any():
+            assert r["description"].dtype == object or pd.api.types.is_string_dtype(r["description"])
+
+        # Query with is_null_to_nan=False
+        r = con_i.query(
+            {"AoUnit": {}, "$attributes": {"name": 1, "description": 1}, "$options": {"$rowlimit": 10}},
+            is_null_to_nan=False,
+        )
+        assert "description" in r.columns
+
+
+def test_query_with_string_format():
+    """Test query method with string formatted JAQueL"""
+    with __create_con_i() as con_i:
+        # Query using JSON string
+        r = con_i.query('{"AoUnit": {}, "$attributes": {"name": 1}, "$options": {"$rowlimit": 1}}')
+        assert "name" in r.columns
+        assert not r.empty
+
+
+def test_query_with_joins():
+    """Test query method with join relationships"""
+    with __create_con_i() as con_i:
+        # Query with joined attributes from related entities
+        r = con_i.query(
+            {
+                "AoMeasurement": {},
+                "$attributes": {
+                    "id": 1,
+                    "name": 1,
+                    "measurement_quantities.name": 1,
+                },
+                "$options": {"$rowlimit": 5},
+            }
+        )
+        assert "id" in r.columns
+        assert "name" in r.columns
+        assert "measurement_quantities.name" in r.columns
+
+
+def test_query_with_asterisk():
+    """Test query method with join relationships"""
+    with __create_con_i() as con_i:
+        unit_e = con_i.mc.entity_by_base_name("AoUnit")
+        phys_dim_e = con_i.mc.entity_by_base_name("AoPhysicalDimension")
+
+        df = con_i.query(
+            {
+                "AoUnit": {},
+                "$options": {"$rowlimit": 1},
+            }
+        )
+        assert con_i.mc.attribute_by_base_name(unit_e, "name").name in df.columns
+        assert con_i.mc.attribute_by_base_name(unit_e, "id").name in df.columns
+        assert con_i.mc.relation_by_base_name(unit_e, "phys_dimension").name in df.columns
+
+        df = con_i.query(
+            {
+                "AoUnit": {},
+                "$attributes": {
+                    "*": 1,
+                },
+                "$options": {"$rowlimit": 1},
+            }
+        )
+        assert con_i.mc.attribute_by_base_name(unit_e, "name").name in df.columns
+        assert con_i.mc.attribute_by_base_name(unit_e, "id").name in df.columns
+        assert con_i.mc.relation_by_base_name(unit_e, "phys_dimension").name in df.columns
+
+        df = con_i.query(
+            {
+                "AoUnit": {},
+                "$attributes": {
+                    "*": 1,
+                    "phys_dimension.*": 1,
+                },
+                "$options": {"$rowlimit": 1},
+            }
+        )
+        assert con_i.mc.attribute_by_base_name(unit_e, "name").name in df.columns
+        assert con_i.mc.attribute_by_base_name(unit_e, "id").name in df.columns
+        assert con_i.mc.relation_by_base_name(unit_e, "phys_dimension").name in df.columns
+        assert "phys_dimension." + con_i.mc.attribute_by_base_name(phys_dim_e, "name").name in df.columns
+        assert "phys_dimension." + con_i.mc.attribute_by_base_name(phys_dim_e, "id").name in df.columns
+
+        df = con_i.query(
+            {
+                "AoUnit": {},
+                "$attributes": {
+                    "NAME": 1,
+                    "phys_dimension.*": 1,
+                },
+                "$options": {"$rowlimit": 1},
+            }
+        )
+        assert "NAME" in df.columns
+        assert con_i.mc.attribute_by_base_name(unit_e, "id").name not in df.columns
+        assert con_i.mc.relation_by_base_name(unit_e, "phys_dimension").name not in df.columns
+        assert "phys_dimension." + con_i.mc.attribute_by_base_name(phys_dim_e, "name").name in df.columns
+        assert "phys_dimension." + con_i.mc.attribute_by_base_name(phys_dim_e, "id").name in df.columns
+
+        df = con_i.query(
+            {
+                "AoUnit": {},
+                "$attributes": {
+                    "NAME": 1,
+                    "PHYS_DIMENSION.*": 1,
+                },
+                "$options": {"$rowlimit": 1},
+            }
+        )
+        assert "NAME" in df.columns
+        assert con_i.mc.attribute_by_base_name(unit_e, "id").name not in df.columns
+        assert con_i.mc.relation_by_base_name(unit_e, "phys_dimension").name not in df.columns
+        assert "PHYS_DIMENSION." + con_i.mc.attribute_by_base_name(phys_dim_e, "name").name in df.columns
+        assert "PHYS_DIMENSION." + con_i.mc.attribute_by_base_name(phys_dim_e, "id").name in df.columns
+
+
+def test_query_empty_result():
+    """Test query method with query that returns no results"""
+    with __create_con_i() as con_i:
+        # Query with impossible condition
+        r = con_i.query(
+            {
+                "AoUnit": {"name": "ThisUnitNameDoesNotExist_XYZ123"},
+                "$attributes": {"name": 1, "id": 1},
+                "$options": {"$rowlimit": 10},
+            }
+        )
+        assert r.empty or len(r) == 0
+        # Even empty result should have correct columns
+        assert "name" in r.columns
+        assert "id" in r.columns
+
+
+def test_query_with_filter():
+    """Test query method with filter conditions"""
+    with __create_con_i() as con_i:
+        # Query with simple filter
+        r = con_i.query({"AoUnit": {"name": "m"}, "$attributes": {"name": 1, "id": 1}, "$options": {"$rowlimit": 5}})
+        assert "name" in r.columns
+        assert "id" in r.columns
+        # All returned names should match filter
+        if not r.empty:
+            assert all("m" in str(name).lower() for name in r["name"] if name)
+
+
+def test_query_with_kwargs():
+    """Test query method with additional kwargs passed to to_pandas"""
+    with __create_con_i() as con_i:
+        # Test with custom name_separator (though this should be overridden by JAQueL naming)
+        r = con_i.query({"AoUnit": {}, "$attributes": {"name": 1}, "$options": {"$rowlimit": 1}}, name_separator="::")
+        # JAQueL naming should take precedence
+        assert "name" in r.columns
+
+        r = con_i.query(
+            {"AoUnit": {}, "$attributes": {"name": 1}, "$options": {"$rowlimit": 1}},
+            result_naming_mode="model",
+            name_separator="::",
+        )
+        # Should use custom separator
+        assert any("::" in col for col in r.columns)

@@ -11,7 +11,7 @@ import pytest
 from google.protobuf.json_format import MessageToJson, Parse
 
 import odsbox.proto.ods_pb2 as ods
-from odsbox.jaquel import jaquel_to_ods
+from odsbox.jaquel import jaquel_to_ods, Jaquel
 
 
 def __get_model(model_file_name):
@@ -92,6 +92,12 @@ def test_predefined():
 
         assert select_statement_ref == select_statement, f"Does not match {MessageToJson(select_statement)}"
 
+        jaquel_result = Jaquel(model, jaquel_dict)
+
+        assert (
+            select_statement_ref == jaquel_result.select_statement
+        ), f"Does not match {MessageToJson(jaquel_result.select_statement)}"
+
 
 def test_syntax_errors():
     model = __get_model("application_model.json")
@@ -140,13 +146,13 @@ def test_syntax_errors():
     with pytest.raises(SyntaxError, match="Entity 'DoesNotExist' is unknown in model."):
         jaquel_to_ods(model, {"DoesNotExist": 1})
 
-    with pytest.raises(SyntaxError, match="47567 is no valid entity aid."):
+    with pytest.raises(SyntaxError, match="'47567' is not a valid entity aid."):
         jaquel_to_ods(model, {"47567": 1})
 
     with pytest.raises(SyntaxError, match="Only id value can be assigned directly. But 'abc' was assigned."):
         jaquel_to_ods(model, {26: "abc"})
 
-    with pytest.raises(SyntaxError, match="47567 is no valid entity aid."):
+    with pytest.raises(SyntaxError, match="'47567' is not a valid entity aid."):
         jaquel_to_ods(model, {47567: 1})
 
     with pytest.raises(SyntaxError, match=r"Does not define a target entity."):
@@ -409,3 +415,179 @@ def test_nested_statements_with_different_operators():
                     break
 
         assert has_nested, f"Expected to find a nested statement for operator {operator}"
+
+
+def test_jaquel():
+    model = __get_model("application_model.json")
+
+    jaquel_result = Jaquel(model, {"AoMeasurement": 1})
+    assert jaquel_result is not None
+    assert jaquel_result.entity.name == "MeaResult"
+    assert jaquel_result.select_statement is not None
+    assert len(jaquel_result.column_lookup) == 1
+    assert jaquel_result.lookup(jaquel_result.entity.aid, ods.DataMatrix.Column(name="*")).path == "*"
+
+    jaquel_result = Jaquel(model, {"AoMeasurement": 1, "$attributes": {"id": 1, "name": 1}})
+    assert jaquel_result is not None
+    assert jaquel_result.entity.name == "MeaResult"
+    assert jaquel_result.select_statement is not None
+    assert len(jaquel_result.column_lookup) == 2
+    assert jaquel_result.lookup(jaquel_result.entity.aid, ods.DataMatrix.Column(name="Id")).path == "id"
+    assert jaquel_result.lookup(jaquel_result.entity.aid, ods.DataMatrix.Column(name="Name")).path == "name"
+
+    jaquel_result = Jaquel(model, {"AoMeasurement": 1, "$attributes": {"Id": 1, "Name": 1}})
+    assert jaquel_result is not None
+    assert jaquel_result.entity.name == "MeaResult"
+    assert jaquel_result.select_statement is not None
+    assert len(jaquel_result.column_lookup) == 2
+    assert jaquel_result.lookup(jaquel_result.entity.aid, ods.DataMatrix.Column(name="Id")).path == "Id"
+    assert jaquel_result.lookup(jaquel_result.entity.aid, ods.DataMatrix.Column(name="Name")).path == "Name"
+
+    jaquel_result = Jaquel(model, {"AoMeasurement": 1, "$attributes": {"ID": 1, "NAME": 1}})
+    assert jaquel_result is not None
+    assert jaquel_result.entity.name == "MeaResult"
+    assert jaquel_result.select_statement is not None
+    assert len(jaquel_result.column_lookup) == 2
+    assert jaquel_result.lookup(jaquel_result.entity.aid, ods.DataMatrix.Column(name="Id")).path == "ID"
+    assert jaquel_result.lookup(jaquel_result.entity.aid, ods.DataMatrix.Column(name="Name")).path == "NAME"
+
+
+def test_jaquel_dotted_path():
+    model = __get_model("application_model.json")
+
+    jaquel_result = Jaquel(model, {"AoMeasurement": 1, "$attributes": {"test.id": 1, "test.name": 1}})
+    assert jaquel_result is not None
+    assert jaquel_result.entity.name == "MeaResult"
+    assert jaquel_result.select_statement is not None
+    assert len(jaquel_result.column_lookup) == 2
+    assert jaquel_result.lookup(model.entities.get("TestStep").aid, ods.DataMatrix.Column(name="Id")).path == "test.id"
+    assert (
+        jaquel_result.lookup(model.entities.get("TestStep").aid, ods.DataMatrix.Column(name="Name")).path == "test.name"
+    )
+
+    jaquel_result = Jaquel(model, {"AoMeasurement": 1, "$attributes": {"test.Id": 1, "test.Name": 1}})
+    assert jaquel_result is not None
+    assert jaquel_result.entity.name == "MeaResult"
+    assert jaquel_result.select_statement is not None
+    assert len(jaquel_result.column_lookup) == 2
+    assert jaquel_result.lookup(model.entities.get("TestStep").aid, ods.DataMatrix.Column(name="Id")).path == "test.Id"
+    assert (
+        jaquel_result.lookup(model.entities.get("TestStep").aid, ods.DataMatrix.Column(name="Name")).path == "test.Name"
+    )
+
+    jaquel_result = Jaquel(model, {"AoMeasurement": 1, "$attributes": {"test.ID": 1, "test.NAME": 1}})
+    assert jaquel_result is not None
+    assert jaquel_result.entity.name == "MeaResult"
+    assert jaquel_result.select_statement is not None
+    assert len(jaquel_result.column_lookup) == 2
+    assert jaquel_result.lookup(model.entities.get("TestStep").aid, ods.DataMatrix.Column(name="Id")).path == "test.ID"
+    assert (
+        jaquel_result.lookup(model.entities.get("TestStep").aid, ods.DataMatrix.Column(name="Name")).path == "test.NAME"
+    )
+
+    jaquel_result = Jaquel(model, {"AoMeasurement": 1, "$attributes": {"TestStep.id": 1, "TestStep.name": 1}})
+    assert jaquel_result is not None
+    assert jaquel_result.entity.name == "MeaResult"
+    assert jaquel_result.select_statement is not None
+    assert len(jaquel_result.column_lookup) == 2
+    assert (
+        jaquel_result.lookup(model.entities.get("TestStep").aid, ods.DataMatrix.Column(name="Id")).path == "TestStep.id"
+    )
+    assert (
+        jaquel_result.lookup(model.entities.get("TestStep").aid, ods.DataMatrix.Column(name="Name")).path
+        == "TestStep.name"
+    )
+
+    jaquel_result = Jaquel(model, {"AoMeasurement": 1, "$attributes": {"TestStep.Id": 1, "TestStep.Name": 1}})
+    assert jaquel_result is not None
+    assert jaquel_result.entity.name == "MeaResult"
+    assert jaquel_result.select_statement is not None
+    assert len(jaquel_result.column_lookup) == 2
+    assert (
+        jaquel_result.lookup(model.entities.get("TestStep").aid, ods.DataMatrix.Column(name="Id")).path == "TestStep.Id"
+    )
+    assert (
+        jaquel_result.lookup(model.entities.get("TestStep").aid, ods.DataMatrix.Column(name="Name")).path
+        == "TestStep.Name"
+    )
+
+    jaquel_result = Jaquel(model, {"AoMeasurement": 1, "$attributes": {"TestStep.ID": 1, "TestStep.NAME": 1}})
+    assert jaquel_result is not None
+    assert jaquel_result.entity.name == "MeaResult"
+    assert jaquel_result.select_statement is not None
+    assert len(jaquel_result.column_lookup) == 2
+    assert (
+        jaquel_result.lookup(model.entities.get("TestStep").aid, ods.DataMatrix.Column(name="Id")).path == "TestStep.ID"
+    )
+    assert (
+        jaquel_result.lookup(model.entities.get("TestStep").aid, ods.DataMatrix.Column(name="Name")).path
+        == "TestStep.NAME"
+    )
+
+    jaquel_result = Jaquel(model, {"AoMeasurement": 1, "$attributes": {"TESTSTEP.ID": 1, "TESTSTEP.NAME": 1}})
+    assert jaquel_result is not None
+    assert jaquel_result.entity.name == "MeaResult"
+    assert jaquel_result.select_statement is not None
+    assert len(jaquel_result.column_lookup) == 2
+    assert (
+        jaquel_result.lookup(model.entities.get("TestStep").aid, ods.DataMatrix.Column(name="Id")).path == "TESTSTEP.ID"
+    )
+    assert (
+        jaquel_result.lookup(model.entities.get("TestStep").aid, ods.DataMatrix.Column(name="Name")).path
+        == "TESTSTEP.NAME"
+    )
+
+
+def test_jaquel_special():
+    model = __get_model("application_model.json")
+
+    jaquel_result = Jaquel(
+        model,
+        {
+            "AoMeasurement": 1,
+            "$attributes": {
+                "test.id": 1,
+                "test.name": 1,
+                "test.parent_test": 1,
+                "test.parent_test.id": 1,
+                "test.parent_test.name": 1,
+            },
+        },
+    )
+    assert jaquel_result is not None
+    assert jaquel_result.entity.name == "MeaResult"
+    assert jaquel_result.select_statement is not None
+    assert len(jaquel_result.column_lookup) == 5
+    assert jaquel_result.lookup(model.entities.get("TestStep").aid, ods.DataMatrix.Column(name="Id")).path == "test.id"
+    assert (
+        jaquel_result.lookup(model.entities.get("TestStep").aid, ods.DataMatrix.Column(name="Name")).path == "test.name"
+    )
+    assert (
+        jaquel_result.lookup(model.entities.get("TestStep").aid, ods.DataMatrix.Column(name="Test")).path
+        == "test.parent_test"
+    )
+    assert (
+        jaquel_result.lookup(model.entities.get("Test").aid, ods.DataMatrix.Column(name="Id")).path
+        == "test.parent_test.id"
+    )
+    assert (
+        jaquel_result.lookup(model.entities.get("Test").aid, ods.DataMatrix.Column(name="Name")).path
+        == "test.parent_test.name"
+    )
+
+
+def test_jaquel_aggregate():
+    model = __get_model("application_model.json")
+
+    jaquel_result = Jaquel(model, {"AoMeasurement": 1, "$attributes": {"id": {"$min": 1}}})
+    assert jaquel_result is not None
+    assert jaquel_result.entity.name == "MeaResult"
+    assert jaquel_result.select_statement is not None
+    assert len(jaquel_result.column_lookup) == 1
+    assert jaquel_result.lookup(jaquel_result.entity.aid, ods.DataMatrix.Column(name="Id")) is None
+    assert (
+        jaquel_result.lookup(
+            jaquel_result.entity.aid, ods.DataMatrix.Column(name="Id", aggregate=ods.AggregateEnum.AG_MIN)
+        ).path
+        == "id.$min"
+    )

@@ -76,6 +76,13 @@ def test_apply_sequence_representation_various():
                 "generation_parameters": [1.0, 2.0, 3.0],
                 "number_of_rows": 2,
             },
+            {
+                "name": "rational",
+                "values": [1, 2],
+                "sequence_representation": SeqRepEnum.raw_rational.value,
+                "generation_parameters": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
+                "number_of_rows": 2,
+            },
         ]
     )
 
@@ -96,6 +103,12 @@ def test_apply_sequence_representation_various():
 
     # calibrated: (p1 + p2 * vals) * p3
     assert list(df.loc[4, "values"]) == [(1.0 + 2.0 * 1.0) * 3.0, (1.0 + 2.0 * 2.0) * 3.0]
+
+    # rational: (p1 * vals^2  + p2 * vals + p3) / (p4 * vals^2 + p5 * vals + p6)
+    assert list(df.loc[5, "values"]) == [
+        (1.0 * 1.0**2 + 2.0 * 1.0 + 3.0) / (4.0 * 1.0**2 + 5.0 * 1.0 + 6.0),
+        (1.0 * 2.0**2 + 2.0 * 2.0 + 3.0) / (4.0 * 2.0**2 + 5.0 * 2.0 + 6.0),
+    ]
 
 
 def test_apply_sequence_representation_errors():
@@ -164,7 +177,7 @@ def test_query_merges_and_prefixes_duplicate_names(monkeypatch):
             )
             return df
 
-        def data_read_jaquel(self, jaquel):
+        def data_read_jaquel(self, jaquel_query):
             return object()  # ignored by our monkeypatched to_pandas
 
     fake = FakeConI()
@@ -236,7 +249,7 @@ def test_query_raises_on_missing_metadata(monkeypatch):
                 ]
             )
 
-        def data_read_jaquel(self, jaquel):
+        def data_read_jaquel(self, jaquel_query):
             return object()
 
     def fake_to_pandas_bulk(dms, date_as_timestamp=True, prefer_np_array_for_unknown=True):
@@ -302,7 +315,7 @@ def test_generation_parameters_requested_when_raw_seq(monkeypatch):
                 ]
             )
 
-        def data_read_jaquel(self, jaquel):
+        def data_read_jaquel(self, jaquel_query):
             return object()
 
     # to_pandas should return id, values, generation_parameters columns (will be renamed inside query)
@@ -334,7 +347,7 @@ def test_generation_parameters_not_requested_when_not_raw(monkeypatch):
                 ]
             )
 
-        def data_read_jaquel(self, jaquel):
+        def data_read_jaquel(self, jaquel_query):
             return object()
 
     def fake_to_pandas2(dms, date_as_timestamp=True, prefer_np_array_for_unknown=True):

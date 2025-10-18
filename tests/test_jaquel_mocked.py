@@ -28,7 +28,7 @@ class TestJaquelEdgeCases:
 
         # Mock the _model_get_entity_ex function to return the same entity each time
         with patch("odsbox.jaquel._model_get_entity_ex", return_value=mock_entity):
-            with pytest.raises(SyntaxError, match='Only one start point allowed "Entity2"'):
+            with pytest.raises(SyntaxError, match="Only one start point allowed 'Entity2'."):
                 jaquel_to_ods(mock_model, {"Entity1": {}, "Entity2": {}})
 
     def test_invalid_id_assignment(self):
@@ -48,7 +48,9 @@ class TestJaquelEdgeCases:
         mock_entity.aid = 1
 
         with patch("odsbox.jaquel._model_get_entity_ex", return_value=mock_entity):
-            with pytest.raises(SyntaxError, match='unknown first level define "\\$unknown"'):
+            with pytest.raises(
+                SyntaxError, match="Unknown first level define '\\$unknown'. Did you mean '\\$options'?"
+            ):
                 jaquel_to_ods(mock_model, {"TestEntity": {}, "$unknown": {}})
 
     def test_json_string_input(self):
@@ -103,7 +105,7 @@ class TestParsingErrors:
         mock_entity.aid = 1
 
         with patch("odsbox.jaquel._model_get_entity_ex", return_value=mock_entity):
-            with pytest.raises(SyntaxError, match="Actually no \\$options defined for attributes"):
+            with pytest.raises(SyntaxError, match="No \\$options are defined for attributes."):
                 jaquel_to_ods(mock_model, {"TestEntity": {}, "$attributes": {"test": {"$options": {}}}})
 
     def test_parse_attributes_array_error(self):
@@ -113,7 +115,9 @@ class TestParsingErrors:
         mock_entity.aid = 1
 
         with patch("odsbox.jaquel._model_get_entity_ex", return_value=mock_entity):
-            with pytest.raises(SyntaxError, match="attributes is not allowed to contain arrays"):
+            with pytest.raises(
+                SyntaxError, match="Attributes are not allowed to contain arrays. Use dictionary setting value to 1."
+            ):
                 jaquel_to_ods(mock_model, {"TestEntity": {}, "$attributes": {"test": [1, 2, 3]}})
 
     def test_parse_orderby_dollar_element_error(self):
@@ -123,7 +127,7 @@ class TestParsingErrors:
         mock_entity.aid = 1
 
         with patch("odsbox.jaquel._model_get_entity_ex", return_value=mock_entity):
-            with pytest.raises(SyntaxError, match="no predefined element '\\$invalid' defined in orderby"):
+            with pytest.raises(SyntaxError, match="No predefined element '\\$invalid' defined in orderby."):
                 jaquel_to_ods(mock_model, {"TestEntity": {}, "$orderby": {"$invalid": 1}})
 
     def test_parse_orderby_array_error(self):
@@ -133,7 +137,9 @@ class TestParsingErrors:
         mock_entity.aid = 1
 
         with patch("odsbox.jaquel._model_get_entity_ex", return_value=mock_entity):
-            with pytest.raises(SyntaxError, match="attributes is not allowed to contain arrays"):
+            with pytest.raises(
+                SyntaxError, match="Attributes are not allowed to contain arrays. Use dictionary setting value to 1."
+            ):
                 jaquel_to_ods(mock_model, {"TestEntity": {}, "$orderby": {"test": [1, 2]}})
 
     def test_parse_orderby_invalid_value_error(self):
@@ -147,7 +153,7 @@ class TestParsingErrors:
                 "odsbox.jaquel._parse_path_and_add_joins",
                 return_value=(ods.DataTypeEnum.DT_STRING, "test_attr", mock_entity),
             ):
-                with pytest.raises(SyntaxError, match="5 not supported for orderby"):
+                with pytest.raises(SyntaxError, match="'5' is not supported for orderby."):
                     jaquel_to_ods(mock_model, {"TestEntity": {}, "$orderby": {"test_attr": 5}})
 
     def test_parse_groupby_dollar_element_error(self):
@@ -157,7 +163,7 @@ class TestParsingErrors:
         mock_entity.aid = 1
 
         with patch("odsbox.jaquel._model_get_entity_ex", return_value=mock_entity):
-            with pytest.raises(SyntaxError, match="no predefined element '\\$invalid' defined in orderby"):
+            with pytest.raises(SyntaxError, match="No predefined element '\\$invalid' defined in orderby."):
                 jaquel_to_ods(mock_model, {"TestEntity": {}, "$groupby": {"$invalid": 1}})
 
     def test_parse_groupby_array_error(self):
@@ -167,7 +173,9 @@ class TestParsingErrors:
         mock_entity.aid = 1
 
         with patch("odsbox.jaquel._model_get_entity_ex", return_value=mock_entity):
-            with pytest.raises(SyntaxError, match="attributes is not allowed to contain arrays"):
+            with pytest.raises(
+                SyntaxError, match="Attributes are not allowed to contain arrays. Use dictionary setting value to 1."
+            ):
                 jaquel_to_ods(mock_model, {"TestEntity": {}, "$groupby": {"test": [1]}})
 
     def test_parse_groupby_invalid_value_error(self):
@@ -177,7 +185,7 @@ class TestParsingErrors:
         mock_entity.aid = 1
 
         with patch("odsbox.jaquel._model_get_entity_ex", return_value=mock_entity):
-            with pytest.raises(SyntaxError, match="0 only 1 supported in groupby"):
+            with pytest.raises(SyntaxError, match="Only 1 is supported in groupby, but '0' was provided."):
                 jaquel_to_ods(mock_model, {"TestEntity": {}, "$groupby": {"test_attr": 0}})
 
 
@@ -191,7 +199,7 @@ class TestGlobalOptionsErrors:
         mock_entity.aid = 1
 
         with patch("odsbox.jaquel._model_get_entity_ex", return_value=mock_entity):
-            with pytest.raises(SyntaxError, match='Undefined options "\\$undefined"'):
+            with pytest.raises(SyntaxError, match="Unknown option '\\$undefined'. Did you mean '\\$seqskip'?"):
                 jaquel_to_ods(mock_model, {"TestEntity": {}, "$options": {"$undefined": 100}})
 
     def test_invalid_global_option_no_dollar(self):
@@ -201,8 +209,15 @@ class TestGlobalOptionsErrors:
         mock_entity.aid = 1
 
         with patch("odsbox.jaquel._model_get_entity_ex", return_value=mock_entity):
-            with pytest.raises(SyntaxError, match='No undefined options allowed "invalid"'):
+            with pytest.raises(SyntaxError, match="No undefined options allowed 'invalid'."):
                 jaquel_to_ods(mock_model, {"TestEntity": {}, "$options": {"invalid": 100}})
+
+    def test_none_dict_in_first_level(self):
+        """Test non-dict in first level raises error"""
+        mock_model = Mock()
+
+        with pytest.raises(SyntaxError, match="Invalid JAQueL query format '<class 'int'>' only dict allowed."):
+            jaquel_to_ods(mock_model, "124")
 
 
 class TestConditionErrors:
@@ -215,7 +230,7 @@ class TestConditionErrors:
         mock_entity.aid = 1
 
         with patch("odsbox.jaquel._model_get_entity_ex", return_value=mock_entity):
-            with pytest.raises(SyntaxError, match="\\$and and \\$or must always contain array"):
+            with pytest.raises(SyntaxError, match="\\$and and \\$or must always contain an array."):
                 jaquel_to_ods(mock_model, {"TestEntity": {"$and": "not_array"}})
 
     def test_not_condition_not_object_error(self):
@@ -227,7 +242,7 @@ class TestConditionErrors:
         with patch("odsbox.jaquel._model_get_entity_ex", return_value=mock_entity):
             # Instead of testing the error through internal function, test it will be caught during parsing
             # The actual error occurs when the code tries to iterate through the string "not_object"
-            with pytest.raises(TypeError):  # string indices must be integers, not 'str'
+            with pytest.raises(SyntaxError):  # string indices must be integers, not 'str'
                 jaquel_to_ods(mock_model, {"TestEntity": {"$not": "not_object"}})
 
     def test_unknown_operator_error(self):
@@ -678,7 +693,7 @@ class TestComplexQueries:
         mock_model = Mock()
         mock_model.entities = {}
 
-        with pytest.raises(SyntaxError, match="999 is no valid entity aid"):
+        with pytest.raises(SyntaxError, match="'999' is not a valid entity aid."):
             jaquel._model_get_entity_ex(mock_model, 999)
 
     def test_model_get_entity_ex_by_name(self):
@@ -1186,7 +1201,7 @@ class TestParseGlobalOptions:
         mock_target = Mock()
         options_dict = {"$undefined": 100}
 
-        with pytest.raises(SyntaxError, match='Undefined options "\\$undefined"'):
+        with pytest.raises(SyntaxError, match="Unknown option '\\$undefined'. Did you mean '\\$seqskip'?"):
             jaquel._parse_global_options(options_dict, mock_target)
 
     def test_parse_global_options_no_dollar_prefix(self):
@@ -1194,7 +1209,7 @@ class TestParseGlobalOptions:
         mock_target = Mock()
         options_dict = {"invalid": 100}
 
-        with pytest.raises(SyntaxError, match='No undefined options allowed "invalid"'):
+        with pytest.raises(SyntaxError, match="No undefined options allowed 'invalid'."):
             jaquel._parse_global_options(options_dict, mock_target)
 
 
@@ -1219,7 +1234,10 @@ class TestParseAttributes:
             "odsbox.jaquel._parse_path_and_add_joins",
             return_value=(ods.DataTypeEnum.DT_STRING, "test_attr", mock_entity),
         ):
-            jaquel._parse_attributes(mock_model, mock_entity, mock_target, element_dict, attribute_dict)
+            result_column_lookup = []
+            jaquel._parse_attributes(
+                mock_model, mock_entity, mock_target, element_dict, attribute_dict, result_column_lookup
+            )
 
         # Should have added column to target
         assert mock_target.columns.add.called
@@ -1233,8 +1251,11 @@ class TestParseAttributes:
         element_dict = {"$options": {}}
         attribute_dict = {"path": "", "aggregate": ods.AggregateEnum.AG_NONE, "unit": 0}
 
-        with pytest.raises(SyntaxError, match="Actually no \\$options defined for attributes"):
-            jaquel._parse_attributes(mock_model, mock_entity, mock_target, element_dict, attribute_dict)
+        with pytest.raises(SyntaxError, match="No \\$options are defined for attributes."):
+            result_column_lookup = []
+            jaquel._parse_attributes(
+                mock_model, mock_entity, mock_target, element_dict, attribute_dict, result_column_lookup
+            )
 
     def test_parse_attributes_with_unknown_aggregate(self):
         """Test parsing attributes with unknown aggregate"""
@@ -1247,7 +1268,10 @@ class TestParseAttributes:
 
         with patch("odsbox.jaquel._model_get_suggestion_aggregate", return_value=" Did you mean '$max'?"):
             with pytest.raises(SyntaxError, match="Unknown aggregate '\\$unknown'"):
-                jaquel._parse_attributes(mock_model, mock_entity, mock_target, element_dict, attribute_dict)
+                result_column_lookup = []
+                jaquel._parse_attributes(
+                    mock_model, mock_entity, mock_target, element_dict, attribute_dict, result_column_lookup
+                )
 
     def test_parse_attributes_with_array(self):
         """Test parsing attributes with array (should raise error)"""
@@ -1258,8 +1282,13 @@ class TestParseAttributes:
         element_dict = {"test_attr": [1, 2, 3]}
         attribute_dict = {"path": "", "aggregate": ods.AggregateEnum.AG_NONE, "unit": 0}
 
-        with pytest.raises(SyntaxError, match="attributes is not allowed to contain arrays"):
-            jaquel._parse_attributes(mock_model, mock_entity, mock_target, element_dict, attribute_dict)
+        with pytest.raises(
+            SyntaxError, match="Attributes are not allowed to contain arrays. Use dictionary setting value to 1."
+        ):
+            result_column_lookup = []
+            jaquel._parse_attributes(
+                mock_model, mock_entity, mock_target, element_dict, attribute_dict, result_column_lookup
+            )
 
 
 class TestParseOrderBy:
@@ -1274,7 +1303,7 @@ class TestParseOrderBy:
         element_dict = {"$invalid": 1}
         attribute_dict = {"path": ""}
 
-        with pytest.raises(SyntaxError, match="no predefined element '\\$invalid' defined in orderby"):
+        with pytest.raises(SyntaxError, match="No predefined element '\\$invalid' defined in orderby."):
             jaquel._parse_orderby(mock_model, mock_entity, mock_target, element_dict, attribute_dict)
 
     def test_parse_orderby_with_array(self):
@@ -1286,7 +1315,9 @@ class TestParseOrderBy:
         element_dict = {"test_attr": [1, 2]}
         attribute_dict = {"path": ""}
 
-        with pytest.raises(SyntaxError, match="attributes is not allowed to contain arrays"):
+        with pytest.raises(
+            SyntaxError, match="Attributes are not allowed to contain arrays. Use dictionary setting value to 1."
+        ):
             jaquel._parse_orderby(mock_model, mock_entity, mock_target, element_dict, attribute_dict)
 
     def test_parse_orderby_invalid_value(self):
@@ -1303,7 +1334,7 @@ class TestParseOrderBy:
             "odsbox.jaquel._parse_path_and_add_joins",
             return_value=(ods.DataTypeEnum.DT_STRING, "test_attr", mock_entity),
         ):
-            with pytest.raises(SyntaxError, match="5 not supported for orderby"):
+            with pytest.raises(SyntaxError, match="'5' is not supported for orderby."):
                 jaquel._parse_orderby(mock_model, mock_entity, mock_target, element_dict, attribute_dict)
 
 
@@ -1319,7 +1350,7 @@ class TestParseGroupBy:
         element_dict = {"$invalid": 1}
         attribute_dict = {"path": ""}
 
-        with pytest.raises(SyntaxError, match="no predefined element '\\$invalid' defined in orderby"):
+        with pytest.raises(SyntaxError, match="No predefined element '\\$invalid' defined in orderby."):
             jaquel._parse_groupby(mock_model, mock_entity, mock_target, element_dict, attribute_dict)
 
     def test_parse_groupby_with_array(self):
@@ -1331,7 +1362,9 @@ class TestParseGroupBy:
         element_dict = {"test_attr": [1]}
         attribute_dict = {"path": ""}
 
-        with pytest.raises(SyntaxError, match="attributes is not allowed to contain arrays"):
+        with pytest.raises(
+            SyntaxError, match="Attributes are not allowed to contain arrays. Use dictionary setting value to 1."
+        ):
             jaquel._parse_groupby(mock_model, mock_entity, mock_target, element_dict, attribute_dict)
 
     def test_parse_groupby_invalid_value(self):
@@ -1343,7 +1376,7 @@ class TestParseGroupBy:
         element_dict = {"test_attr": 0}  # Invalid value, should be 1
         attribute_dict = {"path": ""}
 
-        with pytest.raises(SyntaxError, match="0 only 1 supported in groupby"):
+        with pytest.raises(SyntaxError, match="Only 1 is supported in groupby, but '0' was provided."):
             jaquel._parse_groupby(mock_model, mock_entity, mock_target, element_dict, attribute_dict)
 
 
@@ -1362,7 +1395,7 @@ class TestParseConditionsConjunction:
             "conjunction": ods.SelectStatement.ConditionItem.ConjuctionEnum.CO_AND,
         }
 
-        with pytest.raises(SyntaxError, match="\\$and and \\$or must always contain array"):
+        with pytest.raises(SyntaxError, match="\\$and and \\$or must always contain an array."):
             jaquel._parse_conditions_conjunction(
                 mock_model,
                 mock_entity,
@@ -1394,7 +1427,7 @@ class TestParseConditionsNot:
         }
 
         # The actual error is a TypeError when trying to iterate over a string
-        with pytest.raises(TypeError):  # string indices must be integers, not 'str'
+        with pytest.raises(SyntaxError):  # string indices must be integers, not 'str'
             jaquel._parse_conditions(mock_model, mock_entity, mock_target, element_dict, attribute_dict)
 
 
@@ -1430,7 +1463,7 @@ class TestJaquelToOdsEdgeCases:
         mock_model = Mock()
 
         with patch("odsbox.jaquel._model_get_entity_ex", return_value=Mock()):
-            with pytest.raises(SyntaxError, match='Only one start point allowed "Entity2"'):
+            with pytest.raises(SyntaxError, match="Only one start point allowed 'Entity2'."):
                 jaquel_to_ods(mock_model, {"Entity1": {}, "Entity2": {}})
 
     def test_jaquel_to_ods_invalid_id_assignment(self):
@@ -1450,7 +1483,9 @@ class TestJaquelToOdsEdgeCases:
         mock_entity.aid = 1
 
         with patch("odsbox.jaquel._model_get_entity_ex", return_value=mock_entity):
-            with pytest.raises(SyntaxError, match='unknown first level define "\\$unknown"'):
+            with pytest.raises(
+                SyntaxError, match="Unknown first level define '\\$unknown'. Did you mean '\\$options'?"
+            ):
                 jaquel_to_ods(mock_model, {"TestEntity": {}, "$unknown": {}})
 
     def test_jaquel_to_ods_json_string_input(self):

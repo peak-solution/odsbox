@@ -380,3 +380,148 @@ def test_aggregates():
         "Aggregates::Maximum::AG_MIN": {0: 1.1},
     }
     assert len(pdf.to_json()) > 0
+
+
+def test_jaquel_conversion_result():
+    """Test that jaquel_conversion_result is used to determine column names."""
+    from odsbox.jaquel_conversion_result import JaquelConversionResult
+
+    # Create a DataMatrices with some columns
+    dms = ods.DataMatrices()
+    dm = dms.matrices.add(aid=4711, name="MeaResult")
+    dm.columns.add(name="Id", aggregate=ods.AggregateEnum.AG_NONE).longlong_array.values[:] = [1, 2]
+    dm.columns.add(name="Name", aggregate=ods.AggregateEnum.AG_NONE).string_array.values[:] = ["Result1", "Result2"]
+    dm.columns.add(name="Value", aggregate=ods.AggregateEnum.AG_MAX).double_array.values[:] = [100.5, 200.3]
+
+    # Create JaquelConversionResult with custom column paths
+    entity = ods.Model.Entity(aid=4711, name="MeaResult")
+    select_statement = ods.SelectStatement()
+
+    column_lookup = [
+        JaquelConversionResult.Column(
+            aid=4711, name="Id", aggregate=ods.AggregateEnum.AG_NONE, path="test.measurement.result.id"
+        ),
+        JaquelConversionResult.Column(
+            aid=4711, name="Name", aggregate=ods.AggregateEnum.AG_NONE, path="test.measurement.result.name"
+        ),
+        JaquelConversionResult.Column(
+            aid=4711, name="Value", aggregate=ods.AggregateEnum.AG_MAX, path="test.measurement.result.maximum_value"
+        ),
+    ]
+
+    jaquel_result = JaquelConversionResult(
+        entity=entity, select_statement=select_statement, column_lookup=column_lookup
+    )
+
+    # Test with default separator (.)
+    pdf = to_pandas(dms, jaquel_conversion_result=jaquel_result)
+    logging.getLogger().info(pdf)
+    assert pdf.shape == (2, 3)
+    assert list(pdf.columns) == [
+        "test.measurement.result.id",
+        "test.measurement.result.name",
+        "test.measurement.result.maximum_value",
+    ]
+    assert pdf.to_dict() == {
+        "test.measurement.result.id": {0: 1, 1: 2},
+        "test.measurement.result.name": {0: "Result1", 1: "Result2"},
+        "test.measurement.result.maximum_value": {0: 100.5, 1: 200.3},
+    }
+
+    # Test with custom separator
+    pdf = to_pandas(dms, jaquel_conversion_result=jaquel_result, name_separator="::")
+    logging.getLogger().info(pdf)
+    assert pdf.shape == (2, 3)
+    assert list(pdf.columns) == [
+        "test::measurement::result::id",
+        "test::measurement::result::name",
+        "test::measurement::result::maximum_value",
+    ]
+    assert pdf.to_dict() == {
+        "test::measurement::result::id": {0: 1, 1: 2},
+        "test::measurement::result::name": {0: "Result1", 1: "Result2"},
+        "test::measurement::result::maximum_value": {0: 100.5, 1: 200.3},
+    }
+
+
+def test_jaquel_conversion_result_partial_match():
+    """Test behavior when only some columns match in jaquel_conversion_result."""
+    from odsbox.jaquel_conversion_result import JaquelConversionResult
+
+    # Create a DataMatrices with some columns
+    dms = ods.DataMatrices()
+    dm = dms.matrices.add(aid=4711, name="MeaResult")
+    dm.columns.add(name="Id", aggregate=ods.AggregateEnum.AG_NONE).longlong_array.values[:] = [1, 2]
+    dm.columns.add(name="Name", aggregate=ods.AggregateEnum.AG_NONE).string_array.values[:] = ["Result1", "Result2"]
+    dm.columns.add(name="Value", aggregate=ods.AggregateEnum.AG_NONE).double_array.values[:] = [100.5, 200.3]
+
+    # Create JaquelConversionResult with only partial column matches
+    entity = ods.Model.Entity(aid=4711, name="MeaResult")
+    select_statement = ods.SelectStatement()
+
+    column_lookup = [
+        JaquelConversionResult.Column(aid=4711, name="Id", aggregate=ods.AggregateEnum.AG_NONE, path="custom.path.id"),
+        # Name column is not in lookup
+        # Value column is not in lookup
+    ]
+
+    jaquel_result = JaquelConversionResult(
+        entity=entity, select_statement=select_statement, column_lookup=column_lookup
+    )
+
+    # Test that matched columns use JAQueL paths and unmatched use default naming
+    pdf = to_pandas(dms, jaquel_conversion_result=jaquel_result)
+    logging.getLogger().info(pdf)
+    assert pdf.shape == (2, 3)
+    assert list(pdf.columns) == ["custom.path.id", "MeaResult.Name", "MeaResult.Value"]
+    assert pdf.to_dict() == {
+        "custom.path.id": {0: 1, 1: 2},
+        "MeaResult.Name": {0: "Result1", 1: "Result2"},
+        "MeaResult.Value": {0: 100.5, 1: 200.3},
+    }
+
+
+def test_jaquel_conversion_result_multiple_matrices():
+    """Test jaquel_conversion_result with multiple DataMatrices."""
+    from odsbox.jaquel_conversion_result import JaquelConversionResult
+
+    # Create DataMatrices with multiple matrices
+    dms = ods.DataMatrices()
+
+    dm1 = dms.matrices.add(aid=4711, name="MeaResult")
+    dm1.columns.add(name="Id", aggregate=ods.AggregateEnum.AG_NONE).longlong_array.values[:] = [1]
+
+    dm2 = dms.matrices.add(aid=4712, name="MeaQuantity")
+    dm2.columns.add(name="Name", aggregate=ods.AggregateEnum.AG_NONE).string_array.values[:] = ["Quantity1"]
+    dm2.columns.add(name="Value", aggregate=ods.AggregateEnum.AG_MIN).double_array.values[:] = [50.0]
+
+    # Create JaquelConversionResult with columns from both matrices
+    entity = ods.Model.Entity(aid=4711, name="MeaResult")
+    select_statement = ods.SelectStatement()
+
+    column_lookup = [
+        JaquelConversionResult.Column(
+            aid=4711, name="Id", aggregate=ods.AggregateEnum.AG_NONE, path="result.identifier"
+        ),
+        JaquelConversionResult.Column(
+            aid=4712, name="Name", aggregate=ods.AggregateEnum.AG_NONE, path="quantity.description"
+        ),
+        JaquelConversionResult.Column(
+            aid=4712, name="Value", aggregate=ods.AggregateEnum.AG_MIN, path="quantity.minimum"
+        ),
+    ]
+
+    jaquel_result = JaquelConversionResult(
+        entity=entity, select_statement=select_statement, column_lookup=column_lookup
+    )
+
+    # Test that columns from different matrices are properly renamed
+    pdf = to_pandas(dms, jaquel_conversion_result=jaquel_result)
+    logging.getLogger().info(pdf)
+    assert pdf.shape == (1, 3)
+    assert list(pdf.columns) == ["result.identifier", "quantity.description", "quantity.minimum"]
+    assert pdf.to_dict() == {
+        "result.identifier": {0: 1},
+        "quantity.description": {0: "Quantity1"},
+        "quantity.minimum": {0: 50.0},
+    }

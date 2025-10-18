@@ -27,7 +27,7 @@ from pandas import DataFrame
 import odsbox.proto.ods_pb2 as ods
 from odsbox.bulk_reader import BulkReader
 from odsbox.datamatrices_to_pandas import to_pandas
-from odsbox.jaquel import jaquel_to_ods
+from odsbox.jaquel import Jaquel
 from odsbox.model_cache import ModelCache
 from odsbox.security import Security
 from odsbox.transaction import Transaction
@@ -63,6 +63,8 @@ class ConI:
         verify_certificate: bool = True,
         load_model: bool = True,
         allow_redirects: bool = False,
+        connection_timeout: float = 60.0,
+        request_timeout: float = 600.0,
     ) -> None:
         """
         Create a session object keeping track of ASAM ODS session URL named `conI`.
@@ -107,6 +109,8 @@ class ConI:
             It defaults to True.
         :param bool load_model: If the model should be read after connection is established. It defaults to True.
         :param bool allow_redirects: If redirects should be allowed in requests calls. It defaults to False.
+        :param float connection_timeout: Timeout in seconds for establishing connections. It defaults to 60.0.
+        :param float request_timeout: Timeout in seconds for individual requests. It defaults to 600.0.
         :raises requests.HTTPError: If connection to ASAM ODS server fails.
         """
         self.__session: requests.Session | None = None
@@ -115,6 +119,8 @@ class ConI:
         self.__mc: ModelCache | None = None
         self.__allow_redirects: bool = allow_redirects
         self.__bulk_reader: BulkReader | None = None
+        self.__connection_timeout: float = connection_timeout
+        self.__request_timeout: float = request_timeout
 
         session = requests.Session()
         session.auth = auth
@@ -132,7 +138,7 @@ class ConI:
         response = session.post(
             url + "/ods",
             data=_context_variables.SerializeToString(),
-            timeout=60.0,
+            timeout=self.__connection_timeout,
             headers=self.__default_http_headers,
             allow_redirects=self.__allow_redirects,
         )
@@ -147,8 +153,7 @@ class ConI:
             self.model_read()
 
     def __del__(self) -> None:
-        if self.__session is not None:
-            self.logout()
+        self.close()
 
     def __enter__(self) -> ConI:
         return self
@@ -156,7 +161,17 @@ class ConI:
     def __exit__(
         self, exc_type: type[BaseException] | None, exc_value: BaseException | None, exc_traceback: object
     ) -> None:
-        self.logout()
+        self.close()
+
+    def close(self) -> None:
+        """
+        Close the attached session at the ODS server by calling delete on the session URL
+        and closing the requests session. No exception is raised if logout fails.
+        """
+        try:
+            self.logout()
+        except Exception as e:
+            self.__log.exception("Exception during logout in close: %s", e)
 
     def con_i_url(self) -> str:
         """
@@ -176,21 +191,102 @@ class ConI:
         :raises requests.HTTPError: If delete the ASAM ODS session fails.
         """
         if self.__session is not None:
-            if self.__con_i is None:
-                raise ValueError("ConI already closed")
-            response = self.__session.delete(
-                self.__con_i,
-                timeout=60.0,
-                headers={"Accept": "application/x-asamods+protobuf"},
-                allow_redirects=self.__allow_redirects,
-            )
-            self.__session.close()
-            self.__session = None
-            self.__con_i = None
-            self.__security = None
-            self.__bulk_reader = None
-            self.__mc = None
-            self.check_requests_response(response)
+            try:
+                if self.__con_i is not None:
+                    response = self.__session.delete(
+                        self.__con_i,
+                        timeout=self.__connection_timeout,
+                        headers={"Accept": "application/x-asamods+protobuf"},
+                        allow_redirects=self.__allow_redirects,
+                    )
+                    self.check_requests_response(response)
+            finally:
+                self.__con_i = None
+
+                self.__session.close()
+                self.__session = None
+                self.__security = None
+                self.__bulk_reader = None
+                self.__mc = None
+
+    def query(
+        self,
+        jaquel_query: str | dict,
+        enum_as_string: bool = True,
+        date_as_timestamp: bool = True,
+        is_null_to_nan: bool = True,
+        result_naming_mode: str = "query",  # "query" or "model"
+        **kwargs,
+    ) -> DataFrame:
+        """
+        Query ods server for content using JAQueL query and return the results as Pandas DataFrame.
+
+        This method combines the JAQUEL query language with pandas DataFrames for convenient data access.
+        Result column names can be controlled via the `result_naming_mode` parameter to match either
+        your query specification (JAQUEL mode) or the schema entity names (model mode).
+
+        Example - Basic Query::
+
+            result = con_i.query({"AoUnit": {}})
+            print(result.columns)
+            # Output: Index(['Name', 'Id', 'PhysDimension'], ...)
+
+        Example - Query with Column Selection::
+
+            # Select specific columns using query-based column names (default)
+            query = {
+                "AoUnit": {},
+                "$attributes": {
+                    "name": 1,
+                    "id": 1,
+                    "phys_dimension.name": 1
+                }
+            }
+            result = con_i.query(query)
+            print(result.columns)
+            # Output: Index(['name', 'id', 'phys_dimension.name'], ...)
+
+        Example - Same Query with Model Column Names::
+
+            # Same query but with model/schema column names
+            result = con_i.query(query, result_naming_mode="model")
+            print(result.columns)
+            # Output: Index(['Unit.Name', 'Unit.Id', 'PhysDimension.Name'], ...)
+
+
+        :param str | dict jaquel_query: JAQueL query as dict or str.
+        :param bool enum_as_string: Columns of type DT_ENUM or DS_ENUM are returned as int values.
+                                    If this is set to True the model_cache is used to map the int values
+                                    to the corresponding string values. Defaults to True.
+        :param bool date_as_timestamp: Columns of type DT_DATE or DS_DATE are returned as string.
+                                       If this is set to True the strings are converted to pandas Timestamp.
+                                       Defaults to True.
+        :param bool is_null_to_nan: If set to True, the is_null flags are used to set corresponding values to pd.NA.
+                                    This uses pandas native nullable data types for better type preservation.
+                                    Defaults to True.
+        :param str result_naming_mode: Controls how result column names are generated.
+                                        "query" (default): Uses column names from the JAQUEL query
+                                                          (e.g., 'name', 'phys_dimension.name').
+                                        "model": Uses column names from the ods.Model schema
+                                                (e.g., 'Unit.Name', 'PhysDimension.Name').
+        :param kwargs: Additional arguments passed to `to_pandas`.
+        :raises requests.HTTPError: If query fails.
+        :return DataFrame: The DataMatrices as Pandas.DataFrame with columns named according to `result_naming_mode`.
+        """
+        if result_naming_mode not in ("query", "model"):
+            raise ValueError(f"result_naming_mode must be 'query' or 'model', got '{result_naming_mode}'")
+
+        jaquel = Jaquel(self.model(), jaquel_query)
+        data_matrices = self.data_read(jaquel.select_statement)
+        return to_pandas(
+            data_matrices,
+            model_cache=self.mc,
+            enum_as_string=enum_as_string,
+            date_as_timestamp=date_as_timestamp,
+            is_null_to_nan=is_null_to_nan,
+            jaquel_conversion_result=jaquel if result_naming_mode == "query" else None,
+            **kwargs,
+        )
 
     def query_data(
         self,
@@ -198,34 +294,54 @@ class ConI:
         enum_as_string: bool = False,
         date_as_timestamp: bool = False,
         is_null_to_nan: bool = False,
+        result_naming_mode: str = "model",
         **kwargs,
     ) -> DataFrame:
         """
-        Query ods server for content and return the results as Pandas DataFrame
+        Query ods server for content and return the results as Pandas DataFrame.
+
+        This is a lower-level variant of query() with different defaults:
+        - Defaults to model column names (result_naming_mode="model")
+        - No automatic enum/date/null conversions by default
+        - Can accept raw ASAM ODS SelectStatement objects
 
         :param str | dict | ods.SelectStatement query: Query given as JAQueL query (dict or str)
             or as an ASAM ODS SelectStatement.
-        :param bool enum_as_string: columns of type DT_ENUM or DS_ENUM are returned as int values.
+        :param bool enum_as_string: Columns of type DT_ENUM or DS_ENUM are returned as int values.
                                     If this is set to True the model_cache is used to map the int values
-                                    to the corresponding string values.
-        :param bool date_as_timestamp: columns of type DT_DATE or DS_DATE are returned as string.
+                                    to the corresponding string values. Defaults to False.
+        :param bool date_as_timestamp: Columns of type DT_DATE or DS_DATE are returned as string.
                                        If this is set to True the strings are converted to pandas Timestamp.
+                                       Defaults to False.
         :param bool is_null_to_nan: If set to True, the is_null flags are used to set corresponding values to pd.NA.
                                     This uses pandas native nullable data types for better type preservation.
-        :param kwargs: additional arguments passed to `to_pandas`.
+                                    Defaults to False.
+        :param str result_naming_mode: Controls how result column names are generated.
+                                        "query": Uses column names from the JAQUEL query.
+                                        "model" (default): Uses column names from the ods.Model schema.
+        :param kwargs: Additional arguments passed to `to_pandas`.
         :raises requests.HTTPError: If query fails.
-        :return DataFrame: The DataMatrices as Pandas.DataFrame. The columns are named as `ENTITY_NAME.ATTRIBUTE_NAME`.
-            `IsNull` values are not marked invalid.
+        :return DataFrame: The DataMatrices as Pandas.DataFrame with columns named according to `result_naming_mode`.
         """
-        data_matrices = (
-            self.data_read(query) if isinstance(query, ods.SelectStatement) else self.data_read_jaquel(query)
-        )
+        if result_naming_mode not in ("query", "model"):
+            raise ValueError(f"result_naming_mode must be 'query' or 'model', got '{result_naming_mode}'")
+
+        if isinstance(query, ods.SelectStatement):
+            jaquel = None
+            select_statement = query
+        else:
+            jaquel = Jaquel(self.model(), query)
+            select_statement = jaquel.select_statement
+
+        data_matrices = self.data_read(select_statement)
+
         return to_pandas(
             data_matrices,
             model_cache=self.mc,
             enum_as_string=enum_as_string,
             date_as_timestamp=date_as_timestamp,
             is_null_to_nan=is_null_to_nan,
+            jaquel_conversion_result=jaquel if result_naming_mode == "query" else None,
             **kwargs,
         )
 
@@ -238,17 +354,17 @@ class ConI:
         """
         return self.mc.model()
 
-    def data_read_jaquel(self, jaquel: str | dict) -> ods.DataMatrices:
+    def data_read_jaquel(self, jaquel_query: str | dict) -> ods.DataMatrices:
         """
         Query ods server for content.
 
-        :param str | dict  jaquel: Query given as JAQueL query (dict or str).
+        :param str | dict  jaquel_query: Query given as JAQueL query (dict or str).
         :raises requests.HTTPError: If query fails.
         :return ods.DataMatrices: The DataMatrices representing the result.
             It will contain one ods.DataMatrix for each returned entity type.
         """
-        _, ods_query = jaquel_to_ods(self.model(), jaquel)
-        return self.data_read(ods_query)
+        jaquel = Jaquel(self.model(), jaquel_query)
+        return self.data_read(jaquel.select_statement)
 
     def data_read(self, select_statement: ods.SelectStatement) -> ods.DataMatrices:
         """
@@ -293,17 +409,19 @@ class ConI:
             raise TypeError(f"data_update expects 'ods.DataMatrices', got '{type(data).__name__}'")
         self.ods_post_request("data-update", data)
 
-    def data_delete(self, data: ods.DataMatrices) -> None:
+    def data_delete(self, data: ods.DataMatrices, timeout: float | None = None) -> None:
         """
         Delete existing instances.
 
         :param ods.DataMatrices data: Matrices containing columns for instances to be deleted.
             The `id` column is used to identify the instances to be deleted.
+        :param float | None timeout: maximal time to wait for response. Delete might take longer time.
+                                     Uses the request_timeout from constructor if None.
         :raises requests.HTTPError: If delete fails.
         """
         if not isinstance(data, ods.DataMatrices):
             raise TypeError(f"data_delete expects 'ods.DataMatrices', got '{type(data).__name__}'")
-        self.ods_post_request("data-delete", data)
+        self.ods_post_request("data-delete", data, timeout=timeout)
 
     def data_copy(self, copy_request: ods.CopyRequest) -> ods.Instance:
         """
@@ -594,6 +712,7 @@ class ConI:
             headers={
                 "Accept": "application/octet-stream, application/x-asamods+protobuf, */*",
             },
+            timeout=self.__request_timeout,
             allow_redirects=self.__allow_redirects,
         )
         self.check_requests_response(file_response)
@@ -647,6 +766,7 @@ class ConI:
                 server_file_url,
                 data=file,
                 headers={"Content-Type": "application/octet-stream", "Accept": "application/x-asamods+protobuf"},
+                timeout=self.__request_timeout,
                 allow_redirects=self.__allow_redirects,
             )
             self.check_requests_response(put_response)
@@ -672,6 +792,7 @@ class ConI:
         delete_response = self.__session.delete(
             server_file_url,
             headers={"Accept": "application/x-asamods+protobuf"},
+            timeout=self.__request_timeout,
             allow_redirects=self.__allow_redirects,
         )
         self.check_requests_response(delete_response)
@@ -680,7 +801,7 @@ class ConI:
         self,
         relative_url_part: str,
         message: Message | None = None,
-        timeout: float = 600.0,
+        timeout: float | None = None,
         headers: dict[str, str] | None = None,
     ) -> requests.Response:
         """
@@ -688,7 +809,8 @@ class ConI:
 
         :param str relative_url_part: url part that is joined to conI URL using `/`.
         :param Message | None message: protobuf message to be send, defaults to None.
-        :param float timeout: maximal time to wait for response.
+        :param float | None timeout: maximal time to wait for response.
+            If None, uses the request_timeout from constructor.
         :raises requests.HTTPError: If status code is not 200 or 201.
         :return requests.Response: requests response if successful.
         """
@@ -699,7 +821,7 @@ class ConI:
         response = self.__session.post(
             self.__con_i + "/" + relative_url_part,
             data=message.SerializeToString() if message is not None else None,
-            timeout=timeout,
+            timeout=timeout if timeout is not None else self.__request_timeout,
             headers=(headers if headers is not None else self.__default_http_headers),
             allow_redirects=self.__allow_redirects,
         )
@@ -730,6 +852,8 @@ class ConI:
         :return ods.ModelCache: ModelCache object containing the cached application model.
         """
         if self.__mc is None:
+            if self.__con_i is None:
+                raise ValueError("ConI already closed!")
             raise ValueError("Model not read! Call model_read() first.")
         return self.__mc
 

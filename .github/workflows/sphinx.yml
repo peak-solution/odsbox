@@ -17,4 +17,4 @@ jobs:
     - name: Install Pandoc
       run: sudo apt-get update && sudo apt-get install -y pandoc
     - id: deployment
-      uses: sphinx-notes/pages@3.4
+      uses: sphinx-notes/pages@3.5
