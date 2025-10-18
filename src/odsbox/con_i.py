@@ -27,7 +27,7 @@ from pandas import DataFrame
 import odsbox.proto.ods_pb2 as ods
 from odsbox.bulk_reader import BulkReader
 from odsbox.datamatrices_to_pandas import to_pandas
-from odsbox.jaquel import jaquel_to_ods
+from odsbox.jaquel import Jaquel
 from odsbox.model_cache import ModelCache
 from odsbox.security import Security
 from odsbox.transaction import Transaction
@@ -209,40 +209,139 @@ class ConI:
                 self.__bulk_reader = None
                 self.__mc = None
 
-    def query_data(
+    def query(
         self,
-        query: str | dict | ods.SelectStatement,
-        enum_as_string: bool = False,
-        date_as_timestamp: bool = False,
-        is_null_to_nan: bool = False,
+        jaquel_query: str | dict,
+        enum_as_string: bool = True,
+        date_as_timestamp: bool = True,
+        is_null_to_nan: bool = True,
+        result_naming_mode: str = "query",  # "query" or "model"
         **kwargs,
     ) -> DataFrame:
         """
-        Query ods server for content and return the results as Pandas DataFrame
+        Query ods server for content using JAQueL query and return the results as Pandas DataFrame.
 
-        :param str | dict | ods.SelectStatement query: Query given as JAQueL query (dict or str)
-            or as an ASAM ODS SelectStatement.
-        :param bool enum_as_string: columns of type DT_ENUM or DS_ENUM are returned as int values.
+        This method combines the JAQUEL query language with pandas DataFrames for convenient data access.
+        Result column names can be controlled via the `result_naming_mode` parameter to match either
+        your query specification (JAQUEL mode) or the schema entity names (model mode).
+
+        Example - Basic Query::
+
+            result = con_i.query({"AoUnit": {}})
+            print(result.columns)
+            # Output: Index(['Name', 'Id', 'PhysDimension'], ...)
+
+        Example - Query with Column Selection::
+
+            # Select specific columns using query-based column names (default)
+            query = {
+                "AoUnit": {},
+                "$attributes": {
+                    "name": 1,
+                    "id": 1,
+                    "phys_dimension.name": 1
+                }
+            }
+            result = con_i.query(query)
+            print(result.columns)
+            # Output: Index(['name', 'id', 'phys_dimension.name'], ...)
+
+        Example - Same Query with Model Column Names::
+
+            # Same query but with model/schema column names
+            result = con_i.query(query, result_naming_mode="model")
+            print(result.columns)
+            # Output: Index(['Unit.Name', 'Unit.Id', 'PhysDimension.Name'], ...)
+
+
+        :param str | dict jaquel_query: JAQueL query as dict or str.
+        :param bool enum_as_string: Columns of type DT_ENUM or DS_ENUM are returned as int values.
                                     If this is set to True the model_cache is used to map the int values
-                                    to the corresponding string values.
-        :param bool date_as_timestamp: columns of type DT_DATE or DS_DATE are returned as string.
+                                    to the corresponding string values. Defaults to True.
+        :param bool date_as_timestamp: Columns of type DT_DATE or DS_DATE are returned as string.
                                        If this is set to True the strings are converted to pandas Timestamp.
+                                       Defaults to True.
         :param bool is_null_to_nan: If set to True, the is_null flags are used to set corresponding values to pd.NA.
                                     This uses pandas native nullable data types for better type preservation.
-        :param kwargs: additional arguments passed to `to_pandas`.
+                                    Defaults to True.
+        :param str result_naming_mode: Controls how result column names are generated.
+                                        "query" (default): Uses column names from the JAQUEL query
+                                                          (e.g., 'name', 'phys_dimension.name').
+                                        "model": Uses column names from the ods.Model schema
+                                                (e.g., 'Unit.Name', 'PhysDimension.Name').
+        :param kwargs: Additional arguments passed to `to_pandas`.
         :raises requests.HTTPError: If query fails.
-        :return DataFrame: The DataMatrices as Pandas.DataFrame. The columns are named as `ENTITY_NAME.ATTRIBUTE_NAME`.
-            `IsNull` values are not marked invalid.
+        :return DataFrame: The DataMatrices as Pandas.DataFrame with columns named according to `result_naming_mode`.
         """
-        data_matrices = (
-            self.data_read(query) if isinstance(query, ods.SelectStatement) else self.data_read_jaquel(query)
-        )
+        if result_naming_mode not in ("query", "model"):
+            raise ValueError(f"result_naming_mode must be 'query' or 'model', got '{result_naming_mode}'")
+
+        jaquel = Jaquel(self.model(), jaquel_query)
+        data_matrices = self.data_read(jaquel.select_statement)
         return to_pandas(
             data_matrices,
             model_cache=self.mc,
             enum_as_string=enum_as_string,
             date_as_timestamp=date_as_timestamp,
             is_null_to_nan=is_null_to_nan,
+            jaquel_conversion_result=jaquel if result_naming_mode == "query" else None,
+            **kwargs,
+        )
+
+    def query_data(
+        self,
+        query: str | dict | ods.SelectStatement,
+        enum_as_string: bool = False,
+        date_as_timestamp: bool = False,
+        is_null_to_nan: bool = False,
+        result_naming_mode: str = "model",
+        **kwargs,
+    ) -> DataFrame:
+        """
+        Query ods server for content and return the results as Pandas DataFrame.
+
+        This is a lower-level variant of query() with different defaults:
+        - Defaults to model column names (result_naming_mode="model")
+        - No automatic enum/date/null conversions by default
+        - Can accept raw ASAM ODS SelectStatement objects
+
+        :param str | dict | ods.SelectStatement query: Query given as JAQueL query (dict or str)
+            or as an ASAM ODS SelectStatement.
+        :param bool enum_as_string: Columns of type DT_ENUM or DS_ENUM are returned as int values.
+                                    If this is set to True the model_cache is used to map the int values
+                                    to the corresponding string values. Defaults to False.
+        :param bool date_as_timestamp: Columns of type DT_DATE or DS_DATE are returned as string.
+                                       If this is set to True the strings are converted to pandas Timestamp.
+                                       Defaults to False.
+        :param bool is_null_to_nan: If set to True, the is_null flags are used to set corresponding values to pd.NA.
+                                    This uses pandas native nullable data types for better type preservation.
+                                    Defaults to False.
+        :param str result_naming_mode: Controls how result column names are generated.
+                                        "query": Uses column names from the JAQUEL query.
+                                        "model" (default): Uses column names from the ods.Model schema.
+        :param kwargs: Additional arguments passed to `to_pandas`.
+        :raises requests.HTTPError: If query fails.
+        :return DataFrame: The DataMatrices as Pandas.DataFrame with columns named according to `result_naming_mode`.
+        """
+        if result_naming_mode not in ("query", "model"):
+            raise ValueError(f"result_naming_mode must be 'query' or 'model', got '{result_naming_mode}'")
+
+        if isinstance(query, ods.SelectStatement):
+            jaquel = None
+            select_statement = query
+        else:
+            jaquel = Jaquel(self.model(), query)
+            select_statement = jaquel.select_statement
+
+        data_matrices = self.data_read(select_statement)
+
+        return to_pandas(
+            data_matrices,
+            model_cache=self.mc,
+            enum_as_string=enum_as_string,
+            date_as_timestamp=date_as_timestamp,
+            is_null_to_nan=is_null_to_nan,
+            jaquel_conversion_result=jaquel if result_naming_mode == "query" else None,
             **kwargs,
         )
 
@@ -255,17 +354,17 @@ class ConI:
         """
         return self.mc.model()
 
-    def data_read_jaquel(self, jaquel: str | dict) -> ods.DataMatrices:
+    def data_read_jaquel(self, jaquel_query: str | dict) -> ods.DataMatrices:
         """
         Query ods server for content.
 
-        :param str | dict  jaquel: Query given as JAQueL query (dict or str).
+        :param str | dict  jaquel_query: Query given as JAQueL query (dict or str).
         :raises requests.HTTPError: If query fails.
         :return ods.DataMatrices: The DataMatrices representing the result.
             It will contain one ods.DataMatrix for each returned entity type.
         """
-        _, ods_query = jaquel_to_ods(self.model(), jaquel)
-        return self.data_read(ods_query)
+        jaquel = Jaquel(self.model(), jaquel_query)
+        return self.data_read(jaquel.select_statement)
 
     def data_read(self, select_statement: ods.SelectStatement) -> ods.DataMatrices:
         """
