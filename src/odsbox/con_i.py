@@ -253,45 +253,6 @@ class ConI:
             print(result.columns)
             # Output: Index(['Unit.Name', 'Unit.Id', 'PhysDimension.Name'], ...)
 
-        Result Column Names Comparison
-        ==============================
-
-        For the query::
-
-            {
-                "AoUnit": {
-                    "$attributes": {
-                        "name": 1,
-                        "id": 1,
-                        "factor": 1,
-                        "phys_dimension.name": 1
-                    }
-                }
-            }
-
-        The result DataFrame columns will be:
-
-        | Query Attribute | result_naming_mode="query" | result_naming_mode="model" |
-        |---|---|---|
-        | `"name"` | `name` | `Unit.Name` |
-        | `"id"` | `id` | `Unit.Id` |
-        | `"factor"` | `factor` | `Unit.Factor` |
-        | `"phys_dimension.name"` | `phys_dimension.name` | `PhysDimension.Name` |
-
-        Key Differences
-        ===============
-
-        **result_naming_mode="query" (Default):**
-            - Column names match your JAQUEL query specification exactly
-            - base names and case insensitivity of jaquel is reflected (e.g., `name`, `phys_dimension.name`)
-            - Best for: AI agents, generic programmatic workflows (ods base model usage)
-            - Self-documenting: query names tell you how to access them in the resulting dataframe
-
-        **result_naming_mode="model":**
-            - Column names use application names from the ods.Model (data model)
-            - Column names follow <entity_name>.<attribute_or_relation_name> like returned in ods.DataMatrices
-              (e.g., `Unit.Name`, `PhysDimension.Name`)
-            - Follows ods.Model application naming conventions
 
         :param str | dict query: Query given as JAQueL query (dict or str).
         :param bool enum_as_string: Columns of type DT_ENUM or DS_ENUM are returned as int values.

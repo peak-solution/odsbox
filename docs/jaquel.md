@@ -13,6 +13,45 @@ The lookup order is:
 
 *Almost all examples use base names to make they work on any application model.*
 
+## Query example
+
+This section is a short explanation on the DataFrame content returned
+
+```python
+df = con_i.query({
+    "AoUnit": {},
+    "$attributes": {
+        "name": 1,
+        "id": 1,
+        "factor": 1,
+        "phys_dimension.name": 1
+    }
+}, result_naming_mode="query")
+```
+
+The result DataFrame `df` columns will be:
+
+| Query Attribute | result_naming_mode="query" (Default) | result_naming_mode="model" |
+|-----------------|--------------------------------------|----------------------------|
+| `"name"` | `name` | `Unit.Name` |
+| `"id"` | `id` | `Unit.Id` |
+| `"factor"` | `factor` | `Unit.Factor` |
+| `"phys_dimension.name"` | `phys_dimension.name` | `PhysDimension.Name` |
+
+Key Differences:
+
+- **result_naming_mode="query" (Default):**
+    - Column names match your JAQUEL query specification exactly
+    - base names and case insensitivity of jaquel is reflected (e.g., `name`, `phys_dimension.name`)
+    - Best for: AI agents, generic programmatic workflows (ods base model usage)
+    - Self-documenting: query names tell you how to access them in the resulting dataframe
+
+- **result_naming_mode="model":**
+    - Column names use application names from the ods.Model (data model)
+    - Column names follow `<entity_name>.<attribute_or_relation_name>` like returned in ods.DataMatrices (e.g., `Unit.Name`, `PhysDimension.Name`)
+    - Follows ods.Model application naming conventions
+
+
 ## Examples
 
 ### Get all AoTest instances
