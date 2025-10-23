@@ -354,16 +354,16 @@ class ConI:
         """
         return self.mc.model()
 
-    def data_read_jaquel(self, jaquel_query: str | dict) -> ods.DataMatrices:
+    def data_read_jaquel(self, query: str | dict) -> ods.DataMatrices:
         """
         Query ods server for content.
 
-        :param str | dict  jaquel_query: Query given as JAQueL query (dict or str).
+        :param str | dict  query: Query given as JAQueL query (dict or str).
         :raises requests.HTTPError: If query fails.
         :return ods.DataMatrices: The DataMatrices representing the result.
             It will contain one ods.DataMatrix for each returned entity type.
         """
-        jaquel = Jaquel(self.model(), jaquel_query)
+        jaquel = Jaquel(self.model(), query)
         return self.data_read(jaquel.select_statement)
 
     def data_read(self, select_statement: ods.SelectStatement) -> ods.DataMatrices:
