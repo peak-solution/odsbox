@@ -166,7 +166,7 @@ def test_values_data_read(request: FixtureRequest):
         assert lc_info_df.empty is False
 
         lc_info_dms = con_i.data_read_jaquel(
-            {
+            query={
                 "AoLocalColumn": {"submatrix": sm_id},
                 "$attributes": {"id": 1, "name": 1, "sequence_representation": 1, "independent": 1},
             }
@@ -187,7 +187,7 @@ def test_values_data_read(request: FixtureRequest):
         assert lc_values_df.empty is False
 
         lc_values_dms = con_i.data_read_jaquel(
-            {
+            query={
                 "AoLocalColumn": {"submatrix": sm_id},
                 "$attributes": {"id": 1, "values": 1, "generation_parameters": 1},
                 "$options": {"$seqlimit": sm_number_of_rows, "$seqskip": 0},
@@ -205,7 +205,7 @@ def test_values_valuematrix_read_calculated(request: FixtureRequest):
     test_name = request.node.name
     with __create_con_i() as con_i:
         sm_df = con_i.query_data(
-            {
+            query={
                 "AoSubmatrix": {"name": "Profile_02"},
                 "$attributes": {"id": 1, "number_of_rows": 1},
                 "$options": {"$rowlimit": 1},
@@ -688,7 +688,7 @@ def test_query_with_kwargs():
         assert "name" in r.columns
 
         r = con_i.query(
-            {"AoUnit": {}, "$attributes": {"name": 1}, "$options": {"$rowlimit": 1}},
+            jaquel_query={"AoUnit": {}, "$attributes": {"name": 1}, "$options": {"$rowlimit": 1}},
             result_naming_mode="model",
             name_separator="::",
         )
