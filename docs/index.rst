@@ -18,6 +18,7 @@ Welcome to ASAM ODSBox docs's documentation!
    :caption: Examples:
 
    Simple example <simple_ods_example.ipynb>
+   Compare measurements <compare_measurement.ipynb>
    JAQuel/SelectStatement <jaquel_examples>
    JAQuel Notebook <jaquel_examples_notebook.ipynb>
 
