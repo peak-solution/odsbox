@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-__version__ = "1.0.14"
+__version__ = "1.0.15"
 
 if TYPE_CHECKING:
     from .con_i import ConI
