@@ -210,3 +210,85 @@ def test_enumeration_values():
         assert "DT_FLOAT" == mc.enumeration_value_to_key("DOESNOTEXIST", 3)
     with pytest.raises(ValueError):
         assert "DT_FLOAT" == mc.enumeration_value_to_key("DATATYPE_ENUM", 501)
+
+
+def test_entity_suggestion_in_error():
+    """Test that entity suggestion is included in error message for invalid entity."""
+    mc = ModelCache(__get_model("application_model.json"))
+    # Test suggestion for typo close to "LocalColumn"
+    with pytest.raises(ValueError, match="No entity named 'LocalCol' found."):
+        mc.entity("LocalCol")
+    # Test that error message includes suggestion
+    with pytest.raises(ValueError, match="Did you mean"):
+        mc.entity("LocalCol")
+
+
+def test_entity_by_base_name_suggestion_in_error():
+    """Test that entity suggestion is included in error message for invalid base name."""
+    mc = ModelCache(__get_model("application_model.json"))
+    # Test suggestion for typo close to "AoLocalColumn"
+    with pytest.raises(ValueError, match="No entity derived from base type"):
+        mc.entity_by_base_name("AoLocalCol")
+    # Test that error message includes suggestion
+    with pytest.raises(ValueError, match="Did you mean"):
+        mc.entity_by_base_name("AoLocalCol")
+
+
+def test_attribute_suggestion_in_error():
+    """Test that attribute suggestion is included in error message for invalid attribute."""
+    mc = ModelCache(__get_model("application_model.json"))
+    entity = mc.entity("LocalColumn")
+    # Test suggestion for typo close to "Id"
+    with pytest.raises(ValueError, match="'LocalColumn' has no attribute named 'Ident'"):
+        mc.attribute(entity, "Ident")
+    # Test that error message includes suggestion
+    with pytest.raises(ValueError, match="Did you mean"):
+        mc.attribute(entity, "Ident")
+
+
+def test_attribute_by_base_name_suggestion_in_error():
+    """Test that attribute suggestion is included in error message for invalid base name."""
+    mc = ModelCache(__get_model("application_model.json"))
+    entity = mc.entity("LocalColumn")
+    # Test suggestion for typo close to "id"
+    with pytest.raises(ValueError, match="Entity 'LocalColumn' does not have attribute derived from"):
+        mc.attribute_by_base_name(entity, "idd")
+    # Test that error message includes suggestion
+    with pytest.raises(ValueError, match="Did you mean"):
+        mc.attribute_by_base_name(entity, "idd")
+
+
+def test_relation_suggestion_in_error():
+    """Test that relation suggestion is included in error message for invalid relation."""
+    mc = ModelCache(__get_model("application_model.json"))
+    entity = mc.entity("MeaResult")
+    # Test suggestion for typo close to "TestStep"
+    with pytest.raises(ValueError, match="'MeaResult' has no relation named 'TestStp'"):
+        mc.relation(entity, "TestStp")
+    # Test that error message includes suggestion
+    with pytest.raises(ValueError, match="Did you mean"):
+        mc.relation(entity, "TestStp")
+
+
+def test_relation_by_base_name_suggestion_in_error():
+    """Test that relation suggestion is included in error message for invalid base name."""
+    mc = ModelCache(__get_model("application_model.json"))
+    entity = mc.entity("MeaResult")
+    # Test suggestion for typo close to "test" (base name)
+    with pytest.raises(ValueError, match="Entity 'MeaResult' does not have relation derived from"):
+        mc.relation_by_base_name(entity, "tes")
+    # Test that error message includes suggestion
+    with pytest.raises(ValueError, match="Did you mean"):
+        mc.relation_by_base_name(entity, "tes")
+
+
+def test_enum_value_suggestion_in_error():
+    """Test that enum value suggestion is included in error message for invalid enum key."""
+    mc = ModelCache(__get_model("application_model.json"))
+    datatype_enum = mc.enumeration("datatype_enum")
+    # Test suggestion for typo close to "DT_FLOAT"
+    with pytest.raises(ValueError, match="Enumeration 'datatype_enum' does not contain the key 'DT_FLAOT'"):
+        mc.enumeration_key_to_value(datatype_enum, "DT_FLAOT")
+    # Test that error message includes suggestion
+    with pytest.raises(ValueError, match="Did you mean"):
+        mc.enumeration_key_to_value(datatype_enum, "DT_FLAOT")

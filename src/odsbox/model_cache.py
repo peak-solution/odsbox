@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 
+from odsbox.model_suggestions import ModelSuggestions
 import odsbox.proto.ods_pb2 as ods
 
 
@@ -39,19 +40,36 @@ class ModelCache:
 
     def entity(self, entity_name: str) -> ods.Model.Entity:
         """
-        Get the entity name.
+        Get the entity by name. If no application name matches,
+        it will try to match the base name.
 
-        :param str entity_name: case insensitive name of an entity.
+        :param str entity_name: Case insensitive name of an entity.
+        :return ods.Model.Entity: The found entity.
         :raises ValueError: If the entity does not exist.
+        """
+        entity = self.entity_no_throw(entity_name)
+        if entity is not None:
+            return entity
+        raise ValueError(
+            f"No entity named '{entity_name}' found." f"{ModelSuggestions.get_entity(self.__model, entity_name)}"
+        )
+
+    def entity_no_throw(self, entity_name: str) -> ods.Model.Entity | None:
+        """
+        Get the entity by name. Returns None if not found. if no application name matches,
+        it will try to match the base name.
+
+        :param str entity_name: Case insensitive name of an entity or base name.
+        :return ods.Model.Entity | None: The found entity or None.
         """
         entity = self.__model.entities.get(entity_name)
         if entity is not None:
             return entity
         name_casefold = entity_name.casefold()
         for key, entity in self.__model.entities.items():
-            if key.casefold() == name_casefold:
+            if key.casefold() == name_casefold or entity.base_name.casefold() == name_casefold:
                 return entity
-        raise ValueError(f"No entity named '{entity_name}' found.")
+        return None
 
     def entity_by_base_name(self, entity_base_name: str) -> ods.Model.Entity:
         """
@@ -64,7 +82,10 @@ class ModelCache:
         for _, entity in self.__model.entities.items():
             if name_casefold == entity.base_name.casefold():
                 return entity
-        raise ValueError(f"No entity derived from base type '{entity_base_name}' found.")
+        raise ValueError(
+            f"No entity derived from base type '{entity_base_name}' found."
+            f"{ModelSuggestions.get_entity_by_base_name(self.__model, entity_base_name)}"
+        )
 
     def entity_by_aid(self, aid: int) -> ods.Model.Entity:
         """
@@ -119,6 +140,7 @@ class ModelCache:
             return attribute
         raise ValueError(
             f"'{entity.name}' has no attribute named '{application_or_base_name}' as base or application name."
+            f"{ModelSuggestions.get_attribute(entity, application_or_base_name)}"
         )
 
     def attribute_by_base_name(
@@ -137,7 +159,10 @@ class ModelCache:
         for _, attribute in attributes.items():
             if attribute_base_name.casefold() == attribute.base_name.casefold():
                 return attribute
-        raise ValueError(f"Entity '{entity.name}' does not have attribute derived from '{attribute_base_name}'.")
+        raise ValueError(
+            f"Entity '{entity.name}' does not have attribute derived from '{attribute_base_name}'."
+            f"{ModelSuggestions.get_attribute_by_base_name(entity, attribute_base_name)}"
+        )
 
     def relation_no_throw(
         self, entity_or_name: str | ods.Model.Entity, application_or_base_name: str
@@ -180,6 +205,7 @@ class ModelCache:
             return relation
         raise ValueError(
             f"'{entity.name}' has no relation named '{application_or_base_name}' as base or application name."
+            f"{ModelSuggestions.get_relation(entity, application_or_base_name)}"
         )
 
     def relation_by_base_name(
@@ -198,7 +224,10 @@ class ModelCache:
         for _, relation in relations.items():
             if relation_base_name.casefold() == relation.base_name.casefold():
                 return relation
-        raise ValueError(f"Entity '{entity.name}' does not have relation derived from '{relation_base_name}'.")
+        raise ValueError(
+            f"Entity '{entity.name}' does not have relation derived from '{relation_base_name}'."
+            f"{ModelSuggestions.get_relation_by_base_name(entity, relation_base_name)}"
+        )
 
     def enumeration(self, enumeration_name: str) -> ods.Model.Enumeration:
         """
@@ -248,7 +277,10 @@ class ModelCache:
         for key, value in enumeration.items.items():
             if key.casefold() == name_casefold:
                 return value
-        raise ValueError(f"Enumeration '{enumeration.name}' does not contain the key '{lookup_key}'.")
+        raise ValueError(
+            f"Enumeration '{enumeration.name}' does not contain the key '{lookup_key}'."
+            f"{ModelSuggestions.get_enum(enumeration, lookup_key)}"
+        )
 
     def __entity(self, entity_or_name: str | ods.Model.Entity) -> ods.Model.Entity:
         if isinstance(entity_or_name, ods.Model.Entity):
