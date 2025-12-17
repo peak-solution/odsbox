@@ -90,15 +90,15 @@ class BulkReader:
         for index, r in localcolumn_df.iterrows():
             name = r.get("name")
             if name is None:
-                raise ValueError(f"Missing 'name' field for row at index {index}")
+                raise ValueError(f"Missing 'name' field for row at index {index}.")
             vals = r.get("values")
             if vals is None:
-                raise ValueError(f"Missing 'values' field for column '{name}' at index {index}")
+                raise ValueError(f"Missing 'values' field for column '{name}' at index {index}.")
             sequence_representation = int(r.get("sequence_representation", SeqRepEnum.explicit.value))
             number_of_rows = int(r.get("number_of_rows", 0))
             if values_start > number_of_rows:
                 raise ValueError(
-                    f"values_start {values_start} is greater than number_of_rows {number_of_rows} for column '{name}'"
+                    f"values_start {values_start} is greater than number_of_rows {number_of_rows} for column '{name}'."
                 )
             values_count = (
                 min(number_of_rows - values_start, values_limit) if values_limit > 0 else number_of_rows - values_start
@@ -114,14 +114,14 @@ class BulkReader:
                 if len(vals) >= 1:
                     localcolumn_df.at[index, "values"] = [vals[0]] * values_count
                 else:
-                    raise ValueError(f"Generation parameters missing for {name}")
+                    raise ValueError(f"Generation parameters missing for implicit_constant in column '{name}'.")
             elif sequence_representation == SeqRepEnum.implicit_linear:
                 if len(vals) >= 2:
                     localcolumn_df.at[index, "values"] = [
                         vals[0] + x * vals[1] for x in range(0 + values_start, values_count + values_start)
                     ]
                 else:
-                    raise ValueError(f"Generation parameters missing for {name}")
+                    raise ValueError(f"Generation parameters missing for implicit_linear in column '{name}'.")
             elif sequence_representation in [
                 SeqRepEnum.raw_linear,
                 SeqRepEnum.raw_linear_external,
@@ -134,7 +134,7 @@ class BulkReader:
                         double_vals = np.array(vals, dtype=float)
                         localcolumn_df.at[index, "values"] = p1 + p2 * double_vals
                     else:
-                        raise ValueError(f"Generation parameters missing for {name}")
+                        raise ValueError(f"Generation parameters missing for raw_linear in column '{name}'.")
             elif sequence_representation in [
                 SeqRepEnum.raw_linear_calibrated,
                 SeqRepEnum.raw_linear_calibrated_external,
@@ -148,7 +148,7 @@ class BulkReader:
                         double_vals = np.array(vals, dtype=float)
                         localcolumn_df.at[index, "values"] = (p1 + p2 * double_vals) * p3
                     else:
-                        raise ValueError(f"Generation parameters missing for {name}")
+                        raise ValueError(f"Generation parameters missing for raw_linear_calibrated in column '{name}'.")
             elif sequence_representation in [
                 SeqRepEnum.raw_rational,
                 SeqRepEnum.raw_rational_external,
@@ -167,10 +167,10 @@ class BulkReader:
                             p4 * double_vals**2 + p5 * double_vals + p6
                         )
                     else:
-                        raise ValueError(f"Generation parameters missing for {name}")
+                        raise ValueError(f"Generation parameters missing for raw_rational in column '{name}'.")
             else:
                 raise ValueError(
-                    f"Unhandled sequence representation {SeqRepEnum(sequence_representation).name} for column '{name}'"
+                    f"Unhandled sequence representation {SeqRepEnum(sequence_representation).name} for column '{name}'."
                 )
 
     def query(
@@ -275,7 +275,7 @@ class BulkReader:
 
         missing_meta_ids = merged[merged["name"].isna()]["id"].unique()
         if len(missing_meta_ids):
-            raise KeyError(f"Missing metadata for ids: {sorted(missing_meta_ids)}")
+            raise KeyError(f"Missing metadata for ids: {sorted(missing_meta_ids)}.")
 
         BulkReader.__apply_sequence_representation(
             merged,
