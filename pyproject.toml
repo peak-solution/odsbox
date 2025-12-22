@@ -28,6 +28,7 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Scientific/Engineering :: Information Analysis",
+    "Typing :: Typed",
 ]
 requires-python = ">=3.10.12"
 dynamic = ["version"]
@@ -68,6 +69,9 @@ Tracker = "https://github.com/peak-solution/odsbox/issues"
 
 [tool.flit.module]
 name = "odsbox"
+
+[tool.flit.sdist]
+include = ["src/odsbox/py.typed"]
 
 [tool.bandit]
 exclude_dirs = ["build", "dist", "tests", "scripts"]
