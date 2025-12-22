@@ -22,7 +22,7 @@ class UnitCatalog:
     def __init__(self, con_i: ConI) -> None:
         self.__con_i = con_i
         units_df = con_i.query_data({"AoUnit": {}, "$attributes": {"name": 1, "id": 1}})
-        self.__unit_map = {}
+        self.__unit_map: dict[str, int] = {}
         for _, row in units_df.iterrows():
             unit_name = row.iloc[0]
             unit_id = row.iloc[1]

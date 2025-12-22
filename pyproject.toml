@@ -28,6 +28,7 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Scientific/Engineering :: Information Analysis",
+    "Typing :: Typed",
 ]
 requires-python = ">=3.10.12"
 dynamic = ["version"]
@@ -48,6 +49,7 @@ test = [
     "flake8-formatter_junit_xml",
     "flake8",
     "flake8-pyproject",
+    "mypy==1.14.0",
     "pre-commit==4.5.1",
     "pylint==4.0.4",
     "pylint_junit",
@@ -58,6 +60,7 @@ test = [
     "pytest-github-actions-annotate-failures",
     "pytest-xdist",
     "shellcheck-py==0.11.0.1",
+    "types-requests>=2.30.0,<3.0.0",
 ]
 
 [project.urls]
@@ -65,9 +68,13 @@ Homepage = "https://github.com/peak-solution/odsbox/tree/main#readme"
 Documentation = "https://peak-solution.github.io/odsbox"
 Repository = "https://github.com/peak-solution/odsbox"
 Tracker = "https://github.com/peak-solution/odsbox/issues"
+Changelog = "https://github.com/peak-solution/odsbox/releases"
 
 [tool.flit.module]
 name = "odsbox"
+
+[tool.flit.sdist]
+include = ["src/odsbox/py.typed"]
 
 [tool.bandit]
 exclude_dirs = ["build", "dist", "tests", "scripts"]
@@ -116,6 +123,14 @@ pythonVersion = "3.10"
 pythonPlatform = "Linux"
 
 executionEnvironments = [{ root = "src" }]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+ignore_missing_imports = true
+disable_error_code = ["no-any-return"]
 
 [tool.pytest.ini_options]
 addopts = "--cov-report xml:coverage.xml --cov src --cov-fail-under 0 --cov-append -m 'not integration'"

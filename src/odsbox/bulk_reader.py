@@ -267,7 +267,7 @@ class BulkReader:
         localcolumn_bulk_df = to_pandas(
             localcolumn_bulk_dms, date_as_timestamp=date_as_timestamp, prefer_np_array_for_unknown=True
         )
-        localcolumn_bulk_dms = None  # free memory
+        del localcolumn_bulk_dms  # free memory
         localcolumn_bulk_df.columns = [attr for attr in attributes]
 
         # merge metadata into bulk, preserving bulk order (left join)
