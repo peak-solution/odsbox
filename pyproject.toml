@@ -66,6 +66,7 @@ Homepage = "https://github.com/peak-solution/odsbox/tree/main#readme"
 Documentation = "https://peak-solution.github.io/odsbox"
 Repository = "https://github.com/peak-solution/odsbox"
 Tracker = "https://github.com/peak-solution/odsbox/issues"
+Changelog = "https://github.com/peak-solution/odsbox/releases"
 
 [tool.flit.module]
 name = "odsbox"
