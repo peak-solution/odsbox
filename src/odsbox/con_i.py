@@ -58,13 +58,14 @@ class ConI:
     def __init__(
         self,
         url: str = "http://localhost:8080/api",
-        auth: requests.auth.AuthBase | tuple[str, str] = ("sa", "sa"),
+        auth: requests.auth.AuthBase | tuple[str, str] | None = ("sa", "sa"),
         context_variables: ods.ContextVariables | dict | None = None,
         verify_certificate: bool = True,
         load_model: bool = True,
         allow_redirects: bool = False,
         connection_timeout: float = 60.0,
         request_timeout: float = 600.0,
+        custom_session: requests.Session | None = None,
     ) -> None:
         """
         Create a session object keeping track of ASAM ODS session URL named `conI`.
@@ -101,16 +102,20 @@ class ConI:
 
 
         :param str url: base url of the ASAM ODS API of a given server. An example is "http://localhost:8080/api".
-        :param requests.auth.AuthBase auth: An auth object to be used for the used requests package.
-            For basic auth `("USER", "PASSWORD")` can be used.
+        :param requests.auth.AuthBase | tuple[str, str] | None auth: An auth object to be used for the used
+            requests package. For basic auth `("USER", "PASSWORD")` can be used.
+            Ignored if `custom_session` is provided.
         :param ods.ContextVariables | dict | None context_variables: If context variables are necessary for the
             connection they are passed here. It defaults to None.
         :param bool verify_certificate: If no certificate is provided for https insecure access can be enabled.
-            It defaults to True.
+            It defaults to True. Ignored if `custom_session` is provided.
         :param bool load_model: If the model should be read after connection is established. It defaults to True.
         :param bool allow_redirects: If redirects should be allowed in requests calls. It defaults to False.
         :param float connection_timeout: Timeout in seconds for establishing connections. It defaults to 60.0.
         :param float request_timeout: Timeout in seconds for individual requests. It defaults to 600.0.
+        :param requests.Session | None custom_session: If a preconfigured requests.Session should be used.
+            If provided `auth` and `verify_certificate` parameters are ignored. It defaults to None.
+            e.g. Some OAuth packages provide custom `requests.Session` implementations.
         :raises requests.HTTPError: If connection to ASAM ODS server fails.
         """
         self.__session: requests.Session | None = None
@@ -122,9 +127,11 @@ class ConI:
         self.__connection_timeout: float = connection_timeout
         self.__request_timeout: float = request_timeout
 
-        session = requests.Session()
-        session.auth = auth
-        session.verify = verify_certificate
+        session = custom_session
+        if session is None:
+            session = requests.Session()
+            session.auth = auth
+            session.verify = verify_certificate
 
         _context_variables = None
         if isinstance(context_variables, ods.ContextVariables):

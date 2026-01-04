@@ -679,6 +679,26 @@ def test_query_with_filter():
             assert all("m" in str(name).lower() for name in r["name"] if name)
 
 
+def test_custom_session():
+    """Test that custom_session parameter is used when provided"""
+    import requests
+
+    # Create a custom session with specific configuration
+    custom_session = requests.Session()
+    custom_session.auth = ("Demo", "mdm")
+    custom_session.verify = True
+
+    # Create ConI with the custom session
+    with ConI(url="https://docker.peak-solution.de:10032/api", custom_session=custom_session) as con_i:
+        # Verify that the ConI instance works correctly
+        model = con_i.model_read()
+        assert len(model.entities) > 0
+
+        # Verify we can query data
+        result = con_i.query_data({"AoEnvironment": {}, "$options": {"$rowlimit": 1}})
+        assert result.empty is False
+
+
 def test_query_with_kwargs():
     """Test query method with additional kwargs passed to to_pandas"""
     with __create_con_i() as con_i:
