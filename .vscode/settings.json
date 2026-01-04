@@ -67,6 +67,7 @@
         "notnull",
         "odsbox",
         "Oneof",
+        "preconfigured",
         "pycln",
         "pyproject",
         "pyupgrade",
