@@ -102,8 +102,9 @@ class ConI:
 
 
         :param str url: base url of the ASAM ODS API of a given server. An example is "http://localhost:8080/api".
-        :param requests.auth.AuthBase | tuple[str, str] | None auth: An auth object to be used for the used requests package.
-            For basic auth `("USER", "PASSWORD")` can be used. Ignored if `custom_session` is provided.
+        :param requests.auth.AuthBase | tuple[str, str] | None auth: An auth object to be used for the used
+            requests package. For basic auth `("USER", "PASSWORD")` can be used.
+            Ignored if `custom_session` is provided.
         :param ods.ContextVariables | dict | None context_variables: If context variables are necessary for the
             connection they are passed here. It defaults to None.
         :param bool verify_certificate: If no certificate is provided for https insecure access can be enabled.
