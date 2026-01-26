@@ -272,10 +272,10 @@ class ConI:
                                     This uses pandas native nullable data types for better type preservation.
                                     Defaults to True.
         :param str result_naming_mode: Controls how result column names are generated.
-                                        "query" (default): Uses column names from the JAQUEL query
-                                                          (e.g., 'name', 'phys_dimension.name').
-                                        "model": Uses column names from the ods.Model schema
-                                                (e.g., 'Unit.Name', 'PhysDimension.Name').
+                                       "query" (default): Uses column names from the JAQUEL query
+                                       (e.g., 'name', 'phys_dimension.name').
+                                       "model": Uses column names from the ods.Model schema
+                                       (e.g., 'Unit.Name', 'PhysDimension.Name').
         :param kwargs: Additional arguments passed to `to_pandas`.
         :raises requests.HTTPError: If query fails.
         :return DataFrame: The DataMatrices as Pandas.DataFrame with columns named according to `result_naming_mode`.
@@ -691,6 +691,7 @@ class ConI:
         target_file_or_folder: str,
         overwrite_existing: bool = False,
         default_filename: str = "download.bin",
+        chunk_size: int = 8192,
     ) -> str:
         """
         Read file content from server.
@@ -701,6 +702,7 @@ class ConI:
         :param bool overwrite_existing: If existing files should be overwritten. It defaults to False.
         :param str default_filename: Default filename if no filename is provided by server.
                                      It defaults to "download.bin".
+        :param int chunk_size: Size of chunks in bytes to stream. It defaults to 8192 (8KB).
         :raises requests.HTTPError: If something went wrong.
         :raises FileExistsError: If file already exists and 'overwrite_existing' is False.
         :raises ValueError: If no open session.
@@ -721,6 +723,7 @@ class ConI:
             },
             timeout=self.__request_timeout,
             allow_redirects=self.__allow_redirects,
+            stream=True,
         )
         self.check_requests_response(file_response)
 
@@ -740,7 +743,9 @@ class ConI:
             raise FileExistsError(f"File '{target_file_path}' already exists and 'overwrite_existing' is False.")
 
         with open(target_file_path, "wb") as file:
-            file.write(file_response.content)
+            for chunk in file_response.iter_content(chunk_size=chunk_size):
+                if chunk:  # filter out keep-alive new chunks
+                    file.write(chunk)
 
         return target_file_path
 
