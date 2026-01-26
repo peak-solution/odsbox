@@ -39,8 +39,8 @@ class TestIsNullToNan:
         assert string_col.iloc[0] == "value1", "Index 0 should contain original value"
         assert string_col.iloc[2] == "value3", "Index 2 should contain original value"
 
-        # Column should be object dtype to handle mixed types
-        assert string_col.dtype == object
+        # Column should be object dtype or StringDtype to handle mixed types (StringDtype in pandas 3.0.0+)
+        assert string_col.dtype == object or isinstance(string_col.dtype, pd.StringDtype)
 
     def test_is_null_to_nan_numeric_columns(self):
         """Test is_null_to_nan with numeric columns"""
