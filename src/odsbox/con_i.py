@@ -272,10 +272,10 @@ class ConI:
                                     This uses pandas native nullable data types for better type preservation.
                                     Defaults to True.
         :param str result_naming_mode: Controls how result column names are generated.
-                                        "query" (default): Uses column names from the JAQUEL query
-                                                          (e.g., 'name', 'phys_dimension.name').
-                                        "model": Uses column names from the ods.Model schema
-                                                (e.g., 'Unit.Name', 'PhysDimension.Name').
+                                       "query" (default): Uses column names from the JAQUEL query
+                                       (e.g., 'name', 'phys_dimension.name').
+                                       "model": Uses column names from the ods.Model schema
+                                       (e.g., 'Unit.Name', 'PhysDimension.Name').
         :param kwargs: Additional arguments passed to `to_pandas`.
         :raises requests.HTTPError: If query fails.
         :return DataFrame: The DataMatrices as Pandas.DataFrame with columns named according to `result_naming_mode`.

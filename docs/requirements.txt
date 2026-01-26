@@ -5,3 +5,4 @@ sphinx-copybutton
 sphinx-design
 sphinx-rtd-theme
 sphinx-sitemap
+ipython
