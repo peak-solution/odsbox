@@ -25,7 +25,7 @@ def test_file_access_download_success(con_i):
     with mock.patch.object(con_i, "file_access", return_value="http://example.com/file"):
         with mock.patch.object(con_i._ConI__session, "get") as mock_get:
             mock_response = mock.Mock()
-            mock_response.content = b"file content"
+            mock_response.iter_content = mock.Mock(return_value=[b"file content"])
             mock_response.headers = {"Content-Disposition": "attachment; filename=test_download.bin"}
             mock_get.return_value = mock_response
 
@@ -46,7 +46,7 @@ def test_file_access_download_success_2(con_i):
     with mock.patch.object(con_i, "file_access", return_value="http://example.com/file"):
         with mock.patch.object(con_i._ConI__session, "get") as mock_get:
             mock_response = mock.Mock()
-            mock_response.content = b"file content"
+            mock_response.iter_content = mock.Mock(return_value=[b"file content"])
             mock_response.headers = {"Content-Disposition": 'attachment; filename="test_download.bin"'}
             mock_get.return_value = mock_response
 
@@ -68,7 +68,7 @@ def test_file_access_download_success_3(con_i):
         with mock.patch.object(con_i, "file_access", return_value="http://example.com/file"):
             with mock.patch.object(con_i._ConI__session, "get") as mock_get:
                 mock_response = mock.Mock()
-                mock_response.content = b"file content"
+                mock_response.iter_content = mock.Mock(return_value=[b"file content"])
                 mock_response.headers = {"Content-Disposition": 'attachment; filename="test_download.bin"'}
                 mock_get.return_value = mock_response
 
@@ -88,7 +88,7 @@ def test_file_access_download_success_4(con_i):
         with mock.patch.object(con_i, "file_access", return_value="http://example.com/file"):
             with mock.patch.object(con_i._ConI__session, "get") as mock_get:
                 mock_response = mock.Mock()
-                mock_response.content = b"file content"
+                mock_response.iter_content = mock.Mock(return_value=[b"file content"])
                 mock_response.headers = {}
                 mock_get.return_value = mock_response
 
@@ -110,7 +110,7 @@ def test_file_access_download_no_overwrite(con_i):
     with mock.patch.object(con_i, "file_access", return_value="http://example.com/file"):
         with mock.patch.object(con_i._ConI__session, "get") as mock_get:
             mock_response = mock.Mock()
-            mock_response.content = b"new file content"
+            mock_response.iter_content = mock.Mock(return_value=[b"new file content"])
             mock_response.headers = {"Content-Disposition": "attachment; filename=test_download_no_overwrite.bin"}
             mock_get.return_value = mock_response
 
