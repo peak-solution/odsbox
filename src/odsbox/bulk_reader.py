@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from enum import IntEnum
+import logging
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -60,9 +61,28 @@ class BulkReader:
     to create customer specific code to retrieve bulk data.
     """
 
+    _log : logging.Logger = logging.getLogger(__name__)
+
     def __init__(self, con_i: ConI) -> None:
         """Initialize the BulkReader with a ConI instance."""
         self.__con_i = con_i
+        self._unit_name_lookup_cache: dict[int, str] | None = None
+
+    def unit_name_lookup(self, update: bool = False) -> dict[int, str]:
+        """
+        Get a mapping of unit id to unit name. This is used to cache the unit names for better readability of the data.
+
+        :param bool update: If True, force update the cache.
+        :return dict[int, str]: A dictionary mapping unit id to unit name.
+        """
+        if self._unit_name_lookup_cache is None or update:
+            try:
+                units_df = self.__con_i.query({"AoUnit": {}, "$attributes": {"id": 1, "name": 1}})
+                self._unit_name_lookup_cache = dict(zip(units_df["id"], units_df["name"]))
+            except Exception as e:
+                self._unit_name_lookup_cache = {}
+                self._log.warning(f"Failed to load unit names: {e}")
+        return self._unit_name_lookup_cache
 
     @staticmethod
     def __apply_sequence_representation(

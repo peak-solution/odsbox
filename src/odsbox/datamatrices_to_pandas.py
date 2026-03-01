@@ -259,6 +259,7 @@ def to_pandas(
         return pd.DataFrame()
 
     column_dict = {}
+    column_unit_ids : dict[str, int | list[int]] = {}  # Store unit ids for metadata
     null_masks = {}  # Store null masks for post-processing
 
     for matrix in data_matrices.matrices:
@@ -272,6 +273,7 @@ def to_pandas(
             column_dict[column_name] = __get_datamatrix_column_values_ex(
                 column, model_cache, enum_as_string, entity, date_as_timestamp, prefer_np_array_for_unknown
             )
+            column_unit_ids[column_name] = column.HasField("unknown_arrays") if [item.unit_id for item in column.unknown_arrays.values] else column.unit_id
 
             if is_null_to_nan and column.is_null is not None and len(column.is_null) > 0:
                 if any(column.is_null):  # Only store if there are actual null values
@@ -308,5 +310,8 @@ def to_pandas(
                     rv[column_name] = rv[column_name].astype(pd.Int64Dtype())  # fallback
 
             rv.loc[mask_array, column_name] = pd.NA
+
+    if hasattr(rv, "attrs"):
+        rv.attrs["unit_ids"] = column_unit_ids  # Store unit ids in DataFrame attributes
 
     return rv
