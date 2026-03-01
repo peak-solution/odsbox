@@ -153,23 +153,24 @@ def test_file_access_upload_success(con_i):
 
 
 def test_file_access_upload_failure(con_i):
-    # Create a temporary file to upload
-    with tempfile.NamedTemporaryFile() as temp_file:
+    with tempfile.NamedTemporaryFile(delete=False) as temp_file:
         temp_file.write(b"Test content")
         temp_file_path = temp_file.name
 
-        file_identifier = FileIdentifier(aid=4711, iid=1)
+    file_identifier = FileIdentifier(aid=4711, iid=1)
 
-        with mock.patch.object(con_i, "file_access", return_value="http://example.com/upload"):
-            with mock.patch.object(con_i._ConI__session, "put") as mock_post:
-                mock_response = mock.Mock()
-                mock_response.status_code = 500
-                mock_response.headers = {}
-                mock_response.raise_for_status.side_effect = requests.HTTPError("Failed to upload file")
-                mock_post.return_value = mock_response
+    with mock.patch.object(con_i, "file_access", return_value="http://example.com/upload"):
+        with mock.patch.object(con_i._ConI__session, "put") as mock_post:
+            mock_response = mock.Mock()
+            mock_response.status_code = 500
+            mock_response.headers = {}
+            mock_response.raise_for_status.side_effect = requests.HTTPError("Failed to upload file")
+            mock_post.return_value = mock_response
 
-                with pytest.raises(requests.HTTPError, match="Failed to upload file"):
-                    con_i.file_access_upload(file_identifier, temp_file_path)
+            with pytest.raises(requests.HTTPError, match="Failed to upload file"):
+                con_i.file_access_upload(file_identifier, temp_file_path)
+
+    os.remove(temp_file_path)
 
 
 def test_file_access_delete_success(con_i):
