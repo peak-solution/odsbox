@@ -357,6 +357,38 @@ def test_unknown_arrays_empty():
     assert unknown_array_values(dm.columns[0].unknown_arrays.values[0]) == []
 
 
+def test_extract_column_unit_ids_basic():
+    """extract_column_unit_ids returns one unit_id per unknown_arrays entry."""
+    from odsbox.datamatrices_to_pandas import extract_column_unit_ids
+
+    dms = ods.DataMatrices()
+    dm = dms.matrices.add(aid=1, name="LC")
+    column = dm.columns.add(name="values", base_name="values", data_type=ods.DT_UNKNOWN)
+    column.unknown_arrays.values.add(data_type=ods.DT_FLOAT, unit_id=10).float_array.values.extend([1.0])
+    column.unknown_arrays.values.add(data_type=ods.DT_FLOAT, unit_id=42).float_array.values.extend([2.0])
+    column.unknown_arrays.values.add(data_type=ods.DT_FLOAT, unit_id=0).float_array.values.extend([3.0])
+
+    assert extract_column_unit_ids(dms) == [10, 42, 0]
+
+
+def test_extract_column_unit_ids_empty_dms():
+    """extract_column_unit_ids returns [] for an empty DataMatrices."""
+    from odsbox.datamatrices_to_pandas import extract_column_unit_ids
+
+    dms = ods.DataMatrices()
+    assert extract_column_unit_ids(dms) == []
+
+
+def test_extract_column_unit_ids_no_unknown_arrays():
+    """extract_column_unit_ids returns [] when the column is not unknown_arrays."""
+    from odsbox.datamatrices_to_pandas import extract_column_unit_ids
+
+    dms = ods.DataMatrices()
+    dm = dms.matrices.add(aid=1, name="LC")
+    dm.columns.add(name="values", base_name="values", data_type=ods.DT_FLOAT).float_array.values.extend([1.0, 2.0])
+    assert extract_column_unit_ids(dms) == []
+
+
 def test_aggregates():
     dms = ods.DataMatrices()
     dm = dms.matrices.add(aid=4711, name="Aggregates")
