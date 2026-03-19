@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 from enum import IntEnum
+import logging
 from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
 
-from odsbox.datamatrices_to_pandas import to_pandas
-from odsbox.proto.ods_pb2 import ValueMatrixRequestStruct  # pylint: disable=E0611
+from odsbox.datamatrices_to_pandas import extract_column_unit_ids, to_pandas
+from odsbox.proto.ods_pb2 import DataMatrices, ValueMatrixRequestStruct  # pylint: disable=E0611
 
 if TYPE_CHECKING:
     from .con_i import ConI
@@ -60,9 +61,27 @@ class BulkReader:
     to create customer specific code to retrieve bulk data.
     """
 
+    _log: logging.Logger = logging.getLogger(__name__)
+
     def __init__(self, con_i: ConI) -> None:
         """Initialize the BulkReader with a ConI instance."""
         self.__con_i = con_i
+        self._unit_name_lookup_cache: dict[int, str] | None = None
+
+    def unit_name_lookup(self, update: bool = False) -> dict[int, str]:
+        """
+        Get a mapping of unit id to unit name. This is used to cache the unit names for better readability of the data.
+        :param bool update: If True, force update the cache.
+        :return dict[int, str]: A dictionary mapping unit id to unit name.
+        """
+        if self._unit_name_lookup_cache is None or update:
+            try:
+                units_df = self.__con_i.query({"AoUnit": {}, "$attributes": {"id": 1, "name": 1}})
+                self._unit_name_lookup_cache = dict(zip(units_df["id"], units_df["name"]))
+            except Exception as e:
+                self._unit_name_lookup_cache = {}
+                self._log.warning(f"Failed to load unit names: {e}")
+        return self._unit_name_lookup_cache
 
     @staticmethod
     def __apply_sequence_representation(
@@ -209,7 +228,9 @@ class BulkReader:
         :param int values_limit: Maximum number of values to be retrieved in this chunk. 0 means all remaining values.
         :param bool calculate_raw: Whether to calculate raw values for certain raw sequence representations.
         :raises requests.HTTPError: If access fails.
-        :return DataFrame: The Pandas.DataFrame contains the local_column.values as DataFrame column.
+        :return DataFrame: The Pandas.DataFrame contains the local_column metadata and values as DataFrame columns.
+                           ``df.attrs["unit_names"]`` is set to a ``dict[str, str]`` mapping each local column
+                           name to its unit name (empty string when the unit id is unknown or zero).
         """
 
         lc_meta_df: pd.DataFrame = self.__con_i.query_data(
@@ -264,6 +285,7 @@ class BulkReader:
                 },
             }
         )
+        unit_names = self._extract_unit_names(localcolumn_bulk_dms)
         localcolumn_bulk_df = to_pandas(
             localcolumn_bulk_dms, date_as_timestamp=date_as_timestamp, prefer_np_array_for_unknown=True
         )
@@ -271,7 +293,7 @@ class BulkReader:
         localcolumn_bulk_df.columns = [attr for attr in attributes]
 
         # merge metadata into bulk, preserving bulk order (left join)
-        merged = localcolumn_bulk_df.merge(lc_meta_df, left_on="id", right_index=True, how="left")
+        merged: pd.DataFrame = localcolumn_bulk_df.merge(lc_meta_df, left_on="id", right_index=True, how="left")
 
         missing_meta_ids = merged[merged["name"].isna()]["id"].unique()
         if len(missing_meta_ids):
@@ -290,6 +312,7 @@ class BulkReader:
         remaining_cols = [col for col in existing_cols if col not in desired_first_cols]
         new_column_order = desired_first_cols + remaining_cols
         merged = merged[new_column_order]
+        self._attach_unit_attr(merged, merged["name"], unit_names)
 
         return merged
 
@@ -327,7 +350,9 @@ class BulkReader:
         :param int values_start: Zero-based starting index for the values to be processed. Used for chunk loading.
         :param int values_limit: Maximum number of values to be retrieved in this chunk. 0 means all remaining values.
         :raises requests.HTTPError: If access fails.
-        :return DataFrame: The Pandas.DataFrame contains the local_column.values as DataFrame column.
+        :return DataFrame: The Pandas.DataFrame contains one column per local column, named after the local
+                           column name.  ``df.attrs["unit_names"]`` is set to a ``dict[str, str]`` mapping
+                           each column name to its unit name (empty string when the unit id is unknown or zero).
         """
 
         conditions = {"submatrix": submatrix_iid}
@@ -342,6 +367,7 @@ class BulkReader:
 
         # Create DataFrame from column data
         rv = pd.DataFrame({r["name"]: r["values"] for _, r in localcolumn_df.iterrows()})
+        rv.attrs["unit_names"] = localcolumn_df.attrs.get("unit_names", {})
 
         # Set independent column as index if requested
         if set_independent_as_index:
@@ -381,32 +407,66 @@ class BulkReader:
         :param int values_start: Zero-based starting index for the values to be processed. Used for chunk loading.
         :param int values_limit: Maximum number of values to be retrieved in this chunk. 0 means all remaining values.
         :raises requests.HTTPError: If access fails.
-        :return DataFrame: The Pandas.DataFrame contains the local_column.values as DataFrame column.
+        :return DataFrame: The Pandas.DataFrame contains one column per local column, named after the local
+                           column name.  ``df.attrs["unit_names"]`` is set to a ``dict[str, str]`` mapping
+                           each column name to its unit name (empty string when the unit id is unknown or zero).
         """
         sm_e = self.__con_i.mc.entity_by_base_name("AoSubmatrix")
         lc_e = self.__con_i.mc.entity_by_base_name("AoLocalColumn")
         name_patterns = column_patterns or ["*"]
 
-        df = to_pandas(
-            self.__con_i.valuematrix_read(
-                ValueMatrixRequestStruct(
-                    aid=sm_e.aid,
-                    iid=submatrix_iid,
-                    columns=[ValueMatrixRequestStruct.ColumnItem(name=name_pattern) for name_pattern in name_patterns],
-                    attributes=[
-                        self.__con_i.mc.attribute_by_base_name(lc_e, "name").name,
-                        self.__con_i.mc.attribute_by_base_name(lc_e, "values").name,
-                    ],
-                    mode=ValueMatrixRequestStruct.ModeEnum.MO_CALCULATED,
-                    values_start=values_start,
-                    values_limit=values_limit,
-                )
-            ),
-            date_as_timestamp=date_as_timestamp,
-            prefer_np_array_for_unknown=True,
+        raw_dms = self.__con_i.valuematrix_read(
+            ValueMatrixRequestStruct(
+                aid=sm_e.aid,
+                iid=submatrix_iid,
+                columns=[ValueMatrixRequestStruct.ColumnItem(name=name_pattern) for name_pattern in name_patterns],
+                attributes=[
+                    self.__con_i.mc.attribute_by_base_name(lc_e, "name").name,
+                    self.__con_i.mc.attribute_by_base_name(lc_e, "values").name,
+                ],
+                mode=ValueMatrixRequestStruct.ModeEnum.MO_CALCULATED,
+                values_start=values_start,
+                values_limit=values_limit,
+            )
         )
+        unit_names = self._extract_unit_names(raw_dms)
+        df = to_pandas(raw_dms, date_as_timestamp=date_as_timestamp, prefer_np_array_for_unknown=True)
+        del raw_dms  # free memory
         df.columns = ["name", "values"]
-        return pd.DataFrame({name: values for name, values in zip(df["name"].values, df["values"].values)})
+        rv = pd.DataFrame({name: values for name, values in zip(df["name"].values, df["values"].values)})
+        self._attach_unit_attr(rv, df["name"], unit_names)
+        return rv
+
+    def _attach_unit_attr(self, df: pd.DataFrame, column_names: pd.Series, unit_names: list[str]) -> None:
+        """
+        Attach a ``unit_names`` mapping to ``df.attrs``.
+
+        Sets ``df.attrs["unit_names"]`` to a ``dict`` mapping each name in *column_names* to the
+        corresponding entry in *unit_names*.  Nothing is written when *unit_names* is empty or its
+        length does not match *column_names* (a warning is logged in case of an unexpected error).
+
+        :param pd.DataFrame df: The DataFrame to annotate.
+        :param pd.Series column_names: Series of column names in the same order as *unit_names*.
+        :param list[str] unit_names: Unit name for each column (empty string for unknown units).
+        """
+        try:
+            if unit_names and len(column_names) == len(unit_names):
+                df.attrs["unit_names"] = dict(zip(column_names.values, unit_names))
+        except Exception as e:
+            self._log.warning(f"Failed to attach unit names: {e}")
+
+    def _extract_unit_names(self, data_matrices: DataMatrices) -> list[str]:
+        """
+        Extract unit names for the columns in the provided data matrices.
+
+        :param data_matrices: The data matrices containing the columns for which to extract unit names.
+        :return list[str]: A list of unit names corresponding to the columns.
+
+        """
+        unit_id_lookup = self.unit_name_lookup()
+        column_unit_ids = extract_column_unit_ids(data_matrices)
+
+        return [unit_id_lookup.get(unit_id, "") for unit_id in column_unit_ids]
 
     @staticmethod
     def add_column_filters(
