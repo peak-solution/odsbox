@@ -187,6 +187,7 @@ def test_query_merges_and_prefixes_duplicate_names(monkeypatch):
         return pd.DataFrame([[1, [1, 2]], [2, [3, 4]]], columns=["a", "b"])
 
     monkeypatch.setattr("odsbox.bulk_reader.to_pandas", fake_to_pandas)
+    monkeypatch.setattr("odsbox.bulk_reader.extract_column_unit_ids", lambda dms: [])
 
     br = BulkReader(fake)
     merged = br.query({"submatrix": 5})
@@ -223,6 +224,7 @@ def test_valuematrix_read_maps_names_and_values(monkeypatch):
         return pd.DataFrame({"name": ["a", "b"], "values": [[1, 2], [3, 4]]})
 
     monkeypatch.setattr("odsbox.bulk_reader.to_pandas", fake_to_pandas)
+    monkeypatch.setattr("odsbox.bulk_reader.extract_column_unit_ids", lambda dms: [])
 
     br = BulkReader(fake)
     df = br.valuematrix_read(1, column_patterns=["*"], date_as_timestamp=True)
@@ -257,6 +259,7 @@ def test_query_raises_on_missing_metadata(monkeypatch):
         return pd.DataFrame([[2, [9, 9]]], columns=["id", "values"])
 
     monkeypatch.setattr("odsbox.bulk_reader.to_pandas", fake_to_pandas_bulk)
+    monkeypatch.setattr("odsbox.bulk_reader.extract_column_unit_ids", lambda dms: [])
 
     br = BulkReader(FakeConI2())
     with pytest.raises(KeyError):
@@ -323,6 +326,7 @@ def test_generation_parameters_requested_when_raw_seq(monkeypatch):
         return pd.DataFrame([[1, [1, 2], [1.0, 2.0]]])
 
     monkeypatch.setattr("odsbox.bulk_reader.to_pandas", fake_to_pandas)
+    monkeypatch.setattr("odsbox.bulk_reader.extract_column_unit_ids", lambda dms: [])
 
     br = BulkReader(FakeConI3())
     merged = br.query({"submatrix": 9})
@@ -354,6 +358,7 @@ def test_generation_parameters_not_requested_when_not_raw(monkeypatch):
         return pd.DataFrame([[1, [7, 8]]])
 
     monkeypatch.setattr("odsbox.bulk_reader.to_pandas", fake_to_pandas2)
+    monkeypatch.setattr("odsbox.bulk_reader.extract_column_unit_ids", lambda dms: [])
 
     br = BulkReader(FakeConI4())
     merged = br.query({"submatrix": 10})
@@ -408,3 +413,185 @@ def test_add_column_filters_skips_wildcards_and_empty():
     BulkReader.add_column_filters(conditions, ["*", ""], False)
     # nothing should be added
     assert conditions == {"submatrix": 42}
+
+
+# --- Tests for unit_names extraction and propagation ---
+
+
+def _make_bulk_reader_with_unit_lookup(unit_lookup: dict) -> BulkReader:
+    """Return a BulkReader whose unit_name_lookup cache is pre-filled."""
+
+    class FakeConI:
+        pass
+
+    br = BulkReader(FakeConI())  # type: ignore[arg-type]
+    br._unit_name_lookup_cache = unit_lookup
+    return br
+
+
+def test_attach_unit_attr_sets_dict():
+    br = _make_bulk_reader_with_unit_lookup({})
+    df = pd.DataFrame({"a": [1], "b": [2]})
+    names = pd.Series(["a", "b"])
+    br._attach_unit_attr(df, names, ["m/s", "kg"])
+    assert df.attrs["unit_names"] == {"a": "m/s", "b": "kg"}
+
+
+def test_attach_unit_attr_skips_on_length_mismatch():
+    br = _make_bulk_reader_with_unit_lookup({})
+    df = pd.DataFrame({"a": [1], "b": [2]})
+    names = pd.Series(["a", "b"])
+    br._attach_unit_attr(df, names, ["m/s"])  # mismatched length
+    assert "unit_names" not in df.attrs
+
+
+def test_attach_unit_attr_skips_on_empty_unit_names():
+    br = _make_bulk_reader_with_unit_lookup({})
+    df = pd.DataFrame({"a": [1]})
+    br._attach_unit_attr(df, pd.Series(["a"]), [])
+    assert "unit_names" not in df.attrs
+
+
+def test_extract_unit_names_resolves_ids():
+    """_extract_unit_names maps unit_ids via unit_name_lookup."""
+    import odsbox.proto.ods_pb2 as ods
+
+    br = _make_bulk_reader_with_unit_lookup({10: "m/s", 42: "kg", 0: ""})
+
+    dms = ods.DataMatrices()
+    dm = dms.matrices.add(aid=1, name="LC")
+    column = dm.columns.add(name="values", base_name="values", data_type=ods.DT_UNKNOWN)
+    column.unknown_arrays.values.add(data_type=ods.DT_FLOAT, unit_id=10).float_array.values.extend([1.0])
+    column.unknown_arrays.values.add(data_type=ods.DT_FLOAT, unit_id=42).float_array.values.extend([2.0])
+    column.unknown_arrays.values.add(data_type=ods.DT_FLOAT, unit_id=0).float_array.values.extend([3.0])
+
+    assert br._extract_unit_names(dms) == ["m/s", "kg", ""]
+
+
+def test_extract_unit_names_unknown_id_returns_empty_string():
+    """_extract_unit_names returns '' for ids not present in lookup."""
+    import odsbox.proto.ods_pb2 as ods
+
+    br = _make_bulk_reader_with_unit_lookup({10: "m/s"})
+
+    dms = ods.DataMatrices()
+    dm = dms.matrices.add(aid=1, name="LC")
+    column = dm.columns.add(name="values", base_name="values", data_type=ods.DT_UNKNOWN)
+    column.unknown_arrays.values.add(data_type=ods.DT_FLOAT, unit_id=10).float_array.values.extend([1.0])
+    column.unknown_arrays.values.add(data_type=ods.DT_FLOAT, unit_id=99).float_array.values.extend([2.0])
+
+    assert br._extract_unit_names(dms) == ["m/s", ""]
+
+
+def test_query_propagates_unit_names(monkeypatch):
+    """query() stores unit_names in df.attrs after a successful bulk read."""
+
+    class FakeConI:
+        def query_data(self, query):
+            return pd.DataFrame(
+                [
+                    {
+                        "id": 1,
+                        "name": "Time",
+                        "independent": True,
+                        "sequence_representation": 0,
+                        "submatrix": 5,
+                        "number_of_rows": 2,
+                    },
+                    {
+                        "id": 2,
+                        "name": "Force",
+                        "independent": False,
+                        "sequence_representation": 0,
+                        "submatrix": 5,
+                        "number_of_rows": 2,
+                    },
+                ]
+            )
+
+        def data_read_jaquel(self, query):
+            return object()
+
+    def fake_to_pandas(dms, **kwargs):
+        return pd.DataFrame([[1, [0.0, 1.0]], [2, [10.0, 20.0]]], columns=["a", "b"])
+
+    monkeypatch.setattr("odsbox.bulk_reader.to_pandas", fake_to_pandas)
+    monkeypatch.setattr("odsbox.bulk_reader.extract_column_unit_ids", lambda dms: [7, 99])
+
+    br = BulkReader(FakeConI())  # type: ignore[arg-type]
+    br._unit_name_lookup_cache = {7: "s", 99: "N"}
+
+    merged = br.query({"submatrix": 5})
+    assert merged.attrs["unit_names"] == {"Time": "s", "Force": "N"}
+
+
+def test_data_read_propagates_unit_names(monkeypatch):
+    """data_read() copies unit_names from the intermediate query result into the returned DataFrame."""
+
+    class FakeConI:
+        def query_data(self, query):
+            return pd.DataFrame(
+                [
+                    {
+                        "id": 1,
+                        "name": "Time",
+                        "independent": True,
+                        "sequence_representation": 0,
+                        "submatrix": 5,
+                        "number_of_rows": 2,
+                    },
+                    {
+                        "id": 2,
+                        "name": "Force",
+                        "independent": False,
+                        "sequence_representation": 0,
+                        "submatrix": 5,
+                        "number_of_rows": 2,
+                    },
+                ]
+            )
+
+        def data_read_jaquel(self, query):
+            return object()
+
+    def fake_to_pandas(dms, **kwargs):
+        return pd.DataFrame([[1, [0.0, 1.0]], [2, [10.0, 20.0]]], columns=["a", "b"])
+
+    monkeypatch.setattr("odsbox.bulk_reader.to_pandas", fake_to_pandas)
+    monkeypatch.setattr("odsbox.bulk_reader.extract_column_unit_ids", lambda dms: [7, 99])
+
+    br = BulkReader(FakeConI())  # type: ignore[arg-type]
+    br._unit_name_lookup_cache = {7: "s", 99: "N"}
+
+    df = br.data_read(5, set_independent_as_index=False)
+    assert df.attrs["unit_names"] == {"Time": "s", "Force": "N"}
+
+
+def test_valuematrix_read_propagates_unit_names(monkeypatch):
+    """valuematrix_read() stores unit_names in df.attrs."""
+
+    class FakeMC:
+        def entity_by_base_name(self, base_name):
+            return type("E", (), {"aid": 1})()
+
+        def attribute_by_base_name(self, entity, name):
+            return type("A", (), {"name": name})()
+
+    class FakeConI:
+        def __init__(self):
+            self.mc = FakeMC()
+
+        def valuematrix_read(self, vmreq):
+            return object()
+
+    def fake_to_pandas(dms, **kwargs):
+        return pd.DataFrame({"name": ["Time", "Force"], "values": [[0.0, 1.0], [10.0, 20.0]]})
+
+    monkeypatch.setattr("odsbox.bulk_reader.to_pandas", fake_to_pandas)
+    monkeypatch.setattr("odsbox.bulk_reader.extract_column_unit_ids", lambda dms: [7, 99])
+
+    br = BulkReader(FakeConI())  # type: ignore[arg-type]
+    br._unit_name_lookup_cache = {7: "s", 99: "N"}
+
+    df = br.valuematrix_read(1)
+    assert df.attrs["unit_names"] == {"Time": "s", "Force": "N"}

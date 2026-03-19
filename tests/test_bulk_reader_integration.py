@@ -38,6 +38,11 @@ def test_bulk_reader_simple():
             assert df2.empty is False
             pd.testing.assert_frame_equal(df1, df2)
 
+            assert df1.attrs == df2.attrs
+            assert "unit_names" in df1.attrs
+            assert df1.attrs["unit_names"] == df2.attrs["unit_names"]
+            assert df1.attrs["unit_names"] == {"Time": "s", "Coolant": "°C"}
+
             pd.testing.assert_frame_equal(
                 df1, con_i.bulk.data_read(submatrix_id, ["time", "coolant"], True, set_independent_as_index=False)
             )

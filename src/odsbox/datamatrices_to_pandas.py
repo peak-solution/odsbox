@@ -221,6 +221,34 @@ def _determine_column_name(
     return f"{matrix.name}{name_separator}{column.name}{aggregate_postfix}"
 
 
+def extract_column_unit_ids(
+    dms: ods.DataMatrices,
+    column_name: str = "values",
+) -> list[int]:
+    """
+    Extract the unit_id of each entry in an ``unknown_arrays`` column across all matrices.
+
+    When bulk data is loaded the "values" column contains one
+    :class:`~odsbox.proto.ods_pb2.DataMatrix.Column.UnknownArray` per local column row.
+    Every ``UnknownArray`` carries a ``unit_id`` that identifies the physical unit of that
+    particular channel.  This helper harvests those ids in row order so callers can build
+    a ``{channel_name: unit_id}`` mapping after correlating with the "name" column.
+
+    :param ods.DataMatrices dms: The DataMatrices returned by a data-read call.
+    :return list[int]: One ``unit_id`` per row, in the same order as the rows in the
+                       DataMatrices.  Returns an empty list when no matching column is found.
+    """
+    matrices = dms.matrices
+    if matrices is None:
+        return []
+    for matrix in matrices:
+        for column in matrix.columns:
+            if column.HasField("unknown_arrays"):
+                # there is only one unknown_arrays column per matrices, so we can return as soon as we found it
+                return [item.unit_id for item in column.unknown_arrays.values]
+    return []
+
+
 def to_pandas(
     data_matrices: ods.DataMatrices,
     model_cache: ModelCache | None = None,
