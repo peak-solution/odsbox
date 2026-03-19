@@ -15,6 +15,7 @@ def submatrix_to_pandas(
     con_i: ConI,
     submatrix_iid: int,
     date_as_timestamp: bool = False,
+    set_independent_as_index: bool = False,
 ) -> pd.DataFrame:
     """
     Loads an ASAM ODS SubMatrix and returns it as a pandas DataFrame.
@@ -25,7 +26,13 @@ def submatrix_to_pandas(
     :param int submatrix_iid: id of a submatrix to be retrieved.
     :param bool date_as_timestamp: columns of type DT_DATE or DS_DATE are returned as string.
                                    If this is set to True the strings are converted to pandas Timestamp.
+    :param bool set_independent_as_index: Whether to set the independent column as the index.
     :return pd.DataFrame: A pandas DataFrame containing the values of the localcolumn as pandas columns.
                           The name of the localcolumn is used as pandas column name. The flags are ignored.
     """
-    return BulkReader(con_i).data_read(submatrix_iid=submatrix_iid, date_as_timestamp=date_as_timestamp)
+
+    return BulkReader(con_i).data_read(
+        submatrix_iid=submatrix_iid,
+        date_as_timestamp=date_as_timestamp,
+        set_independent_as_index=set_independent_as_index,
+    )
