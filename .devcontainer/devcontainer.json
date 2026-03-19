@@ -1,10 +1,10 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
-// https://github.com/microsoft/vscode-dev-containers/tree/v0.222.0/containers/python-3-miniconda
+// https://containers.dev/implementors/json_reference/
 {
 	"name": "Python Environment",
-	"build": {
-		"dockerfile": "Dockerfile",
-		"context": ".."
+	"image": "mcr.microsoft.com/devcontainers/python:3.10",
+	"containerEnv": {
+		"FLIT_ROOT_INSTALL": "1"
 	},
 	"customizations": {
 		"vscode": {
@@ -12,6 +12,7 @@
 				"editorconfig.editorconfig",
 				"github.vscode-pull-request-github",
 				"github.vscode-github-actions",
+				"github.copilot-chat",
 				"ms-azuretools.vscode-docker",
 				"ms-python.python",
 				"ms-python.vscode-pylance",
@@ -23,8 +24,7 @@
 				"ms-vscode.live-server",
 				"ryanluker.vscode-coverage-gutters",
 				"tamasfe.even-better-toml",
-				"streetsidesoftware.code-spell-checker",
-				"GitHub.copilot"
+				"streetsidesoftware.code-spell-checker"
 			],
 			"settings": {
 				"python.defaultInterpreterPath": "/usr/local/bin/python",
@@ -43,5 +43,6 @@
 			}
 		}
 	},
-	"onCreateCommand": "pre-commit install-hooks"
+	"onCreateCommand": "pip install --upgrade pip && pip install 'flit>=3.8.0' && flit install --only-deps --deps develop",
+	"postCreateCommand": "pre-commit install-hooks"
 }
