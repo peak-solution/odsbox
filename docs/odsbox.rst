@@ -13,6 +13,13 @@ con_i
    :members:
    :show-inheritance:
 
+con_i_factory
+-------------
+
+.. automodule:: odsbox.con_i_factory
+   :members:
+   :show-inheritance:
+
 transaction
 -----------
 

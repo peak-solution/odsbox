@@ -10,6 +10,7 @@ Welcome to ASAM ODSBox docs's documentation!
 
    overview
    odsbox
+   con_i_factory
    jaquel
    repository_rules
 

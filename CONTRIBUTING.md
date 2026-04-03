@@ -61,7 +61,7 @@ Please read and follow our [Code of Conduct](CODE_OF_CONDUCT.md) in all interact
 ## Development Setup Details
 
 - **Python Version**: >= 3.10.12
-- **Dependencies**: protobuf, requests, pandas (core); grpcio (for exd-data)
+- **Dependencies**: protobuf, requests, pandas (core); grpcio (for exd-data); pip-system-certs, requests-oauthlib (for oidc)
 - **Test Dependencies**: pytest, black, flake8, bandit, pylint, pre-commit, etc.
 
 To install all dev tools:

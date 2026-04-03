@@ -13,7 +13,7 @@ from google.protobuf.json_format import MessageToJson
 
 import odsbox.proto.ods_pb2 as ods
 import odsbox.proto.ods_security_pb2 as ods_security
-from odsbox.con_i import ConI
+from odsbox import ConI
 from odsbox.jaquel import jaquel_to_ods
 from odsbox.security import Security
 from odsbox.submatrix_to_pandas import submatrix_to_pandas
