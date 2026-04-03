@@ -80,6 +80,7 @@
         "submatrices",
         "submatrix",
         "TESTSTEP",
-        "valuematrix"
+        "valuematrix",
+        "webfinger"
     ]
 }

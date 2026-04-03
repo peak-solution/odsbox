@@ -16,10 +16,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 
 if TYPE_CHECKING:
     from .con_i import ConI
+    from .con_i_factory import ConIFactory
 
 
 def __getattr__(name: str):
@@ -28,13 +29,25 @@ def __getattr__(name: str):
         from .con_i import ConI
 
         return ConI
+    elif name == "ConIFactory":
+        try:
+            from .con_i_factory import ConIFactory
+        except ImportError as e:
+            raise ImportError(
+                "The 'oidc' and 'm2m' authentication methods require additional dependencies. "
+                "Install them with:\n\n"
+                "  pip install -e .[oidc]\n\n"
+                "or\n\n"
+                "  pip install requests-oauthlib\n"
+            ) from e
+        return ConIFactory
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 def __dir__():
     """Return list of available attributes for tab completion"""
-    return ["ConI", "__version__"]
+    return ["ConI", "ConIFactory", "__version__"]
 
 
 # Define what gets imported with "from odsbox import *"
-__all__ = ["ConI"]
+__all__ = ["ConI", "ConIFactory", "__version__"]

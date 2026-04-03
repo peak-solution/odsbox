@@ -40,6 +40,7 @@ dependencies = [
 
 [project.optional-dependencies]
 exd-data = ["grpcio>=1.59.3,<2.0.0"]
+oidc = ["pip-system-certs>=5.3,<6.0.0", "requests-oauthlib>=2.0.0,<3.0.0"]
 test = [
     "bandit[toml]==1.9.4",
     "black==26.3.1",

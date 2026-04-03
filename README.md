@@ -24,7 +24,7 @@ and [pandas DataFrames](https://pandas.pydata.org/).
 1. Install ODSBox: `pip install odsbox`
 2. Connect to an ASAM ODS server:
     ```python
-    from odsbox.con_i import ConI
+    from odsbox import ConI
 
     with ConI(url="https://MY_SERVER/api", auth=("USERNAME", "PASSWORD")) as con_i:
         measurements = con_i.query(
@@ -34,7 +34,7 @@ and [pandas DataFrames](https://pandas.pydata.org/).
                 "$options": {"$rowlimit": 50},
             }
         )
-        print(measurements) # print pandas DataFrame
+        print(measurements) # print pandas DataFrame with column "name" and "id"
     ```
 
 ## Documentation
