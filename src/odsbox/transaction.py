@@ -1,4 +1,19 @@
-"""helper for handling transactions"""
+"""
+Helper for handling transactions
+
+Example::
+
+    from odsbox.con_i import ConI
+
+    with ConI(
+        url="http://localhost:8087/api",
+        auth=("sa", "sa")
+    ) as con_i:
+        with con_i.transaction() as transaction:
+            # do some work
+            transaction.commit()
+
+"""
 
 from __future__ import annotations
 
@@ -17,6 +32,24 @@ class Transaction:
     __con_i: ConI | None = None
 
     def __init__(self, con_i: ConI) -> None:
+        """
+        Start a transaction on the given ConI instance.
+
+        Example::
+
+            from odsbox.con_i import ConI
+
+            with ConI(
+                url="http://localhost:8087/api",
+                auth=("sa", "sa")
+            ) as con_i:
+                with con_i.transaction() as transaction:
+                    # do some work
+                    transaction.commit()
+
+        :param con_i: ConI instance to start the transaction on
+        """
+
         con_i.transaction_create()
         self.__con_i = con_i
 

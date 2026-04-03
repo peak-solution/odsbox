@@ -43,7 +43,7 @@ def test_odsbox_all_contains_expected_attributes():
     """Test that __all__ contains expected attribute names"""
     import odsbox
 
-    expected_attributes = ["ConI"]
+    expected_attributes = ["ConI", "ConIFactory", "__version__"]
 
     assert odsbox.__all__ == expected_attributes
 
