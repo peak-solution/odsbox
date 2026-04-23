@@ -50,7 +50,7 @@ test = [
     "flake8-formatter_junit_xml",
     "flake8",
     "flake8-pyproject",
-    "mypy==1.20.1",
+    "mypy==1.20.2",
     "pre-commit==4.6.0",
     "pylint==4.0.5",
     "pylint_junit",
