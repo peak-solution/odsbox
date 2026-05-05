@@ -8,6 +8,7 @@ from odsbox.bulk_reader import BulkReader
 
 if TYPE_CHECKING:
     import pandas as pd
+
     from .con_i import ConI
 
 

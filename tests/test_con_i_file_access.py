@@ -153,11 +153,12 @@ def test_file_access_upload_success(con_i):
 
 
 def test_file_access_upload_failure(con_i):
-    # Create a temporary file to upload
-    with tempfile.NamedTemporaryFile() as temp_file:
+    # Create a temporary file to upload (delete=False for Windows compatibility)
+    with tempfile.NamedTemporaryFile(delete=False) as temp_file:
         temp_file.write(b"Test content")
         temp_file_path = temp_file.name
 
+    try:
         file_identifier = FileIdentifier(aid=4711, iid=1)
 
         with mock.patch.object(con_i, "file_access", return_value="http://example.com/upload"):
@@ -170,6 +171,8 @@ def test_file_access_upload_failure(con_i):
 
                 with pytest.raises(requests.HTTPError, match="Failed to upload file"):
                     con_i.file_access_upload(file_identifier, temp_file_path)
+    finally:
+        os.remove(temp_file_path)
 
 
 def test_file_access_delete_success(con_i):

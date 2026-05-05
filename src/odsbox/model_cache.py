@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import logging
 
-from odsbox.model_suggestions import ModelSuggestions
 import odsbox.proto.ods_pb2 as ods
+from odsbox.model_suggestions import ModelSuggestions
 
 
 class ModelCache:
@@ -51,7 +51,7 @@ class ModelCache:
         if entity is not None:
             return entity
         raise ValueError(
-            f"No entity named '{entity_name}' found." f"{ModelSuggestions.get_entity(self.__model, entity_name)}"
+            f"No entity named '{entity_name}' found.{ModelSuggestions.get_entity(self.__model, entity_name)}"
         )
 
     def entity_no_throw(self, entity_name: str) -> ods.Model.Entity | None:

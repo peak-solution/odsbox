@@ -4,7 +4,7 @@ Helps to access the unit catalog and find physical dimensions.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from pandas import DataFrame
 
@@ -25,10 +25,27 @@ def query_physical_dimensions(
     temperature: int = 0,
     molar_amount: int = 0,
     luminous_intensity: int = 0,
-    **kwargs,
+    **kwargs: Any,
 ) -> DataFrame:
-    """
-    Search for a physical dimension by its SI exponents.
+    """Search for physical dimensions matching the given SI base-unit exponents.
+
+    Each argument is the integer exponent for that SI base quantity. For example,
+    velocity (m/s) is ``length=1, time=-1``; acceleration (m/s²) is
+    ``length=1, time=-2``.
+
+    Args:
+        con_i: Active ODS server session.
+        length: Exponent of length (metre, m). Defaults to 0.
+        mass: Exponent of mass (kilogram, kg). Defaults to 0.
+        time: Exponent of time (second, s). Defaults to 0.
+        current: Exponent of electric current (ampere, A). Defaults to 0.
+        temperature: Exponent of thermodynamic temperature (kelvin, K). Defaults to 0.
+        molar_amount: Exponent of amount of substance (mole, mol). Defaults to 0.
+        luminous_intensity: Exponent of luminous intensity (candela, cd). Defaults to 0.
+        **kwargs: Additional keyword arguments forwarded to :func:`to_pandas`.
+
+    Returns:
+        DataFrame with all matching ``AoPhysicalDimension`` instances.
     """
     physical_dimension_entity = con_i.mc.entity_by_base_name("AoPhysicalDimension")
 
@@ -74,10 +91,28 @@ def query_units(
     temperature: int = 0,
     molar_amount: int = 0,
     luminous_intensity: int = 0,
-    **kwargs,
+    **kwargs: Any,
 ) -> DataFrame:
-    """
-    Search for a unit by its SI exponents.
+    """Search for units matching the given SI base-unit exponents.
+
+    Joins ``AoUnit`` with ``AoPhysicalDimension`` and filters by the SI
+    exponents of the associated physical dimension. The returned DataFrame
+    includes unit columns plus the physical dimension name.
+
+    Args:
+        con_i: Active ODS server session.
+        length: Exponent of length (metre, m). Defaults to 0.
+        mass: Exponent of mass (kilogram, kg). Defaults to 0.
+        time: Exponent of time (second, s). Defaults to 0.
+        current: Exponent of electric current (ampere, A). Defaults to 0.
+        temperature: Exponent of thermodynamic temperature (kelvin, K). Defaults to 0.
+        molar_amount: Exponent of amount of substance (mole, mol). Defaults to 0.
+        luminous_intensity: Exponent of luminous intensity (candela, cd). Defaults to 0.
+        **kwargs: Additional keyword arguments forwarded to :func:`to_pandas`.
+
+    Returns:
+        DataFrame with all matching ``AoUnit`` instances including the
+        physical dimension name column.
     """
     unit_entity = con_i.mc.entity_by_base_name("AoUnit")
     physical_dimension_entity = con_i.mc.entity_by_base_name("AoPhysicalDimension")
@@ -133,10 +168,29 @@ def query_quantity(
     temperature: int = 0,
     molar_amount: int = 0,
     luminous_intensity: int = 0,
-    **kwargs,
+    **kwargs: Any,
 ) -> DataFrame:
-    """
-    Search for a quantity by its SI exponents.
+    """Search for quantities matching the given SI base-unit exponents.
+
+    Joins ``AoQuantity`` → ``AoUnit`` → ``AoPhysicalDimension`` and filters by
+    the SI exponents of the associated physical dimension. The returned
+    DataFrame includes quantity columns plus the default unit and physical
+    dimension name columns.
+
+    Args:
+        con_i: Active ODS server session.
+        length: Exponent of length (metre, m). Defaults to 0.
+        mass: Exponent of mass (kilogram, kg). Defaults to 0.
+        time: Exponent of time (second, s). Defaults to 0.
+        current: Exponent of electric current (ampere, A). Defaults to 0.
+        temperature: Exponent of thermodynamic temperature (kelvin, K). Defaults to 0.
+        molar_amount: Exponent of amount of substance (mole, mol). Defaults to 0.
+        luminous_intensity: Exponent of luminous intensity (candela, cd). Defaults to 0.
+        **kwargs: Additional keyword arguments forwarded to :func:`to_pandas`.
+
+    Returns:
+        DataFrame with all matching ``AoQuantity`` instances including the
+        default unit name and physical dimension name columns.
     """
     unit_entity = con_i.mc.entity_by_base_name("AoUnit")
     physical_dimension_entity = con_i.mc.entity_by_base_name("AoPhysicalDimension")

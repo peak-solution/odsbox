@@ -225,7 +225,7 @@ class TestConIWithResourceLogout:
         # Set minimal required attributes to avoid AttributeError
         for attr in ["_ConI__session", "_ConI__con_i", "_ConI__security", "_ConI__bulk_reader", "_ConI__mc"]:
             setattr(con_i, attr, None)
-        setattr(con_i, "_ConI__connection_timeout", 60.0)
+        con_i._ConI__connection_timeout = 60.0
 
         # This should not raise an exception
         con_i.logout()

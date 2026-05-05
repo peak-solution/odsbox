@@ -11,7 +11,7 @@ import pytest
 from google.protobuf.json_format import MessageToJson, Parse
 
 import odsbox.proto.ods_pb2 as ods
-from odsbox.jaquel import jaquel_to_ods, Jaquel
+from odsbox.jaquel import Jaquel, jaquel_to_ods
 
 
 def __get_model(model_file_name):
@@ -94,9 +94,9 @@ def test_predefined():
 
         jaquel_result = Jaquel(model, jaquel_dict)
 
-        assert (
-            select_statement_ref == jaquel_result.select_statement
-        ), f"Does not match {MessageToJson(jaquel_result.select_statement)}"
+        assert select_statement_ref == jaquel_result.select_statement, (
+            f"Does not match {MessageToJson(jaquel_result.select_statement)}"
+        )
 
 
 def test_syntax_errors():

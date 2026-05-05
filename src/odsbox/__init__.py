@@ -14,7 +14,7 @@ Example::
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 __version__ = "1.2.0"
 
@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from .con_i_factory import ConIFactory
 
 
-def __getattr__(name: str):
+def __getattr__(name: str) -> Any:
     """Lazy import for better performance"""
     if name == "ConI":
         from .con_i import ConI
@@ -44,7 +44,7 @@ def __getattr__(name: str):
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
-def __dir__():
+def __dir__() -> list[str]:
     """Return list of available attributes for tab completion"""
     return ["ConI", "ConIFactory", "__version__"]
 

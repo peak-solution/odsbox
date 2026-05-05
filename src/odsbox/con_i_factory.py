@@ -47,9 +47,10 @@ from __future__ import annotations
 import os
 import threading
 import time
+from collections.abc import Generator
 from contextlib import contextmanager
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from typing import Any, Generator
+from typing import Any
 from urllib.parse import urlparse
 
 import requests

@@ -2,22 +2,24 @@
 them to an pandas DataFrame for ease of use."""
 
 from __future__ import annotations
+
 import logging
+from typing import Any
 
 import numpy as np
 import pandas as pd
 
 import odsbox.proto.ods_pb2 as ods
 from odsbox.asam_time import to_pd_timestamp
-from odsbox.model_cache import ModelCache
 from odsbox.jaquel_conversion_result import JaquelConversionResult
+from odsbox.model_cache import ModelCache
 
 
 def unknown_array_values(
     unknown_array: ods.DataMatrix.Column.UnknownArray,
     date_as_timestamp: bool = False,
     prefer_np_array: bool = False,
-) -> list | np.ndarray:
+) -> list[Any] | np.ndarray:
     """
     Get the values of an UnknownArray as list or numpy array
 
@@ -88,7 +90,9 @@ def unknown_array_values(
 
 
 def __adjust_enums(
-    model_cache: ModelCache | None, enumeration: ods.Model.Enumeration | None, values: list[int] | None
+    model_cache: ModelCache | None,
+    enumeration: ods.Model.Enumeration | None,
+    values: list[int] | None,
 ) -> list[int] | list[str] | None:
     if values is None or enumeration is None or model_cache is None:
         return values
@@ -102,7 +106,7 @@ def __get_datamatrix_column_values(
     enumeration: ods.Model.Enumeration | None,
     date_as_timestamp: bool,
     prefer_np_array_for_unknown: bool,
-) -> list | np.ndarray | None:
+) -> list[Any] | np.ndarray | None:
     if column.WhichOneof("ValuesOneOf") is None:
         return None
 
@@ -181,7 +185,7 @@ def __get_datamatrix_column_values_ex(
     entity: ods.Model.Entity | None,
     date_as_timestamp: bool,
     prefer_np_array_for_unknown: bool,
-) -> list | np.ndarray:
+) -> list[Any] | np.ndarray:
     enumeration = None
     if (
         enum_as_string
@@ -298,7 +302,12 @@ def to_pandas(
                 logging.warning(f"Duplicate column name '{column_name}' found. Overwriting previous column.")
 
             column_dict[column_name] = __get_datamatrix_column_values_ex(
-                column, model_cache, enum_as_string, entity, date_as_timestamp, prefer_np_array_for_unknown
+                column,
+                model_cache,
+                enum_as_string,
+                entity,
+                date_as_timestamp,
+                prefer_np_array_for_unknown,
             )
 
             if is_null_to_nan and column.is_null is not None and len(column.is_null) > 0:

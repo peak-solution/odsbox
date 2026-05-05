@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from enum import IntEnum
 import logging
-from typing import TYPE_CHECKING
+from enum import IntEnum
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pandas as pd
@@ -131,12 +131,12 @@ class BulkReader:
             elif sequence_representation == SeqRepEnum.implicit_constant:
                 # generation parameters expected to be stored in vals as [offset, factor, ...]
                 if len(vals) >= 1:
-                    localcolumn_df.at[index, "values"] = [vals[0]] * values_count
+                    localcolumn_df.at[index, "values"] = [vals[0]] * values_count  # type: ignore[assignment]
                 else:
                     raise ValueError(f"Generation parameters missing for implicit_constant in column '{name}'.")
             elif sequence_representation == SeqRepEnum.implicit_linear:
                 if len(vals) >= 2:
-                    localcolumn_df.at[index, "values"] = [
+                    localcolumn_df.at[index, "values"] = [  # type: ignore[assignment]
                         vals[0] + x * vals[1] for x in range(0 + values_start, values_count + values_start)
                     ]
                 else:
@@ -194,7 +194,7 @@ class BulkReader:
 
     def query(
         self,
-        localcolumn_jaquel_condition: dict,
+        localcolumn_jaquel_condition: dict[str, Any],
         date_as_timestamp: bool = True,
         row_limit: int = 0,
         values_start: int = 0,
@@ -470,7 +470,7 @@ class BulkReader:
 
     @staticmethod
     def add_column_filters(
-        conditions: dict,
+        conditions: dict[str, Any],
         column_patterns: list[str] | None,
         column_patterns_case_insensitive: bool,
     ) -> None:

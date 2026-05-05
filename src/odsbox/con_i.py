@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import logging
 import os
+from typing import Any
 
 import requests
 import requests.auth
@@ -59,7 +60,7 @@ class ConI:
         self,
         url: str = "http://localhost:8080/api",
         auth: requests.auth.AuthBase | tuple[str, str] | None = ("sa", "sa"),
-        context_variables: ods.ContextVariables | dict | None = None,
+        context_variables: ods.ContextVariables | dict[str, str] | None = None,
         verify_certificate: bool = True,
         load_model: bool = True,
         allow_redirects: bool = False,
@@ -166,7 +167,10 @@ class ConI:
         return self
 
     def __exit__(
-        self, exc_type: type[BaseException] | None, exc_value: BaseException | None, exc_traceback: object
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        exc_traceback: object,
     ) -> None:
         self.close()
 
@@ -218,12 +222,12 @@ class ConI:
 
     def query(
         self,
-        jaquel_query: str | dict,
+        jaquel_query: str | dict[str, Any],
         enum_as_string: bool = True,
         date_as_timestamp: bool = True,
         is_null_to_nan: bool = True,
         result_naming_mode: str = "query",  # "query" or "model"
-        **kwargs,
+        **kwargs: Any,
     ) -> DataFrame:
         """
         Query ods server for content using JAQueL query and return the results as Pandas DataFrame.
@@ -297,12 +301,12 @@ class ConI:
 
     def query_data(
         self,
-        query: str | dict | ods.SelectStatement,
+        query: str | dict[str, Any] | ods.SelectStatement,
         enum_as_string: bool = False,
         date_as_timestamp: bool = False,
         is_null_to_nan: bool = False,
         result_naming_mode: str = "model",
-        **kwargs,
+        **kwargs: Any,
     ) -> DataFrame:
         """
         Query ods server for content and return the results as Pandas DataFrame.
@@ -361,7 +365,7 @@ class ConI:
         """
         return self.mc.model()
 
-    def data_read_jaquel(self, query: str | dict) -> ods.DataMatrices:
+    def data_read_jaquel(self, query: str | dict[str, Any]) -> ods.DataMatrices:
         """
         Query ods server for content.
 
@@ -777,7 +781,10 @@ class ConI:
             put_response = self.__session.put(
                 server_file_url,
                 data=file,
-                headers={"Content-Type": "application/octet-stream", "Accept": "application/x-asamods+protobuf"},
+                headers={
+                    "Content-Type": "application/octet-stream",
+                    "Accept": "application/x-asamods+protobuf",
+                },
                 timeout=self.__request_timeout,
                 allow_redirects=self.__allow_redirects,
             )
@@ -843,7 +850,6 @@ class ConI:
     @staticmethod
     def check_requests_response(response: requests.Response) -> None:
         if response.status_code not in (200, 201):
-            response.headers
             if (
                 "Content-Type" in response.headers
                 and "application/x-asamods+protobuf" == response.headers["Content-Type"]

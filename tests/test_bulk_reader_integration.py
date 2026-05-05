@@ -18,7 +18,6 @@ def __create_con_i(load_model: bool = True) -> ConI:
 @pytest.mark.integration
 def test_bulk_reader_simple():
     with __create_con_i() as con_i:
-
         sm_s = con_i.query_data(
             {
                 "AoSubmatrix": {"measurement.name": "Profile_52"},
