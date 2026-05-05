@@ -11,7 +11,7 @@ from odsbox.proto.ods_pb2 import DataMatrix
 def dummy_con_i():
     # create without running __init__
     con_i = ConI.__new__(ConI)
-    con_i._ConI__session = None  # type: ignore
+    con_i._ConI__session = None
     return con_i
 
 

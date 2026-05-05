@@ -39,10 +39,9 @@ Test map
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, patch
 
 import pandas as pd
-import pytest
 
 from odsbox.bulk_reader import BulkReader
 from odsbox.submatrix_to_pandas import submatrix_to_pandas
@@ -103,7 +102,7 @@ class TestSubmatrixToPandasDefaultBehavior:
             "submatrix_to_pandas is called with default arguments."
         )
         assert result.index.name != "time", (
-            "The DataFrame index must NOT be named 'time' when " "set_independent_as_index is False (default)."
+            "The DataFrame index must NOT be named 'time' when set_independent_as_index is False (default)."
         )
 
     def test_passes_set_independent_as_index_false_to_bulk_reader(self):

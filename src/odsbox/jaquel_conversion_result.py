@@ -43,9 +43,12 @@ class JaquelConversionResult:
             """
             Get the column name as it appears in the DataFrame.
 
-            :param str separator: The separator used in the column names.
-            :param str asterisk_name: The name to use for the asterisk column, if applicable.
-            :return str: The column name.
+            Args:
+                separator: The separator used in the column names.
+                asterisk_name: The name to use for the asterisk column, if applicable.
+
+            Returns:
+                The column name.
             """
             if self.name == "*":
                 base_path = self.path.rsplit(".", 1)[0] if "." in self.path else ""
@@ -63,9 +66,12 @@ class JaquelConversionResult:
         """
         Look up a result column by aid and DataMatrix.Column.
 
-        :param int aid: The application element ID to match.
-        :param ods.DataMatrix.Column column: The DataMatrix column with name and aggregate.
-        :return Column | None: The matching column, or None if not found.
+        Args:
+            aid: The application element ID to match.
+            column: The DataMatrix column with name and aggregate.
+
+        Returns:
+            The matching column, or None if not found.
         """
         asterisk_col = None
         for col in self.column_lookup:

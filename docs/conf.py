@@ -6,26 +6,20 @@
 
 from __future__ import annotations
 
-# -- Path setup --------------------------------------------------------------
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
-#
-import os
-import sys
-
-sys.path.insert(0, os.path.abspath("../src/"))
-
-import odsbox  # noqa: E402
-
 # -- Project information -----------------------------------------------------
 
-project = "ASAM ODSBox docs"
-copyright = "2025, Peak Solution"
+project = "ODSBox"
+copyright = "2026, Peak Solution"
 author = "Peak Solution"
 
 # The full version, including alpha/beta/rc tags
-release = odsbox.__version__
+release = "0.0.0"  # overridden by sphinx-build -D release=...
+try:
+    import odsbox
+
+    release = odsbox.__version__
+except ImportError:
+    pass
 
 
 # -- General configuration ---------------------------------------------------
@@ -34,7 +28,7 @@ release = odsbox.__version__
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    "sphinx.ext.autodoc",
+    "autoapi.extension",
     "sphinx.ext.napoleon",  # to render Google format docstrings
     "sphinx.ext.doctest",
     "sphinx.ext.intersphinx",
@@ -42,6 +36,7 @@ extensions = [
     "sphinx.ext.viewcode",  # Add links to highlighted source code
     "sphinx.ext.githubpages",
     "sphinx_sitemap",
+    "sphinx_copybutton",
     "myst_parser",
     "sphinx_design",
     "nbsphinx",  # Jupyter notebook support
@@ -61,7 +56,7 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = "sphinx_rtd_theme"
+html_theme = "furo"
 
 html_context = {"google_site_verification": "M-YV4bEhpyyWVOBQB9VLsSCjKfqO_UpvTBMJ7DS5t_U"}
 
@@ -80,7 +75,16 @@ templates_path = ["_templates"]
 napoleon_include_init_with_doc = True
 napoleon_include_private_with_doc = True
 
-# Autodoc settings
+# AutoAPI settings — auto-discovers all modules from source
+autoapi_type = "python"
+autoapi_dirs = ["../src"]
+autoapi_options = ["members", "undoc-members", "show-inheritance", "show-module-summary", "imported-members"]
+autoapi_ignore = ["*/proto/*", "*_pb2*"]
+autoapi_keep_files = True
+autoapi_add_toctree_entry = False
+autoapi_python_class_content = "both"
+
+# Autodoc settings (used by autoapi for type hint rendering)
 autodoc_typehints = "description"
 
 # Suppress warnings for multiple targets (e.g., ConI available both as odsbox.ConI and odsbox.con_i.ConI)

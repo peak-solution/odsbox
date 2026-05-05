@@ -6,7 +6,6 @@ import os
 from pathlib import Path
 from unittest.mock import Mock
 
-import pytest
 from google.protobuf.json_format import Parse
 
 from odsbox.model_suggestions import ModelSuggestions

@@ -1,12 +1,9 @@
-[build-system]
-requires = ["flit_core >=2,<4"]
-build-backend = "flit_core.buildapi"
-
 [project]
 name = "odsbox"
+version = "1.2.0"
 authors = [{ name = "Andreas Krantz", email = "a.krantz@peak-solution.de" }]
 description = "Toolbox for accessing ASAM ODS servers using the HTTP API"
-license = { file = "LICENSE" }
+license = "MIT"
 keywords = [
     "asam",
     "ods",
@@ -31,38 +28,15 @@ classifiers = [
     "Typing :: Typed",
 ]
 requires-python = ">=3.10.12"
-dynamic = ["version"]
 dependencies = [
     "protobuf>=5.27.0,<8.0.0",
     "requests>=2.30.0,<3.0.0",
-    "pandas>=2.2.0,<3.0.0",
+    "pandas>=2.2.0,<4.0.0",
 ]
 
 [project.optional-dependencies]
 exd-data = ["grpcio>=1.59.3,<2.0.0"]
 oidc = ["pip-system-certs>=5.3,<6.0.0", "requests-oauthlib>=2.0.0,<3.0.0"]
-test = [
-    "bandit[toml]==1.9.4",
-    "black==26.3.1",
-    "check-manifest==0.51",
-    "flake8-bugbear==25.11.29",
-    "flake8-docstrings",
-    "flake8-formatter_junit_xml",
-    "flake8",
-    "flake8-pyproject",
-    "mypy==1.20.0",
-    "pre-commit==4.5.1",
-    "pylint==4.0.5",
-    "pylint_junit",
-    "pytest-cov==7.1.0",
-    "pytest-mock<3.15.2",
-    "pytest-runner",
-    "pytest==9.0.2",
-    "pytest-github-actions-annotate-failures",
-    "pytest-xdist",
-    "shellcheck-py==0.11.0.1",
-    "types-requests>=2.30.0,<3.0.0",
-]
 
 [project.urls]
 Homepage = "https://github.com/peak-solution/odsbox/tree/main#readme"
@@ -71,22 +45,61 @@ Repository = "https://github.com/peak-solution/odsbox"
 Tracker = "https://github.com/peak-solution/odsbox/issues"
 Changelog = "https://github.com/peak-solution/odsbox/releases"
 
-[tool.flit.module]
-name = "odsbox"
+[dependency-groups]
+dev = [
+    "mypy>=1.20.0",
+    "pandas-stubs>=2.2.0",
+    "pip-audit>=2.9.0",
+    "pre-commit>=4.6.0",
+    "pytest>=9.0.0",
+    "pytest-cov>=7.1.0",
+    "pytest-mock>=3.14.0",
+    "python-semantic-release>=9.0.0",
+    "ruff>=0.15.0",
+    "types-requests>=2.30.0",
+]
+docs = [
+    "sphinx>=8.0.0",
+    "sphinx-autoapi>=3.0.0",
+    "nbsphinx>=0.9.0",
+    "myst-parser>=4.0.0",
+    "furo>=2024.0.0",
+    "sphinx-design>=0.6.0",
+    "sphinx-copybutton>=0.5.0",
+    "sphinx-sitemap>=2.6.0",
+    "sphinx-autobuild>=2024.0.0",
+    "ipython>=8.0.0",
+]
 
-[tool.flit.sdist]
-include = ["src/odsbox/py.typed"]
+[build-system]
+requires = ["uv_build>=0.6,<0.12"]
+build-backend = "uv_build"
 
-[tool.bandit]
-exclude_dirs = ["build", "dist", "tests", "scripts"]
-number = 4
-recursive = true
-targets = "src"
-
-[tool.black]
+[tool.ruff]
 line-length = 120
-fast = true
-exclude = ".+(_pb2\\.py|_pb2\\.pyi|_pb2_grpc\\.py)$"
+exclude = ["*_pb2.py", "*_pb2.pyi", "*_pb2_grpc.py", "*_pb2_grpc.pyi", "*.ipynb"]
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "UP", "B"]
+ignore = ["B905"]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+ignore_missing_imports = true
+exclude = [".*_pb2.*\\.py$"]
+
+[[tool.mypy.overrides]]
+module = ["odsbox.proto.*"]
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = ["odsbox.model_cache", "odsbox.jaquel", "odsbox.datamatrices_to_pandas", "odsbox.bulk_reader"]
+disable_error_code = ["no-any-return"]
+
+[[tool.mypy.overrides]]
+module = ["tests.*"]
+ignore_errors = true
 
 [tool.coverage.run]
 branch = true
@@ -94,50 +107,10 @@ branch = true
 [tool.coverage.report]
 fail_under = 100
 
-[tool.flake8]
-max-line-length = 120
-select = "F,E,W,B,B901,B902,B903"
-exclude = [
-    ".eggs",
-    ".git",
-    ".tox",
-    "nssm",
-    "obj",
-    "out",
-    "packages",
-    "pywin32",
-    "tests",
-    "swagger_client",
-    "*_pb2*.py*",
-]
-ignore = ["E722", "B001", "W503", "E203"]
-
-[tool.pyright]
-include = ["src"]
-exclude = ["**/node_modules", "**/__pycache__"]
-venv = "env37"
-
-reportMissingImports = true
-reportMissingTypeStubs = false
-
-pythonVersion = "3.10"
-pythonPlatform = "Linux"
-
-executionEnvironments = [{ root = "src" }]
-
-[tool.mypy]
-python_version = "3.10"
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = false
-ignore_missing_imports = true
-disable_error_code = ["no-any-return"]
-
 [tool.pytest.ini_options]
-addopts = "--cov-report xml:coverage.xml --cov src --cov-fail-under 0 --cov-append -m 'not integration'"
+addopts = "--cov-report xml:coverage.xml --cov src/odsbox --cov-fail-under 0 -m 'not integration'"
 pythonpath = ["src"]
-testpaths = "tests"
-junit_family = "xunit2"
+testpaths = ["tests"]
 markers = [
     "integration: marks as integration test",
     "notebooks: marks as notebook test",
@@ -146,148 +119,15 @@ markers = [
     "unit: fast offline tests",
 ]
 
-[tool.tox]
-legacy_tox_ini = """
-[tox]
-envlist = py, integration, all
+[tool.semantic_release]
+version_toml = ["pyproject.toml:project.version"]
+version_variables = ["src/odsbox/__init__.py:__version__"]
+tag_format = "v{version}"
+build_command = "uv build"
 
-[testenv]
-commands =
-    pytest -m "not integration" {posargs}
+[tool.semantic_release.branches.main]
+match = "main"
+prerelease = false
 
-[testenv:integration]
-commands =
-    pytest -m "integration" {posargs}
-
-[testenv:all]
-extras = all
-commands =
-    pytest {posargs}
-"""
-
-[tool.pylint]
-extension-pkg-whitelist = [
-    "numpy",
-    "torch",
-    "cv2",
-    "pyodbc",
-    "pydantic",
-    "ciso8601",
-    "netcdf4",
-    "scipy",
-]
-ignore = "CVS"
-ignore-patterns = "test.*?py,conftest.py,*_pb2*.py*"
-init-hook = 'import sys; sys.setrecursionlimit(8 * sys.getrecursionlimit())'
-jobs = 0
-limit-inference-results = 100
-persistent = "yes"
-suggestion-mode = "yes"
-unsafe-load-any-extension = "no"
-
-[tool.pylint.'MESSAGES CONTROL']
-enable = "c-extension-no-member"
-
-[tool.pylint.'REPORTS']
-evaluation = "10.0 - ((float(5 * error + warning + refactor + convention) / statement) * 10)"
-output-format = "text"
-reports = "no"
-score = "yes"
-
-[tool.pylint.'REFACTORING']
-max-nested-blocks = 5
-never-returning-functions = "sys.exit"
-
-[tool.pylint.'BASIC']
-argument-naming-style = "snake_case"
-attr-naming-style = "snake_case"
-bad-names = ["foo", "bar"]
-class-attribute-naming-style = "any"
-class-naming-style = "PascalCase"
-const-naming-style = "UPPER_CASE"
-docstring-min-length = -1
-function-naming-style = "snake_case"
-good-names = ["i", "j", "k", "ex", "Run", "_"]
-include-naming-hint = "yes"
-inlinevar-naming-style = "any"
-method-naming-style = "snake_case"
-module-naming-style = "any"
-no-docstring-rgx = "^_"
-property-classes = "abc.abstractproperty"
-variable-naming-style = "snake_case"
-
-[tool.pylint.'FORMAT']
-ignore-long-lines = "^\\s*(# )?.*['\"]?<?https?://\\S+>?"
-indent-after-paren = 4
-indent-string = '    '
-max-line-length = 120
-max-module-lines = 1000
-single-line-class-stmt = "no"
-single-line-if-stmt = "no"
-
-[tool.pylint.'LOGGING']
-logging-format-style = "old"
-logging-modules = "logging"
-
-[tool.pylint.'MISCELLANEOUS']
-notes = ["FIXME", "XXX", "TODO"]
-
-[tool.pylint.'SIMILARITIES']
-ignore-comments = "yes"
-ignore-docstrings = "yes"
-ignore-imports = "yes"
-min-similarity-lines = 7
-
-[tool.pylint.'SPELLING']
-max-spelling-suggestions = 4
-spelling-store-unknown-words = "no"
-
-[tool.pylint.'STRING']
-check-str-concat-over-line-jumps = "no"
-
-[tool.pylint.'TYPECHECK']
-contextmanager-decorators = "contextlib.contextmanager"
-generated-members = "numpy.*,np.*,ods*_pb2.*,collect_list"
-ignore-mixin-members = "yes"
-ignore-none = "yes"
-ignore-on-opaque-inference = "yes"
-ignored-classes = "optparse.Values,thread._local,_thread._local,numpy,torch,swagger_client"
-ignored-modules = "numpy,torch,swagger_client,netCDF4,scipy"
-missing-member-hint = "yes"
-missing-member-hint-distance = 1
-missing-member-max-choices = 1
-
-[tool.pylint.'VARIABLES']
-additional-builtins = "dbutils"
-allow-global-unused-variables = "yes"
-callbacks = ["cb_", "_cb"]
-dummy-variables-rgx = "_+$|(_[a-zA-Z0-9_]*[a-zA-Z0-9]+?$)|dummy|^ignored_|^unused_"
-ignored-argument-names = "_.*|^ignored_|^unused_"
-init-import = "no"
-redefining-builtins-modules = "six.moves,past.builtins,future.builtins,builtins,io"
-
-[tool.pylint.'CLASSES']
-defining-attr-methods = ["__init__", "__new__", "setUp", "__post_init__"]
-exclude-protected = ["_asdict", "_fields", "_replace", "_source", "_make"]
-valid-classmethod-first-arg = "cls"
-valid-metaclass-classmethod-first-arg = "cls"
-
-[tool.pylint.'DESIGN']
-max-args = 5
-max-attributes = 7
-max-bool-expr = 5
-max-branches = 12
-max-locals = 15
-max-parents = 7
-max-public-methods = 20
-max-returns = 6
-max-statements = 50
-min-public-methods = 2
-
-[tool.pylint.'IMPORTS']
-allow-wildcard-with-all = "no"
-analyse-fallback-blocks = "no"
-deprecated-modules = "optparse,tkinter.tix"
-
-[tool.pylint.'EXCEPTIONS']
-overgeneral-exceptions = ["BaseException", "Exception"]
+[tool.semantic_release.changelog]
+exclude_commit_patterns = ["^Merge", "^chore"]

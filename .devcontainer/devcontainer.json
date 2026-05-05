@@ -1,48 +1,26 @@
-// For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
-// https://containers.dev/implementors/json_reference/
 {
-	"name": "Python Environment",
-	"image": "mcr.microsoft.com/devcontainers/python:3.10",
-	"containerEnv": {
-		"FLIT_ROOT_INSTALL": "1"
-	},
+	"name": "ODSbox Dev",
+	"image": "mcr.microsoft.com/devcontainers/python:3.14",
 	"customizations": {
 		"vscode": {
 			"extensions": [
-				"editorconfig.editorconfig",
-				"github.vscode-pull-request-github",
-				"github.vscode-github-actions",
-				"github.copilot-chat",
-				"ms-azuretools.vscode-docker",
 				"ms-python.python",
 				"ms-python.vscode-pylance",
-				"ms-python.pylint",
-				"ms-python.isort",
-				"ms-python.flake8",
-				"ms-python.black-formatter",
-				"ms-vsliveshare.vsliveshare",
-				"ms-vscode.live-server",
-				"ryanluker.vscode-coverage-gutters",
-				"tamasfe.even-better-toml",
+				"ms-python.mypy-type-checker",
+				"charliermarsh.ruff",
+				"github.vscode-pull-request-github",
+				"editorconfig.editorconfig",
+				"github.vscode-github-actions",
 				"streetsidesoftware.code-spell-checker"
 			],
 			"settings": {
 				"python.defaultInterpreterPath": "/usr/local/bin/python",
-				"black-formatter.path": [
-					"/usr/local/py-utils/bin/black"
-				],
-				"pylint.path": [
-					"/usr/local/py-utils/bin/pylint"
-				],
-				"flake8.path": [
-					"/usr/local/py-utils/bin/flake8"
-				],
-				"isort.path": [
-					"/usr/local/py-utils/bin/isort"
-				]
+				"editor.formatOnSave": true,
+				"[python]": {
+					"editor.defaultFormatter": "charliermarsh.ruff"
+				}
 			}
 		}
 	},
-	"onCreateCommand": "pip install --upgrade pip && pip install 'flit>=3.8.0' && flit install --only-deps --deps develop",
-	"postCreateCommand": "pre-commit install-hooks"
+	"onCreateCommand": "pip install uv && uv sync --all-groups"
 }

@@ -144,7 +144,7 @@ def _model_get_entity_ex(model: ods.Model, entity_name_or_aid: str | int) -> ods
     )
 
 
-def _model_get_suggestion(lower_case_dict: dict, str_val: str) -> str:
+def _model_get_suggestion(lower_case_dict: dict[str, Any], str_val: str) -> str:
     return ModelSuggestions.get(lower_case_dict, str_val)
 
 
@@ -302,7 +302,7 @@ def _suggestion_for_options(option_name: str) -> str:
     return _model_get_suggestion(available, option_name)
 
 
-def _parse_global_options(elem_dict: dict, target: ods.SelectStatement) -> None:
+def _parse_global_options(elem_dict: dict[str, Any], target: ods.SelectStatement) -> None:
     for elem in elem_dict:
         if elem.startswith("$"):
             if "$rowlimit" == elem:
@@ -323,8 +323,8 @@ def _parse_attributes(
     model: ods.Model,
     entity: ods.Model.Entity,
     select_statement: ods.SelectStatement,
-    element_dict: dict,
-    attribute_dict: dict,
+    element_dict: dict[str, Any],
+    attribute_dict: dict[str, Any],
     result_column_lookup: list[JaquelConversionResult.Column],
 ) -> None:
     for element in element_dict:
@@ -347,7 +347,12 @@ def _parse_attributes(
 
         if isinstance(element_dict[element], dict):
             _parse_attributes(
-                model, entity, select_statement, element_dict[element], element_attribute, result_column_lookup
+                model,
+                entity,
+                select_statement,
+                element_dict[element],
+                element_attribute,
+                result_column_lookup,
             )
         elif isinstance(element_dict[element], list):
             raise SyntaxError("Attributes are not allowed to contain arrays. Use dictionary setting value to 1.")
@@ -382,8 +387,8 @@ def _parse_orderby(
     model: ods.Model,
     entity: ods.Model.Entity,
     target: ods.SelectStatement,
-    element_dict: dict,
-    attribute_dict: dict,
+    element_dict: dict[str, Any],
+    attribute_dict: dict[str, Any],
 ) -> None:
     for elem in element_dict:
         if elem.startswith("$"):
@@ -415,8 +420,8 @@ def _parse_groupby(
     model: ods.Model,
     entity: ods.Model.Entity,
     target: ods.SelectStatement,
-    element_dict: dict,
-    attribute_dict: dict,
+    element_dict: dict[str, Any],
+    attribute_dict: dict[str, Any],
 ) -> None:
     for elem in element_dict:
         if elem.startswith("$"):
@@ -443,8 +448,8 @@ def _parse_conditions_conjunction(
     entity: ods.Model.Entity,
     conjunction: ods.SelectStatement.ConditionItem.ConjuctionEnum,
     target: ods.SelectStatement,
-    element_list: list,
-    attribute_dict: dict,
+    element_list: list[Any],
+    attribute_dict: dict[str, Any],
 ) -> None:
     if not isinstance(element_list, list):
         raise SyntaxError("$and and $or must always contain an array.")
@@ -480,8 +485,8 @@ def _parse_conditions_not(
     model: ods.Model,
     entity: ods.Model.Entity,
     target: ods.SelectStatement,
-    element_dict: dict,
-    attribute_dict: dict,
+    element_dict: dict[str, Any],
+    attribute_dict: dict[str, Any],
 ) -> None:
     if not isinstance(element_dict, dict):
         raise SyntaxError("$not must always contain a dictionary.")
@@ -505,7 +510,7 @@ def _handle_nested_statement(
     entity: ods.Model.Entity,
     target: ods.SelectStatement,
     condition_path: str,
-    nested_query_dict: dict,
+    nested_query_dict: dict[str, Any],
     condition_unit_id: int,
     condition_options: str,
     condition_operator: OperatorEnum = OperatorEnum.OP_INSET,
@@ -513,17 +518,18 @@ def _handle_nested_statement(
     """
     Handle $nested operator by creating a nested SelectStatement.
 
-    :param ods.Model model: application model to be used for conversion.
-    :param ods.Model.Entity entity: current entity context
-    :param ods.SelectStatement target: target SelectStatement to add condition to
-    :param str condition_path: path to the attribute
-    :param dict nested_query_dict: nested jaquel query dictionary
-    :param int condition_unit_id: unit id for the condition
-    :param str condition_options: condition options
-    :param OperatorEnum condition_operator: operator to use with the nested statement
+    Args:
+        model: Application model to be used for conversion.
+        entity: Current entity context.
+        target: Target SelectStatement to add condition to.
+        condition_path: Path to the attribute.
+        nested_query_dict: Nested jaquel query dictionary.
+        condition_unit_id: Unit id for the condition.
+        condition_options: Condition options.
+        condition_operator: Operator to use with the nested statement.
     """
     # Create nested SelectStatement from the nested query
-    nested_entity, nested_statement = jaquel_to_ods(model, nested_query_dict)
+    _nested_entity, nested_statement = jaquel_to_ods(model, nested_query_dict)
 
     # Get attribute information for the condition
     attribute_type, attribute_name, attribute_entity = _parse_path_and_add_joins(
@@ -685,8 +691,8 @@ def _parse_conditions(
     model: ods.Model,
     entity: ods.Model.Entity,
     target: ods.SelectStatement,
-    element_dict: dict,
-    attribute_dict: dict,
+    element_dict: dict[str, Any],
+    attribute_dict: dict[str, Any],
 ) -> None:
     for elem in element_dict:
         elem_attribute = attribute_dict.copy()
@@ -738,7 +744,10 @@ def _parse_conditions(
             if len(element_dict[elem]) == 1 and "$nested" in element_dict[elem]:
                 # This is a nested statement, handle it specially
                 current_operator = elem_attribute.get("operator")
-                if current_operator in (OperatorEnum.OP_IS_NULL, OperatorEnum.OP_IS_NOT_NULL):
+                if current_operator in (
+                    OperatorEnum.OP_IS_NULL,
+                    OperatorEnum.OP_IS_NOT_NULL,
+                ):
                     raise SyntaxError("$nested cannot be used with $null or $notnull operators.")
 
                 if 0 != attribute_dict["conjunction_count"]:
@@ -789,17 +798,22 @@ def _top_elem_get_suggestion(str_val: str) -> str:
     return _model_get_suggestion(available, str_val)
 
 
-def _jaquel_to_ods_internal(model: ods.Model, jaquel_query: str | dict) -> JaquelConversionResult:
+def _jaquel_to_ods_internal(model: ods.Model, jaquel_query: str | dict[str, Any]) -> JaquelConversionResult:
     """
     Convert a given JAQueL query into an ASAM ODS SelectStatement and collect attribute tuples.
 
-    :param ods.Model model: application model to be used for conversion.
-    :param str | dict jaquel_query: JAQueL query as dict or json string.
-    :raises SyntaxError: If contains syntactical errors.
-    :raises ValueError: If conversion fail.
-    :raises json.decoder.JSONDecodeError: If JSON string contains syntax errors.
-    :return JaquelConversionResult: A result object containing the target entity, the ASAM ODS SelectStatement,
-             and a list of tuples containing attribute paths and their corresponding AttributeItems
+    Args:
+        model: Application model to be used for conversion.
+        jaquel_query: JAQueL query as dict or json string.
+
+    Returns:
+        A result object containing the target entity, the ASAM ODS SelectStatement,
+        and a list of tuples containing attribute paths and their corresponding AttributeItems.
+
+    Raises:
+        SyntaxError: If contains syntactical errors.
+        ValueError: If conversion fails.
+        json.decoder.JSONDecodeError: If JSON string contains syntax errors.
     """
     if isinstance(jaquel_query, dict):
         query = jaquel_query
@@ -893,20 +907,28 @@ def _jaquel_to_ods_internal(model: ods.Model, jaquel_query: str | dict) -> Jaque
             )
         )
 
-    return JaquelConversionResult(entity=entity, select_statement=select_statement, column_lookup=result_column_lookup)
+    return JaquelConversionResult(
+        entity=entity,
+        select_statement=select_statement,
+        column_lookup=result_column_lookup,
+    )
 
 
-def jaquel_to_ods(model: ods.Model, jaquel_query: str | dict) -> tuple[ods.Model.Entity, ods.SelectStatement]:
+def jaquel_to_ods(model: ods.Model, jaquel_query: str | dict[str, Any]) -> tuple[ods.Model.Entity, ods.SelectStatement]:
     """
     Convert a given JAQueL query into an ASAM ODS SelectStatement.
 
-    :param ods.Model model: application model to be used for conversion.
-    :param str | dict jaquel_query: JAQueL query as dict or json string.
-    :raises SyntaxError: If contains syntactical errors.
-    :raises ValueError: If conversion fail.
-    :raises json.decoder.JSONDecodeError: If JSON string contains syntax errors.
-    :return Tuple[ods.Model.Entity, ods.SelectStatement]: A tuple defining the target entity
-        and the ASAM ODS SelectStatement
+    Args:
+        model: Application model to be used for conversion.
+        jaquel_query: JAQueL query as dict or json string.
+
+    Returns:
+        A tuple defining the target entity and the ASAM ODS SelectStatement.
+
+    Raises:
+        SyntaxError: If contains syntactical errors.
+        ValueError: If conversion fails.
+        json.decoder.JSONDecodeError: If JSON string contains syntax errors.
     """
     result = _jaquel_to_ods_internal(model, jaquel_query)
     return result.entity, result.select_statement
@@ -921,15 +943,18 @@ class Jaquel(JaquelConversionResult):
     and their corresponding AttributeItems.
     """
 
-    def __init__(self, model: ods.Model, jaquel_query: str | dict) -> None:
+    def __init__(self, model: ods.Model, jaquel_query: str | dict[str, Any]) -> None:
         """
         Initialize the Jaquel object by converting the given JAQueL query.
 
-        :param ods.Model model: application model to be used for conversion.
-        :param str | dict jaquel_query: JAQueL query as dict or json string.
-        :raises SyntaxError: If contains syntactical errors.
-        :raises ValueError: If conversion fail.
-        :raises json.decoder.JSONDecodeError: If JSON string contains syntax errors.
+        Args:
+            model: Application model to be used for conversion.
+            jaquel_query: JAQueL query as dict or json string.
+
+        Raises:
+            SyntaxError: If contains syntactical errors.
+            ValueError: If conversion fails.
+            json.decoder.JSONDecodeError: If JSON string contains syntax errors.
         """
         result = _jaquel_to_ods_internal(model, jaquel_query)
         super().__init__(

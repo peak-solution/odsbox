@@ -17,13 +17,12 @@ Please read and follow our [Code of Conduct](CODE_OF_CONDUCT.md) in all interact
    ```
 
 3. **Set Up the Development Environment**:
-   - We recommend using a dev container for a consistent development environment. If using VS Code, reopen the project in a dev container via "Dev Containers: Reopen in Container" from the command palette. The dev container's Dockerfile installs all dependencies automatically, so you can skip the pip install step below.
-   - If not using a dev container, ensure you have Python 3.10.12 or higher installed.
-   - Install dependencies:
+   - We recommend using a dev container for a consistent development environment. If using VS Code, reopen the project in a dev container via "Dev Containers: Reopen in Container" from the command palette. The dev container installs all dependencies automatically via `uv sync --all-groups`.
+   - If not using a dev container, ensure you have Python 3.10.12 or higher and [uv](https://docs.astral.sh/uv/) installed.
+   - Install all dependencies (including dev tools):
      ```bash
-     pip install -e .[test]
+     uv sync --all-groups
      ```
-     This installs the package in editable mode along with test dependencies.
 
 4. **Create a Branch**:
    ```bash
@@ -40,10 +39,10 @@ Please read and follow our [Code of Conduct](CODE_OF_CONDUCT.md) in all interact
 
 7. **Run Tests and Checks**:
    ```bash
-   pytest  # Run tests
-   black --check src/ tests/  # Check code formatting
-   flake8 src/ tests/  # Lint code
-   bandit -r src/  # Security check
+   uv run pytest tests/           # Run unit tests
+   uv run ruff check src/ tests/  # Lint code
+   uv run ruff format src/ tests/ # Format code
+   uv run mypy src/               # Type check
    ```
 
 8. **Commit Your Changes**:
@@ -61,20 +60,20 @@ Please read and follow our [Code of Conduct](CODE_OF_CONDUCT.md) in all interact
 ## Development Setup Details
 
 - **Python Version**: >= 3.10.12
+- **Package Manager**: [uv](https://docs.astral.sh/uv/)
 - **Dependencies**: protobuf, requests, pandas (core); grpcio (for exd-data); pip-system-certs, requests-oauthlib (for oidc)
-- **Test Dependencies**: pytest, black, flake8, bandit, pylint, pre-commit, etc.
+- **Dev Tools**: ruff, mypy, pytest, pytest-cov, python-semantic-release, pip-audit
 
 To install all dev tools:
 ```bash
-pip install -e .[test]
+uv sync --all-groups
 ```
 
 ## Coding Standards
 
-- **Formatting**: Use [Black](https://black.readthedocs.io/) with line length 120.
-- **Linting**: Follow [Flake8](https://flake8.pycqa.org/) rules.
-- **Security**: Run [Bandit](https://bandit.readthedocs.io/) for security checks.
-- **Type Hints**: Use type hints where appropriate.
+- **Formatting & Linting**: Use [Ruff](https://docs.astral.sh/ruff/) with line length 120.
+- **Type Hints**: Use strict type hints throughout. All modules must include `from __future__ import annotations`.
+- **Type Checking**: Run [mypy](https://mypy.readthedocs.io/) in strict mode (`uv run mypy src/`).
 - **Docstrings**: Follow Google-style docstrings.
 
 ## Testing
@@ -86,13 +85,22 @@ pip install -e .[test]
 
 ## Pre-commit Hooks
 
-We recommend using pre-commit hooks to automate checks:
+We use [pre-commit](https://pre-commit.com/) hooks to automate checks before each commit:
 ```bash
-pip install pre-commit
-pre-commit install
+uv run pre-commit install
 ```
 
-This will run formatting and linting before each commit.
+Hooks run: ruff (lint + format), mypy, codespell, and various file checks.
+
+## Building Documentation
+
+Documentation is built with Sphinx and AutoAPI. To build locally:
+
+```bash
+uv run sphinx-build -b html docs docs/_build/html
+```
+
+Then open `docs/_build/html/index.html` in your browser.
 
 ## Reporting Issues
 
