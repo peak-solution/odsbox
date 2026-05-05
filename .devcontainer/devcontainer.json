@@ -1,21 +1,16 @@
 {
-	"name": "Python Environment",
-	"image": "mcr.microsoft.com/devcontainers/python:3.13",
+	"name": "ODSbox Dev",
+	"image": "mcr.microsoft.com/devcontainers/python:3.14",
 	"customizations": {
 		"vscode": {
 			"extensions": [
-				"editorconfig.editorconfig",
-				"github.vscode-pull-request-github",
-				"github.vscode-github-actions",
-				"github.copilot-chat",
-				"ms-azuretools.vscode-docker",
 				"ms-python.python",
 				"ms-python.vscode-pylance",
+				"ms-python.mypy-type-checker",
 				"charliermarsh.ruff",
-				"ms-vsliveshare.vsliveshare",
-				"ms-vscode.live-server",
-				"ryanluker.vscode-coverage-gutters",
-				"tamasfe.even-better-toml",
+				"github.vscode-pull-request-github",
+				"editorconfig.editorconfig",
+				"github.vscode-github-actions",
 				"streetsidesoftware.code-spell-checker"
 			],
 			"settings": {
@@ -27,5 +22,5 @@
 			}
 		}
 	},
-	"onCreateCommand": "pip install uv && uv sync --all-groups && uv run pre-commit install"
+	"onCreateCommand": "pip install uv && uv sync --all-groups"
 }
