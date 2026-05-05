@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.4.0 (2026-05-05)
+
+### Features
+
+- Bump build action versions ([#250](https://github.com/peak-solution/odsbox/pull/250),
+  [`4e3b9f6`](https://github.com/peak-solution/odsbox/commit/4e3b9f6ec55bd3fb88f17962a768d10d84fb742d))
+
+
 ## v1.3.0 (2026-05-05)
 
 ### Bug Fixes
