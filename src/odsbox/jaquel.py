@@ -518,17 +518,18 @@ def _handle_nested_statement(
     """
     Handle $nested operator by creating a nested SelectStatement.
 
-    :param ods.Model model: application model to be used for conversion.
-    :param ods.Model.Entity entity: current entity context
-    :param ods.SelectStatement target: target SelectStatement to add condition to
-    :param str condition_path: path to the attribute
-    :param dict nested_query_dict: nested jaquel query dictionary
-    :param int condition_unit_id: unit id for the condition
-    :param str condition_options: condition options
-    :param OperatorEnum condition_operator: operator to use with the nested statement
+    Args:
+        model: Application model to be used for conversion.
+        entity: Current entity context.
+        target: Target SelectStatement to add condition to.
+        condition_path: Path to the attribute.
+        nested_query_dict: Nested jaquel query dictionary.
+        condition_unit_id: Unit id for the condition.
+        condition_options: Condition options.
+        condition_operator: Operator to use with the nested statement.
     """
     # Create nested SelectStatement from the nested query
-    nested_entity, nested_statement = jaquel_to_ods(model, nested_query_dict)
+    _nested_entity, nested_statement = jaquel_to_ods(model, nested_query_dict)
 
     # Get attribute information for the condition
     attribute_type, attribute_name, attribute_entity = _parse_path_and_add_joins(
@@ -801,13 +802,18 @@ def _jaquel_to_ods_internal(model: ods.Model, jaquel_query: str | dict[str, Any]
     """
     Convert a given JAQueL query into an ASAM ODS SelectStatement and collect attribute tuples.
 
-    :param ods.Model model: application model to be used for conversion.
-    :param str | dict jaquel_query: JAQueL query as dict or json string.
-    :raises SyntaxError: If contains syntactical errors.
-    :raises ValueError: If conversion fail.
-    :raises json.decoder.JSONDecodeError: If JSON string contains syntax errors.
-    :return JaquelConversionResult: A result object containing the target entity, the ASAM ODS SelectStatement,
-             and a list of tuples containing attribute paths and their corresponding AttributeItems
+    Args:
+        model: Application model to be used for conversion.
+        jaquel_query: JAQueL query as dict or json string.
+
+    Returns:
+        A result object containing the target entity, the ASAM ODS SelectStatement,
+        and a list of tuples containing attribute paths and their corresponding AttributeItems.
+
+    Raises:
+        SyntaxError: If contains syntactical errors.
+        ValueError: If conversion fails.
+        json.decoder.JSONDecodeError: If JSON string contains syntax errors.
     """
     if isinstance(jaquel_query, dict):
         query = jaquel_query
@@ -912,13 +918,17 @@ def jaquel_to_ods(model: ods.Model, jaquel_query: str | dict[str, Any]) -> tuple
     """
     Convert a given JAQueL query into an ASAM ODS SelectStatement.
 
-    :param ods.Model model: application model to be used for conversion.
-    :param str | dict jaquel_query: JAQueL query as dict or json string.
-    :raises SyntaxError: If contains syntactical errors.
-    :raises ValueError: If conversion fail.
-    :raises json.decoder.JSONDecodeError: If JSON string contains syntax errors.
-    :return Tuple[ods.Model.Entity, ods.SelectStatement]: A tuple defining the target entity
-        and the ASAM ODS SelectStatement
+    Args:
+        model: Application model to be used for conversion.
+        jaquel_query: JAQueL query as dict or json string.
+
+    Returns:
+        A tuple defining the target entity and the ASAM ODS SelectStatement.
+
+    Raises:
+        SyntaxError: If contains syntactical errors.
+        ValueError: If conversion fails.
+        json.decoder.JSONDecodeError: If JSON string contains syntax errors.
     """
     result = _jaquel_to_ods_internal(model, jaquel_query)
     return result.entity, result.select_statement
@@ -937,11 +947,14 @@ class Jaquel(JaquelConversionResult):
         """
         Initialize the Jaquel object by converting the given JAQueL query.
 
-        :param ods.Model model: application model to be used for conversion.
-        :param str | dict jaquel_query: JAQueL query as dict or json string.
-        :raises SyntaxError: If contains syntactical errors.
-        :raises ValueError: If conversion fail.
-        :raises json.decoder.JSONDecodeError: If JSON string contains syntax errors.
+        Args:
+            model: Application model to be used for conversion.
+            jaquel_query: JAQueL query as dict or json string.
+
+        Raises:
+            SyntaxError: If contains syntactical errors.
+            ValueError: If conversion fails.
+            json.decoder.JSONDecodeError: If JSON string contains syntax errors.
         """
         result = _jaquel_to_ods_internal(model, jaquel_query)
         super().__init__(

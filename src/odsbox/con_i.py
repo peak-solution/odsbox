@@ -102,22 +102,25 @@ class ConI:
                 units = con_i.query_data({"AoUnit": {}})
 
 
-        :param str url: base url of the ASAM ODS API of a given server. An example is "http://localhost:8080/api".
-        :param requests.auth.AuthBase | tuple[str, str] | None auth: An auth object to be used for the used
-            requests package. For basic auth `("USER", "PASSWORD")` can be used.
-            Ignored if `custom_session` is provided.
-        :param ods.ContextVariables | dict | None context_variables: If context variables are necessary for the
-            connection they are passed here. It defaults to None.
-        :param bool verify_certificate: If no certificate is provided for https insecure access can be enabled.
-            It defaults to True. Ignored if `custom_session` is provided.
-        :param bool load_model: If the model should be read after connection is established. It defaults to True.
-        :param bool allow_redirects: If redirects should be allowed in requests calls. It defaults to False.
-        :param float connection_timeout: Timeout in seconds for establishing connections. It defaults to 60.0.
-        :param float request_timeout: Timeout in seconds for individual requests. It defaults to 600.0.
-        :param requests.Session | None custom_session: If a preconfigured requests.Session should be used.
-            If provided `auth` and `verify_certificate` parameters are ignored. It defaults to None.
-            e.g. Some OAuth packages provide custom `requests.Session` implementations.
-        :raises requests.HTTPError: If connection to ASAM ODS server fails.
+        Args:
+            url: Base URL of the ASAM ODS API of a given server.
+                An example is "http://localhost:8080/api".
+            auth: Auth object for the requests package.
+                For basic auth `("USER", "PASSWORD")` can be used.
+                Ignored if `custom_session` is provided.
+            context_variables: Context variables for the connection. Defaults to None.
+            verify_certificate: If no certificate is provided for https, insecure access
+                can be enabled. Defaults to True. Ignored if `custom_session` is provided.
+            load_model: Whether to read the model after connection is established. Defaults to True.
+            allow_redirects: Whether redirects should be allowed in requests calls. Defaults to False.
+            connection_timeout: Timeout in seconds for establishing connections. Defaults to 60.0.
+            request_timeout: Timeout in seconds for individual requests. Defaults to 600.0.
+            custom_session: A preconfigured requests.Session to use.
+                If provided, `auth` and `verify_certificate` parameters are ignored. Defaults to None.
+                e.g. Some OAuth packages provide custom `requests.Session` implementations.
+
+        Raises:
+            requests.HTTPError: If connection to ASAM ODS server fails.
         """
         self.__session: requests.Session | None = None
         self.__con_i: str | None = None
@@ -188,7 +191,8 @@ class ConI:
         """
         Get the ASAM ODS session URL used to work with this session.
 
-        :return str: The ASAM ODS session URL
+        Returns:
+            The ASAM ODS session URL.
         """
         if self.__con_i is None:
             raise ValueError("ConI already closed")
@@ -199,7 +203,8 @@ class ConI:
         Close the attached session at the ODS server by calling delete on the session URL
         and closing the requests session.
 
-        :raises requests.HTTPError: If delete the ASAM ODS session fails.
+        Raises:
+            requests.HTTPError: If deleting the ASAM ODS session fails.
         """
         if self.__session is not None:
             try:
@@ -265,24 +270,26 @@ class ConI:
             # Output: Index(['Unit.Name', 'Unit.Id', 'PhysDimension.Name'], ...)
 
 
-        :param str | dict jaquel_query: JAQueL query as dict or str.
-        :param bool enum_as_string: Columns of type DT_ENUM or DS_ENUM are returned as int values.
-                                    If this is set to True the model_cache is used to map the int values
-                                    to the corresponding string values. Defaults to True.
-        :param bool date_as_timestamp: Columns of type DT_DATE or DS_DATE are returned as string.
-                                       If this is set to True the strings are converted to pandas Timestamp.
-                                       Defaults to True.
-        :param bool is_null_to_nan: If set to True, the is_null flags are used to set corresponding values to pd.NA.
-                                    This uses pandas native nullable data types for better type preservation.
-                                    Defaults to True.
-        :param str result_naming_mode: Controls how result column names are generated.
-                                       "query" (default): Uses column names from the JAQUEL query
-                                       (e.g., 'name', 'phys_dimension.name').
-                                       "model": Uses column names from the ods.Model schema
-                                       (e.g., 'Unit.Name', 'PhysDimension.Name').
-        :param kwargs: Additional arguments passed to `to_pandas`.
-        :raises requests.HTTPError: If query fails.
-        :return DataFrame: The DataMatrices as Pandas.DataFrame with columns named according to `result_naming_mode`.
+        Args:
+            jaquel_query: JAQueL query as dict or str.
+            enum_as_string: If True, the model_cache is used to map DT_ENUM/DS_ENUM int values
+                to corresponding string values. Defaults to True.
+            date_as_timestamp: If True, DT_DATE/DS_DATE strings are converted to pandas Timestamp.
+                Defaults to True.
+            is_null_to_nan: If True, is_null flags set corresponding values to pd.NA using
+                pandas native nullable data types. Defaults to True.
+            result_naming_mode: Controls how result column names are generated.
+                "query" (default): Uses column names from the JAQUEL query
+                (e.g., 'name', 'phys_dimension.name').
+                "model": Uses column names from the ods.Model schema
+                (e.g., 'Unit.Name', 'PhysDimension.Name').
+            **kwargs: Additional arguments passed to `to_pandas`.
+
+        Returns:
+            The DataMatrices as Pandas DataFrame with columns named according to `result_naming_mode`.
+
+        Raises:
+            requests.HTTPError: If query fails.
         """
         if result_naming_mode not in ("query", "model"):
             raise ValueError(f"result_naming_mode must be 'query' or 'model', got '{result_naming_mode}'")
@@ -316,23 +323,24 @@ class ConI:
         - No automatic enum/date/null conversions by default
         - Can accept raw ASAM ODS SelectStatement objects
 
-        :param str | dict | ods.SelectStatement query: Query given as JAQueL query (dict or str)
-            or as an ASAM ODS SelectStatement.
-        :param bool enum_as_string: Columns of type DT_ENUM or DS_ENUM are returned as int values.
-                                    If this is set to True the model_cache is used to map the int values
-                                    to the corresponding string values. Defaults to False.
-        :param bool date_as_timestamp: Columns of type DT_DATE or DS_DATE are returned as string.
-                                       If this is set to True the strings are converted to pandas Timestamp.
-                                       Defaults to False.
-        :param bool is_null_to_nan: If set to True, the is_null flags are used to set corresponding values to pd.NA.
-                                    This uses pandas native nullable data types for better type preservation.
-                                    Defaults to False.
-        :param str result_naming_mode: Controls how result column names are generated.
-                                        "query": Uses column names from the JAQUEL query.
-                                        "model" (default): Uses column names from the ods.Model schema.
-        :param kwargs: Additional arguments passed to `to_pandas`.
-        :raises requests.HTTPError: If query fails.
-        :return DataFrame: The DataMatrices as Pandas.DataFrame with columns named according to `result_naming_mode`.
+        Args:
+            query: Query given as JAQueL query (dict or str) or as an ASAM ODS SelectStatement.
+            enum_as_string: If True, the model_cache is used to map DT_ENUM/DS_ENUM int values
+                to corresponding string values. Defaults to False.
+            date_as_timestamp: If True, DT_DATE/DS_DATE strings are converted to pandas Timestamp.
+                Defaults to False.
+            is_null_to_nan: If True, is_null flags set corresponding values to pd.NA using
+                pandas native nullable data types. Defaults to False.
+            result_naming_mode: Controls how result column names are generated.
+                "query": Uses column names from the JAQUEL query.
+                "model" (default): Uses column names from the ods.Model schema.
+            **kwargs: Additional arguments passed to `to_pandas`.
+
+        Returns:
+            The DataMatrices as Pandas DataFrame with columns named according to `result_naming_mode`.
+
+        Raises:
+            requests.HTTPError: If query fails.
         """
         if result_naming_mode not in ("query", "model"):
             raise ValueError(f"result_naming_mode must be 'query' or 'model', got '{result_naming_mode}'")
@@ -361,7 +369,8 @@ class ConI:
         Get the cache ODS server model. This model will return the cached
         application model related to your session.
 
-        :return ods.Model: The application model of the ASAM ODS server.
+        Returns:
+            The application model of the ASAM ODS server.
         """
         return self.mc.model()
 
@@ -369,10 +378,15 @@ class ConI:
         """
         Query ods server for content.
 
-        :param str | dict  query: Query given as JAQueL query (dict or str).
-        :raises requests.HTTPError: If query fails.
-        :return ods.DataMatrices: The DataMatrices representing the result.
+        Args:
+            query: Query given as JAQueL query (dict or str).
+
+        Returns:
+            The DataMatrices representing the result.
             It will contain one ods.DataMatrix for each returned entity type.
+
+        Raises:
+            requests.HTTPError: If query fails.
         """
         jaquel = Jaquel(self.model(), query)
         return self.data_read(jaquel.select_statement)
@@ -381,10 +395,15 @@ class ConI:
         """
         Query ods server for content.
 
-        :param ods.SelectStatement  select_statement: Query given as ASAM ODS SelectStatement.
-        :raises requests.HTTPError: If query fails.
-        :return ods.DataMatrices: The DataMatrices representing the result.
+        Args:
+            select_statement: Query given as ASAM ODS SelectStatement.
+
+        Returns:
+            The DataMatrices representing the result.
             It will contain one ods.DataMatrix for each returned entity type.
+
+        Raises:
+            requests.HTTPError: If query fails.
         """
         if not isinstance(select_statement, ods.SelectStatement):
             raise TypeError(f"data_read expects 'ods.SelectStatement', got '{type(select_statement).__name__}'")
@@ -397,9 +416,14 @@ class ConI:
         """
         Create new ASAM ODS instances or write bulk data.
 
-        :param ods.DataMatrices data: Matrices containing columns for instances to be created.
-        :raises requests.HTTPError: If creation fails.
-        :return List[int]: list of ids created from your request.
+        Args:
+            data: Matrices containing columns for instances to be created.
+
+        Returns:
+            List of ids created from your request.
+
+        Raises:
+            requests.HTTPError: If creation fails.
         """
         if not isinstance(data, ods.DataMatrices):
             raise TypeError(f"data_create expects 'ods.DataMatrices', got '{type(data).__name__}'")
@@ -412,9 +436,12 @@ class ConI:
         """
         Update existing instances.
 
-        :param ods.DataMatrices data: Matrices containing columns for instances to be updated.
-            The `id` column is used to identify the instances to be updated.
-        :raises requests.HTTPError: If update fails.
+        Args:
+            data: Matrices containing columns for instances to be updated.
+                The `id` column is used to identify the instances to be updated.
+
+        Raises:
+            requests.HTTPError: If update fails.
         """
         if not isinstance(data, ods.DataMatrices):
             raise TypeError(f"data_update expects 'ods.DataMatrices', got '{type(data).__name__}'")
@@ -424,11 +451,14 @@ class ConI:
         """
         Delete existing instances.
 
-        :param ods.DataMatrices data: Matrices containing columns for instances to be deleted.
-            The `id` column is used to identify the instances to be deleted.
-        :param float | None timeout: maximal time to wait for response. Delete might take longer time.
-                                     Uses the request_timeout from constructor if None.
-        :raises requests.HTTPError: If delete fails.
+        Args:
+            data: Matrices containing columns for instances to be deleted.
+                The `id` column is used to identify the instances to be deleted.
+            timeout: Maximal time to wait for response. Delete might take longer time.
+                Uses the request_timeout from constructor if None.
+
+        Raises:
+            requests.HTTPError: If delete fails.
         """
         if not isinstance(data, ods.DataMatrices):
             raise TypeError(f"data_delete expects 'ods.DataMatrices', got '{type(data).__name__}'")
@@ -438,9 +468,14 @@ class ConI:
         """
         Copy an Instance and its related children.
 
-        :param ods.CopyRequest copy_request: Define instance to be copied.
-        :raises requests.HTTPError: If copy fails.
-        :return ods.Instance: Newly created instance
+        Args:
+            copy_request: Define instance to be copied.
+
+        Returns:
+            Newly created instance.
+
+        Raises:
+            requests.HTTPError: If copy fails.
         """
         if not isinstance(copy_request, ods.CopyRequest):
             raise TypeError(f"data_copy expects 'ods.CopyRequest', got '{type(copy_request).__name__}'")
@@ -453,9 +488,14 @@ class ConI:
         """
         Read n-m relations for a defined instance.
 
-        :param ods.NtoMRelationIdentifier identifier: identify n to m relation to be read.
-        :raises requests.HTTPError: If read fails.
-        :return ods.NtoMRelatedInstances: Return n to m related instances that were queried.
+        Args:
+            identifier: Identify n to m relation to be read.
+
+        Returns:
+            The n to m related instances that were queried.
+
+        Raises:
+            requests.HTTPError: If read fails.
         """
         if not isinstance(identifier, ods.NtoMRelationIdentifier):
             raise TypeError(
@@ -470,9 +510,11 @@ class ConI:
         """
         Update, delete or create n-m relations for given instance pairs.
 
-        :raises requests.HTTPError: If write fails.
-        :param ods.NtoMWriteRelatedInstances related_instances: related instances to be
-            updated, deleted or created.
+        Args:
+            related_instances: Related instances to be updated, deleted or created.
+
+        Raises:
+            requests.HTTPError: If write fails.
         """
         if not isinstance(related_instances, ods.NtoMWriteRelatedInstances):
             raise TypeError(
@@ -482,7 +524,7 @@ class ConI:
 
     def transaction(self) -> Transaction:
         """
-        Open a transaction object to be used in a with clause
+        Open a transaction object to be used in a with clause.
 
         Example::
 
@@ -490,29 +532,38 @@ class ConI:
                 # do writing
                 transaction.commit()
 
-        :raises requests.HTTPError: If creation of transaction fails.
-        :return Transaction: transaction object that will abort automatically if commit is not called.
+        Returns:
+            Transaction object that will abort automatically if commit is not called.
+
+        Raises:
+            requests.HTTPError: If creation of transaction fails.
         """
         return Transaction(self)
 
     def transaction_create(self) -> None:
         """
         Open a transaction for writing.
-        :raises requests.HTTPError: If creation of transaction fails.
+
+        Raises:
+            requests.HTTPError: If creation of transaction fails.
         """
         self.ods_post_request("transaction-create")
 
     def transaction_commit(self) -> None:
         """
         Commit transaction created before.
-        :raises requests.HTTPError: If creation of transaction fails.
+
+        Raises:
+            requests.HTTPError: If commit of transaction fails.
         """
         self.ods_post_request("transaction-commit")
 
     def transaction_abort(self) -> None:
         """
         Abort transaction created before.
-        :raises requests.HTTPError: If creation of transaction fails.
+
+        Raises:
+            requests.HTTPError: If abort of transaction fails.
         """
         self.ods_post_request("transaction-abort")
 
@@ -521,10 +572,14 @@ class ConI:
         Read bulk data from a submatrix or measurement.
         Submatrix access can also be done using data-read.
 
-        :param ods.ValueMatrixRequestStruct request: Define measurement or submatrix to
-            create ASAM ODS ValueMatrix for.
-        :raises requests.HTTPError: If ValueMatrix access fails.
-        :return ods.DataMatrices: DataMatrices containing the bulk data for the request.
+        Args:
+            request: Define measurement or submatrix to create ASAM ODS ValueMatrix for.
+
+        Returns:
+            DataMatrices containing the bulk data for the request.
+
+        Raises:
+            requests.HTTPError: If ValueMatrix access fails.
         """
         if not isinstance(request, ods.ValueMatrixRequestStruct):
             raise TypeError(f"valuematrix_read expects 'ods.ValueMatrixRequestStruct', got '{type(request).__name__}'")
@@ -537,8 +592,11 @@ class ConI:
         """
         Read the model from server and update cached version.
 
-        :raises requests.HTTPError: If model read fails.
-        :return ods.Model: The application model of the server.
+        Returns:
+            The application model of the server.
+
+        Raises:
+            requests.HTTPError: If model read fails.
         """
         response = self.ods_post_request("model-read")
         model = ods.Model()
@@ -551,10 +609,13 @@ class ConI:
         Update application model content. This method is used to modify existing items or
         create new ones.
 
-        :param ods.Model model_parts: parts of the model to be updated or created.
-        :param bool update_model: determine if the model cache of this ConI instance should be
-            updated by reading the whole model again. It defaults to True.
-        :raises requests.HTTPError: If model update fails.
+        Args:
+            model_parts: Parts of the model to be updated or created.
+            update_model: Whether the model cache should be updated by reading the whole
+                model again. Defaults to True.
+
+        Raises:
+            requests.HTTPError: If model update fails.
         """
         if not isinstance(model_parts, ods.Model):
             raise TypeError(f"model_update expects 'ods.Model', got '{type(model_parts).__name__}'")
@@ -567,10 +628,13 @@ class ConI:
         """
         Delete application model content.
 
-        :param ods.Model model_parts: define model parts to be deleted.
-        :param bool update_model: determine if the model cache of this ConI instance should be
-            updated by reading the whole model again. It defaults to True.
-        :raises requests.HTTPError: If model update fails.
+        Args:
+            model_parts: Define model parts to be deleted.
+            update_model: Whether the model cache should be updated by reading the whole
+                model again. Defaults to True.
+
+        Raises:
+            requests.HTTPError: If model delete fails.
         """
         if not isinstance(model_parts, ods.Model):
             raise TypeError(f"model_delete expects 'ods.Model', got '{type(model_parts).__name__}'")
@@ -583,7 +647,8 @@ class ConI:
         """
         Check if stored application model is consistent.
 
-        :raises requests.HTTPError: If model contains errors.
+        Raises:
+            requests.HTTPError: If model contains errors.
         """
         self.ods_post_request("model-check")
 
@@ -591,8 +656,11 @@ class ConI:
         """
         Read the ODS base model version used by the server.
 
-        :raises requests.HTTPError: If reading base model fails.
-        :return ods.BaseModel: used server base model.
+        Returns:
+            The server base model.
+
+        Raises:
+            requests.HTTPError: If reading base model fails.
         """
         response = self.ods_post_request("basemodel-read")
         base_model = ods.BaseModel()
@@ -601,11 +669,16 @@ class ConI:
 
     def asampath_create(self, instance: ods.Instance) -> ods.AsamPath:
         """
-        Create an persistent string representing the instance.
+        Create a persistent string representing the instance.
 
-        :param ods.Instance instance: Instance to be get AsamPath for.
-        :raises requests.HTTPError: If creation fails.
-        :return ods.AsamPath: The AsamPath that represents the instance.
+        Args:
+            instance: Instance to get AsamPath for.
+
+        Returns:
+            The AsamPath that represents the instance.
+
+        Raises:
+            requests.HTTPError: If creation fails.
         """
         if not isinstance(instance, ods.Instance):
             raise TypeError(f"asampath_create expects 'ods.Instance', got '{type(instance).__name__}'")
@@ -618,9 +691,14 @@ class ConI:
         """
         Use the persistent string to get back the instance.
 
-        :param ods.AsamPath asam_path: AsamPath to be resolved.
-        :raises requests.HTTPError: If path could not be resolved.
-        :return ods.Instance: Instance represented by AsamPath.
+        Args:
+            asam_path: AsamPath to be resolved.
+
+        Returns:
+            Instance represented by AsamPath.
+
+        Raises:
+            requests.HTTPError: If path could not be resolved.
         """
         if not isinstance(asam_path, ods.AsamPath):
             raise TypeError(f"asampath_resolve expects 'ods.AsamPath', got '{type(asam_path).__name__}'")
@@ -633,10 +711,15 @@ class ConI:
         """
         Read the session context variables.
 
-        :param ods.ContextVariablesFilter | str pattern_or_filter: Context variable filter as str
-            or ContextVariablesFilter. It defaults to "*" to return all variables.
-        :raises requests.HTTPError: If something went wrong.
-        :return ods.ContextVariables: ContextVariables where the name matches the filter.
+        Args:
+            pattern_or_filter: Context variable filter as str or ContextVariablesFilter.
+                Defaults to "*" to return all variables.
+
+        Returns:
+            ContextVariables where the name matches the filter.
+
+        Raises:
+            requests.HTTPError: If something went wrong.
         """
         context_variables_filter = (
             pattern_or_filter
@@ -653,8 +736,11 @@ class ConI:
         Set context variables for current session. This will set context variables for the given session.
         If new session is created they will fall back to their default.
 
-        :param ods.ContextVariables context_variables: ContextVariables to be set or updated.
-        :raises requests.HTTPError: If something went wrong.
+        Args:
+            context_variables: ContextVariables to be set or updated.
+
+        Raises:
+            requests.HTTPError: If something went wrong.
         """
         if not isinstance(context_variables, ods.ContextVariables):
             raise TypeError(f"context_update expects 'ods.ContextVariables', got '{type(context_variables).__name__}'")
@@ -664,8 +750,11 @@ class ConI:
         """
         Update the password of the defined user.
 
-        :param ods.PasswordUpdate password_update: Defines for which user the password should eb updated.
-        :raises requests.HTTPError: If something went wrong.
+        Args:
+            password_update: Defines for which user the password should be updated.
+
+        Raises:
+            requests.HTTPError: If something went wrong.
         """
         if not isinstance(password_update, ods.PasswordUpdate):
             raise TypeError(f"password_update expects 'ods.PasswordUpdate', got '{type(password_update).__name__}'")
@@ -675,11 +764,16 @@ class ConI:
         """
         Get file access URL for file content.
 
-        :param ods.FileIdentifier file_identifier: Define content to be accessed.
-                                                   Might be an AoFile or a DT_BLOB attribute.
-        :raises requests.HTTPError: If something went wrong.
-        :raises ValueError: If no file location provided by server.
-        :return str: The server file URL.
+        Args:
+            file_identifier: Define content to be accessed.
+                Might be an AoFile or a DT_BLOB attribute.
+
+        Returns:
+            The server file URL.
+
+        Raises:
+            requests.HTTPError: If something went wrong.
+            ValueError: If no file location provided by server.
         """
         if not isinstance(file_identifier, ods.FileIdentifier):
             raise TypeError(f"file_access expects 'ods.FileIdentifier', got '{type(file_identifier).__name__}'")
@@ -700,17 +794,22 @@ class ConI:
         """
         Read file content from server.
 
-        :param ods.FileIdentifier file_identifier: Define content to be read. Might be an AoFile or a DT_BLOB attribute.
-        :param str target_file_or_folder: Path to save the file content to. If pointing to an existing folder. Original
-                                          filename will be used. Full path is returned.
-        :param bool overwrite_existing: If existing files should be overwritten. It defaults to False.
-        :param str default_filename: Default filename if no filename is provided by server.
-                                     It defaults to "download.bin".
-        :param int chunk_size: Size of chunks in bytes to stream. It defaults to 8192 (8KB).
-        :raises requests.HTTPError: If something went wrong.
-        :raises FileExistsError: If file already exists and 'overwrite_existing' is False.
-        :raises ValueError: If no open session.
-        :return str: file path of saved file.
+        Args:
+            file_identifier: Define content to be read. Might be an AoFile or a DT_BLOB attribute.
+            target_file_or_folder: Path to save the file content to. If pointing to an existing
+                folder, original filename will be used. Full path is returned.
+            overwrite_existing: Whether existing files should be overwritten. Defaults to False.
+            default_filename: Default filename if no filename is provided by server.
+                Defaults to "download.bin".
+            chunk_size: Size of chunks in bytes to stream. Defaults to 8192 (8KB).
+
+        Returns:
+            File path of saved file.
+
+        Raises:
+            requests.HTTPError: If something went wrong.
+            FileExistsError: If file already exists and 'overwrite_existing' is False.
+            ValueError: If no open session.
         """
         if not isinstance(file_identifier, ods.FileIdentifier):
             raise TypeError(
@@ -761,12 +860,15 @@ class ConI:
         """
         Upload file content to server.
 
-        :param ods.FileIdentifier file_identifier: Define content to be written.
-                                                   Might be an AoFile or a DT_BLOB attribute.
-        :param str source_file_path: Path to the file to be uploaded.
-        :raises requests.HTTPError: If something went wrong.
-        :raises FileNotFoundError: If source file was not found.
-        :raises ValueError: If no open session.
+        Args:
+            file_identifier: Define content to be written.
+                Might be an AoFile or a DT_BLOB attribute.
+            source_file_path: Path to the file to be uploaded.
+
+        Raises:
+            requests.HTTPError: If something went wrong.
+            FileNotFoundError: If source file was not found.
+            ValueError: If no open session.
         """
         if not isinstance(file_identifier, ods.FileIdentifier):
             raise TypeError(f"file_access_upload expects 'ods.FileIdentifier', got '{type(file_identifier).__name__}'")
@@ -797,10 +899,13 @@ class ConI:
         """
         Delete file content from server.
 
-        :param ods.FileIdentifier file_identifier: Define content to be deleted.
-                                                   Might be an AoFile or a DT_BLOB attribute.
-        :raises requests.HTTPError: If something went wrong.
-        :raises ValueError: If no open session.
+        Args:
+            file_identifier: Define content to be deleted.
+                Might be an AoFile or a DT_BLOB attribute.
+
+        Raises:
+            requests.HTTPError: If something went wrong.
+            ValueError: If no open session.
         """
         if not isinstance(file_identifier, ods.FileIdentifier):
             raise TypeError(f"file_access_delete expects 'ods.FileIdentifier', got '{type(file_identifier).__name__}'")
@@ -826,12 +931,18 @@ class ConI:
         """
         Do ODS post call with the given relative URL.
 
-        :param str relative_url_part: url part that is joined to conI URL using `/`.
-        :param Message | None message: protobuf message to be send, defaults to None.
-        :param float | None timeout: maximal time to wait for response.
-            If None, uses the request_timeout from constructor.
-        :raises requests.HTTPError: If status code is not 200 or 201.
-        :return requests.Response: requests response if successful.
+        Args:
+            relative_url_part: URL part that is joined to conI URL using `/`.
+            message: Protobuf message to be sent. Defaults to None.
+            timeout: Maximal time to wait for response.
+                If None, uses the request_timeout from constructor.
+            headers: Custom HTTP headers. If None, uses default protobuf headers.
+
+        Returns:
+            Requests response if successful.
+
+        Raises:
+            requests.HTTPError: If status code is not 200 or 201.
         """
 
         if self.__session is None or self.__con_i is None:
@@ -867,7 +978,8 @@ class ConI:
         """
         Get the model cache for the current session.
 
-        :return ods.ModelCache: ModelCache object containing the cached application model.
+        Returns:
+            ModelCache object containing the cached application model.
         """
         if self.__mc is None:
             if self.__con_i is None:
@@ -880,8 +992,11 @@ class ConI:
         """
         Get the security information for the current session.
 
-        :raises requests.HTTPError: If security info retrieval fails.
-        :return ods.Security: Security object containing permissions and roles.
+        Returns:
+            Security object containing permissions and roles.
+
+        Raises:
+            requests.HTTPError: If security info retrieval fails.
         """
         if self.__session is None:
             raise ValueError("No open session!")
@@ -906,7 +1021,8 @@ class ConI:
                 submatrix_id = 1234
                 df = con_i.bulk.data_read(submatrix_id, ["Time", "Co*"])
 
-        :return ods.BulkReader: BulkReader object for reading data in bulk.
+        Returns:
+            BulkReader object for reading data in bulk.
         """
         if self.__session is None:
             raise ValueError("No open session!")

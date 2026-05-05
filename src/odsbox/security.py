@@ -23,9 +23,15 @@ class Security:
     def security_read(self, security_read_request: ods_security.SecurityReadRequest) -> ods_security.SecurityInfo:
         """
         This method reads the security configuration from the ASAM ODS server.
-        :param security_read_request: The security read request
-        :raises requests.HTTPError: If fails.
-        :return: The security information
+
+        Args:
+            security_read_request: The security read request.
+
+        Returns:
+            The security information.
+
+        Raises:
+            requests.HTTPError: If fails.
         """
         response = self.__con_i.ods_post_request("security-read", security_read_request)
         security_info = ods_security.SecurityInfo()
@@ -35,16 +41,24 @@ class Security:
     def security_update(self, security_write_request: ods_security.SecurityWriteRequest) -> None:
         """
         This method updates the security configuration on the ASAM ODS server.
-        :param security_write_request: The security write request
-        :raises requests.HTTPError: If fails.
+
+        Args:
+            security_write_request: The security write request.
+
+        Raises:
+            requests.HTTPError: If fails.
         """
         self.__con_i.ods_post_request("security-update", security_write_request)
 
     def initial_rights(self, security_write_request: ods_security.SecurityWriteRequest) -> None:
         """
         This method sets the initial rights for newly created instances.
-        :param security_write_request: The security write request
-        :raises requests.HTTPError: If fails.
+
+        Args:
+            security_write_request: The security write request.
+
+        Raises:
+            requests.HTTPError: If fails.
         """
         self.__con_i.ods_post_request("initial-rights", security_write_request)
 

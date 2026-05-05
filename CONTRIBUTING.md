@@ -92,6 +92,16 @@ uv run pre-commit install
 
 Hooks run: ruff (lint + format), mypy, codespell, and various file checks.
 
+## Building Documentation
+
+Documentation is built with Sphinx and AutoAPI. To build locally:
+
+```bash
+uv run sphinx-build -b html docs docs/_build/html
+```
+
+Then open `docs/_build/html/index.html` in your browser.
+
 ## Reporting Issues
 
 If you find a bug or have a feature request, please open an issue on GitHub with:

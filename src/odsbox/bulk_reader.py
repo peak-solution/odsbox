@@ -74,8 +74,12 @@ class BulkReader:
     def unit_name_lookup(self, update: bool = False) -> dict[int, str]:
         """
         Get a mapping of unit id to unit name. This is used to cache the unit names for better readability of the data.
-        :param bool update: If True, force update the cache.
-        :return dict[int, str]: A dictionary mapping unit id to unit name.
+
+        Args:
+            update: If True, force update the cache.
+
+        Returns:
+            A dictionary mapping unit id to unit name.
         """
         if self._unit_name_lookup_cache is None or update:
             try:
@@ -103,11 +107,12 @@ class BulkReader:
         - generation_parameters: the generation parameters if raw types are used in sequence_representation
         - number_of_rows: maximal row count for the local column
 
-        :param pd.DataFrame localcolumn_df: DataFrame containing local column metadata and bulk data.
-                                            The dataframe is changed inplace.
-        :param int values_start: zero based starting index for the values to be processed
-        :param int values_limit: maximum number of values to be processed
-        :param bool calculate_raw: whether to calculate raw values for certain sequence representations
+        Args:
+            localcolumn_df: DataFrame containing local column metadata and bulk data.
+                The dataframe is changed inplace.
+            values_start: Zero based starting index for the values to be processed.
+            values_limit: Maximum number of values to be processed.
+            calculate_raw: Whether to calculate raw values for certain sequence representations.
         """
         for index, r in localcolumn_df.iterrows():
             name = r.get("name")
@@ -220,20 +225,25 @@ class BulkReader:
                 con_i.bulk.add_column_filters(conditions, ["Time", "Coolant"], column_patterns_case_insensitive=False)
                 df = con_i.bulk.query(conditions)
 
-        :param dict localcolumn_jaquel_condition: Jaquel query condition for local columns.
-                                                `{"AoLocalColumn": localcolumn_jaquel_condition}`
-                                                is used to determine the local columns to load.
-        :param bool date_as_timestamp: Whether to treat date columns as timestamps. This will convert ASAM ODS
-                                        date columns to pandas datetime objects.
-        :param int row_limit: Maximum number of rows to return. Can be used to avoid huge amount of local columns
-                            to be returned.
-        :param int values_start: Zero-based starting index for the values to be processed. Used for chunk loading.
-        :param int values_limit: Maximum number of values to be retrieved in this chunk. 0 means all remaining values.
-        :param bool calculate_raw: Whether to calculate raw values for certain raw sequence representations.
-        :raises requests.HTTPError: If access fails.
-        :return DataFrame: The Pandas.DataFrame contains the local_column metadata and values as DataFrame columns.
-                           ``df.attrs["unit_names"]`` is set to a ``dict[str, str]`` mapping each local column
-                           name to its unit name (empty string when the unit id is unknown or zero).
+        Args:
+            localcolumn_jaquel_condition: Jaquel query condition for local columns.
+                ``{"AoLocalColumn": localcolumn_jaquel_condition}`` is used to determine
+                the local columns to load.
+            date_as_timestamp: Whether to treat date columns as timestamps. This will convert
+                ASAM ODS date columns to pandas datetime objects.
+            row_limit: Maximum number of rows to return. Can be used to avoid huge amount of
+                local columns to be returned.
+            values_start: Zero-based starting index for the values to be processed. Used for chunk loading.
+            values_limit: Maximum number of values to be retrieved in this chunk. 0 means all remaining values.
+            calculate_raw: Whether to calculate raw values for certain raw sequence representations.
+
+        Returns:
+            The Pandas DataFrame contains the local_column metadata and values as DataFrame columns.
+            ``df.attrs["unit_names"]`` is set to a ``dict[str, str]`` mapping each local column
+            name to its unit name (empty string when the unit id is unknown or zero).
+
+        Raises:
+            requests.HTTPError: If access fails.
         """
 
         lc_meta_df: pd.DataFrame = self.__con_i.query_data(
@@ -346,18 +356,23 @@ class BulkReader:
                 submatrix_id = 1234
                 df = con_i.bulk.data_read(submatrix_id, ["Time", "Co*"])
 
-        :param int submatrix_iid: The ID of the submatrix to load.
-        :param list[str] | None column_patterns: List of column name patterns to filter the columns.
-                                                 If None, all columns are loaded. `*?` is used as a wildcard.
-        :param bool column_patterns_case_insensitive: Whether to treat column name patterns as case insensitive.
-        :param bool date_as_timestamp: Whether to treat date columns as timestamps.
-        :param bool set_independent_as_index: Whether to set the independent column as the index.
-        :param int values_start: Zero-based starting index for the values to be processed. Used for chunk loading.
-        :param int values_limit: Maximum number of values to be retrieved in this chunk. 0 means all remaining values.
-        :raises requests.HTTPError: If access fails.
-        :return DataFrame: The Pandas.DataFrame contains one column per local column, named after the local
-                           column name.  ``df.attrs["unit_names"]`` is set to a ``dict[str, str]`` mapping
-                           each column name to its unit name (empty string when the unit id is unknown or zero).
+        Args:
+            submatrix_iid: The ID of the submatrix to load.
+            column_patterns: List of column name patterns to filter the columns.
+                If None, all columns are loaded. `*?` is used as a wildcard.
+            column_patterns_case_insensitive: Whether to treat column name patterns as case insensitive.
+            date_as_timestamp: Whether to treat date columns as timestamps.
+            set_independent_as_index: Whether to set the independent column as the index.
+            values_start: Zero-based starting index for the values to be processed. Used for chunk loading.
+            values_limit: Maximum number of values to be retrieved in this chunk. 0 means all remaining values.
+
+        Returns:
+            The Pandas DataFrame contains one column per local column, named after the local
+            column name. ``df.attrs["unit_names"]`` is set to a ``dict[str, str]`` mapping
+            each column name to its unit name (empty string when the unit id is unknown or zero).
+
+        Raises:
+            requests.HTTPError: If access fails.
         """
 
         conditions = {"submatrix": submatrix_iid}
@@ -405,16 +420,21 @@ class BulkReader:
                 submatrix_id = 1234
                 df = con_i.bulk.valuematrix_read(submatrix_id, ["Time", "Co*"])
 
-        :param int submatrix_iid: The ID of the submatrix to load.
-        :param list[str] | None column_patterns: List of column name patterns to filter the columns.
-                                                 If None, all columns are loaded. `*?` is used as a wildcard.
-        :param bool date_as_timestamp: Whether to treat date columns as timestamps.
-        :param int values_start: Zero-based starting index for the values to be processed. Used for chunk loading.
-        :param int values_limit: Maximum number of values to be retrieved in this chunk. 0 means all remaining values.
-        :raises requests.HTTPError: If access fails.
-        :return DataFrame: The Pandas.DataFrame contains one column per local column, named after the local
-                           column name.  ``df.attrs["unit_names"]`` is set to a ``dict[str, str]`` mapping
-                           each column name to its unit name (empty string when the unit id is unknown or zero).
+        Args:
+            submatrix_iid: The ID of the submatrix to load.
+            column_patterns: List of column name patterns to filter the columns.
+                If None, all columns are loaded. `*?` is used as a wildcard.
+            date_as_timestamp: Whether to treat date columns as timestamps.
+            values_start: Zero-based starting index for the values to be processed. Used for chunk loading.
+            values_limit: Maximum number of values to be retrieved in this chunk. 0 means all remaining values.
+
+        Returns:
+            The Pandas DataFrame contains one column per local column, named after the local
+            column name. ``df.attrs["unit_names"]`` is set to a ``dict[str, str]`` mapping
+            each column name to its unit name (empty string when the unit id is unknown or zero).
+
+        Raises:
+            requests.HTTPError: If access fails.
         """
         sm_e = self.__con_i.mc.entity_by_base_name("AoSubmatrix")
         lc_e = self.__con_i.mc.entity_by_base_name("AoLocalColumn")
@@ -454,9 +474,10 @@ class BulkReader:
         corresponding entry in *unit_names*.  Nothing is written when *unit_names* is empty or its
         length does not match *column_names* (a warning is logged in case of an unexpected error).
 
-        :param pd.DataFrame df: The DataFrame to annotate.
-        :param pd.Series column_names: Series of column names in the same order as *unit_names*.
-        :param list[str] unit_names: Unit name for each column (empty string for unknown units).
+        Args:
+            df: The DataFrame to annotate.
+            column_names: Series of column names in the same order as *unit_names*.
+            unit_names: Unit name for each column (empty string for unknown units).
         """
         try:
             if unit_names and len(column_names) == len(unit_names):
@@ -468,9 +489,11 @@ class BulkReader:
         """
         Extract unit names for the columns in the provided data matrices.
 
-        :param data_matrices: The data matrices containing the columns for which to extract unit names.
-        :return list[str]: A list of unit names corresponding to the columns.
+        Args:
+            data_matrices: The data matrices containing the columns for which to extract unit names.
 
+        Returns:
+            A list of unit names corresponding to the columns.
         """
         unit_id_lookup = self.unit_name_lookup()
         column_unit_ids = extract_column_unit_ids(data_matrices)
@@ -487,10 +510,11 @@ class BulkReader:
         Add filter conditions for AoLocalColumn to match column patterns. This is just a helper method
         to create the Jaquel conditions for local columns names based on the column patterns.
 
-        :param dict conditions: The conditions dictionary to update.
-        :param list[str] | None column_patterns: List of column name patterns to filter the columns.
-                                                Wildcards `*` and `?` are supported.
-        :param bool column_patterns_case_insensitive: Whether to treat column name patterns as case insensitive.
+        Args:
+            conditions: The conditions dictionary to update.
+            column_patterns: List of column name patterns to filter the columns.
+                Wildcards `*` and `?` are supported.
+            column_patterns_case_insensitive: Whether to treat column name patterns as case insensitive.
         """
         if not column_patterns:
             return
