@@ -21,7 +21,11 @@ from odsbox.submatrix_to_pandas import submatrix_to_pandas
 
 def __create_con_i(load_model: bool = True) -> ConI:
     """Create a connection session for an ASAM ODS server"""
-    return ConI("https://docker.peak-solution.de:10032/api", ("Demo", "mdm"), load_model=load_model)
+    return ConI(
+        "https://docker.peak-solution.de:10032/api",
+        ("Demo", "mdm"),
+        load_model=load_model,
+    )
 
 
 def test_con_i():
@@ -36,11 +40,14 @@ def test_con_i():
         con_i.query_data({"AoUnit": {}, "$options": {"$rowlimit": 1}})
         con_i.query_data({"AoMeasurement": {}, "$options": {"$rowlimit": 1}})
         con_i.query_data(
-            {"AoMeasurement": {}, "$options": {"$rowlimit": 50}}, date_as_timestamp=True, enum_as_string=True
+            {"AoMeasurement": {}, "$options": {"$rowlimit": 50}},
+            date_as_timestamp=True,
+            enum_as_string=True,
         )
 
         r = con_i.query_data(
-            {"AoUnit": {}, "$attributes": {"name": 1}, "$options": {"$rowlimit": 1}}, name_separator="::"
+            {"AoUnit": {}, "$attributes": {"name": 1}, "$options": {"$rowlimit": 1}},
+            name_separator="::",
         )
         assert f"{entity.name}::" in r.columns[0]
 
@@ -50,21 +57,43 @@ def test_con_i_query():
         model = con_i.model_read()
         assert len(model.entities) > 0
 
-        r = con_i.query({"AoUnit": {}, "$attributes": {"name": 1, "id": 1}, "$options": {"$rowlimit": 1}})
+        r = con_i.query(
+            {
+                "AoUnit": {},
+                "$attributes": {"name": 1, "id": 1},
+                "$options": {"$rowlimit": 1},
+            }
+        )
         assert "name" in r.columns
         assert "id" in r.columns
 
-        r = con_i.query({"AoUnit": {}, "$attributes": {"Name": 1, "Id": 1}, "$options": {"$rowlimit": 1}})
+        r = con_i.query(
+            {
+                "AoUnit": {},
+                "$attributes": {"Name": 1, "Id": 1},
+                "$options": {"$rowlimit": 1},
+            }
+        )
         assert "Name" in r.columns
         assert "Id" in r.columns
 
         r = con_i.query(
-            {"AoUnit": {}, "$attributes": {"name": 1, "phys_dimension.name": 1}, "$options": {"$rowlimit": 1}}
+            {
+                "AoUnit": {},
+                "$attributes": {"name": 1, "phys_dimension.name": 1},
+                "$options": {"$rowlimit": 1},
+            }
         )
         assert "name" in r.columns
         assert "phys_dimension.name" in r.columns
 
-        r = con_i.query({"AoUnit": {}, "$attributes": {"name": {"$distinct": 1}}, "$options": {"$rowlimit": 1}})
+        r = con_i.query(
+            {
+                "AoUnit": {},
+                "$attributes": {"name": {"$distinct": 1}},
+                "$options": {"$rowlimit": 1},
+            }
+        )
         assert "name.$distinct" in r.columns
 
 
@@ -111,7 +140,7 @@ def test_submatrix_load():
         logging.getLogger().info(sm_s.shape)
         assert sm_s.shape[0] <= 1
         if 1 == sm_s.shape[0]:
-            submatrix_id = int(sm_s.iloc[0, 0])  # type: ignore
+            submatrix_id = int(sm_s.iloc[0, 0])
             assert 0 != submatrix_id
             logging.getLogger().info(submatrix_id)
             submatrix_dataframe = submatrix_to_pandas(con_i, submatrix_id)
@@ -160,7 +189,12 @@ def test_values_data_read(request: FixtureRequest):
         lc_info_df = con_i.query_data(
             {
                 "AoLocalColumn": {"submatrix": sm_id},
-                "$attributes": {"id": 1, "name": 1, "sequence_representation": 1, "independent": 1},
+                "$attributes": {
+                    "id": 1,
+                    "name": 1,
+                    "sequence_representation": 1,
+                    "independent": 1,
+                },
             }
         )
         assert lc_info_df.empty is False
@@ -168,12 +202,19 @@ def test_values_data_read(request: FixtureRequest):
         lc_info_dms = con_i.data_read_jaquel(
             query={
                 "AoLocalColumn": {"submatrix": sm_id},
-                "$attributes": {"id": 1, "name": 1, "sequence_representation": 1, "independent": 1},
+                "$attributes": {
+                    "id": 1,
+                    "name": 1,
+                    "sequence_representation": 1,
+                    "independent": 1,
+                },
             }
         )
         assert 1 == len(lc_info_dms.matrices)
         with open(
-            os.path.join(tempfile.gettempdir(), f"{test_name}_lc_info.proto.json"), "w", encoding="utf-8"
+            os.path.join(tempfile.gettempdir(), f"{test_name}_lc_info.proto.json"),
+            "w",
+            encoding="utf-8",
         ) as json_file:
             json_file.write(MessageToJson(lc_info_dms))
 
@@ -195,7 +236,9 @@ def test_values_data_read(request: FixtureRequest):
         )
         assert 1 == len(lc_values_dms.matrices)
         with open(
-            os.path.join(tempfile.gettempdir(), f"{test_name}_lc_values.proto.json"), "w", encoding="utf-8"
+            os.path.join(tempfile.gettempdir(), f"{test_name}_lc_values.proto.json"),
+            "w",
+            encoding="utf-8",
         ) as json_file:
             json_file.write(MessageToJson(lc_values_dms))
 
@@ -224,7 +267,12 @@ def test_values_valuematrix_read_calculated(request: FixtureRequest):
         lc_info_df = con_i.query_data(
             {
                 "AoLocalColumn": {"submatrix": sm_id},
-                "$attributes": {"id": 1, "name": 1, "sequence_representation": 1, "independent": 1},
+                "$attributes": {
+                    "id": 1,
+                    "name": 1,
+                    "sequence_representation": 1,
+                    "independent": 1,
+                },
             }
         )
         assert lc_info_df.empty is False
@@ -232,12 +280,19 @@ def test_values_valuematrix_read_calculated(request: FixtureRequest):
         lc_info_dms = con_i.data_read_jaquel(
             {
                 "AoLocalColumn": {"submatrix": sm_id},
-                "$attributes": {"id": 1, "name": 1, "sequence_representation": 1, "independent": 1},
+                "$attributes": {
+                    "id": 1,
+                    "name": 1,
+                    "sequence_representation": 1,
+                    "independent": 1,
+                },
             }
         )
         assert 1 == len(lc_info_dms.matrices)
         with open(
-            os.path.join(tempfile.gettempdir(), f"{test_name}_lc_info.proto.json"), "w", encoding="utf-8"
+            os.path.join(tempfile.gettempdir(), f"{test_name}_lc_info.proto.json"),
+            "w",
+            encoding="utf-8",
         ) as json_file:
             json_file.write(MessageToJson(lc_info_dms))
 
@@ -259,7 +314,9 @@ def test_values_valuematrix_read_calculated(request: FixtureRequest):
         )
         assert 1 == len(lc_values_dms.matrices)
         with open(
-            os.path.join(tempfile.gettempdir(), f"{test_name}_lc_values.proto.json"), "w", encoding="utf-8"
+            os.path.join(tempfile.gettempdir(), f"{test_name}_lc_values.proto.json"),
+            "w",
+            encoding="utf-8",
         ) as json_file:
             json_file.write(MessageToJson(lc_values_dms))
 
@@ -287,7 +344,12 @@ def test_values_valuematrix_read_storage(request: FixtureRequest):
         lc_info_df = con_i.query_data(
             {
                 "AoLocalColumn": {"submatrix": sm_id},
-                "$attributes": {"id": 1, "name": 1, "sequence_representation": 1, "independent": 1},
+                "$attributes": {
+                    "id": 1,
+                    "name": 1,
+                    "sequence_representation": 1,
+                    "independent": 1,
+                },
             }
         )
         assert lc_info_df.empty is False
@@ -304,12 +366,19 @@ def test_values_valuematrix_read_storage(request: FixtureRequest):
         lc_info_dms = con_i.data_read_jaquel(
             {
                 "AoLocalColumn": {"submatrix": sm_id},
-                "$attributes": {"id": 1, "name": 1, "sequence_representation": 1, "independent": 1},
+                "$attributes": {
+                    "id": 1,
+                    "name": 1,
+                    "sequence_representation": 1,
+                    "independent": 1,
+                },
             }
         )
         assert 1 == len(lc_info_dms.matrices)
         with open(
-            os.path.join(tempfile.gettempdir(), f"{test_name}_lc_info.proto.json"), "w", encoding="utf-8"
+            os.path.join(tempfile.gettempdir(), f"{test_name}_lc_info.proto.json"),
+            "w",
+            encoding="utf-8",
         ) as json_file:
             json_file.write(MessageToJson(lc_info_dms))
 
@@ -327,7 +396,9 @@ def test_values_valuematrix_read_storage(request: FixtureRequest):
         lc_values_dms = con_i.valuematrix_read(value_matrix_request)
         assert 1 == len(lc_values_dms.matrices)
         with open(
-            os.path.join(tempfile.gettempdir(), f"{test_name}_lc_values.proto.json"), "w", encoding="utf-8"
+            os.path.join(tempfile.gettempdir(), f"{test_name}_lc_values.proto.json"),
+            "w",
+            encoding="utf-8",
         ) as json_file:
             json_file.write(MessageToJson(lc_values_dms))
 
@@ -359,7 +430,7 @@ def test_security_property_returns_security_instance(monkeypatch):
 def test_security_property_raises_if_no_session():
     with __create_con_i() as con_i:
         # Simulate closed session
-        con_i._ConI__session = None  # type: ignore
+        con_i._ConI__session = None
         try:
             _ = con_i.security
             raise AssertionError("Expected ValueError when session is None")
@@ -407,7 +478,18 @@ def test_do_not_load_model():
 def test_nested_query(request: FixtureRequest):
     with __create_con_i() as con_i:
         df = con_i.query_data(
-            {"AoTest": {"name": {"$in": {"$nested": {"AoTest": {}, "$attributes": {"name": {"$distinct": 1}}}}}}}
+            {
+                "AoTest": {
+                    "name": {
+                        "$in": {
+                            "$nested": {
+                                "AoTest": {},
+                                "$attributes": {"name": {"$distinct": 1}},
+                            }
+                        }
+                    }
+                }
+            }
         )
 
         assert df is not None
@@ -415,7 +497,18 @@ def test_nested_query(request: FixtureRequest):
 
         _, s = jaquel_to_ods(
             con_i.model(),
-            {"AoTest": {"name": {"$in": {"$nested": {"AoTest": {}, "$attributes": {"name": {"$distinct": 1}}}}}}},
+            {
+                "AoTest": {
+                    "name": {
+                        "$in": {
+                            "$nested": {
+                                "AoTest": {},
+                                "$attributes": {"name": {"$distinct": 1}},
+                            }
+                        }
+                    }
+                }
+            },
         )
         assert s.where[0].condition.nested_statement.columns[0].attribute is not None
 
@@ -429,7 +522,13 @@ def test_query_with_jaquel_column_names():
         assert "AoUnit.name" not in r.columns
 
         # Query with multiple attributes
-        r = con_i.query({"AoUnit": {}, "$attributes": {"name": 1, "id": 1}, "$options": {"$rowlimit": 1}})
+        r = con_i.query(
+            {
+                "AoUnit": {},
+                "$attributes": {"name": 1, "id": 1},
+                "$options": {"$rowlimit": 1},
+            }
+        )
         assert "name" in r.columns
         assert "id" in r.columns
         assert len(r.columns) == 2
@@ -438,7 +537,11 @@ def test_query_with_jaquel_column_names():
         r = con_i.query(
             {
                 "AoUnit": {},
-                "$attributes": {"name": 1, "phys_dimension.name": 1, "phys_dimension.id": 1},
+                "$attributes": {
+                    "name": 1,
+                    "phys_dimension.name": 1,
+                    "phys_dimension.id": 1,
+                },
                 "$options": {"$rowlimit": 1},
             }
         )
@@ -467,7 +570,13 @@ def test_query_with_aggregates():
     """Test query method with aggregate functions"""
     with __create_con_i() as con_i:
         # Query with distinct
-        r = con_i.query({"AoUnit": {}, "$attributes": {"name": {"$distinct": 1}}, "$options": {"$rowlimit": 5}})
+        r = con_i.query(
+            {
+                "AoUnit": {},
+                "$attributes": {"name": {"$distinct": 1}},
+                "$options": {"$rowlimit": 5},
+            }
+        )
         assert "name.$distinct" in r.columns
 
         # Query with count
@@ -482,7 +591,12 @@ def test_query_enum_as_string():
         # Simply test that the parameter is accepted and queries execute
         # Testing actual enum conversion would require knowing specific enum fields
         r = con_i.query(
-            {"AoUnit": {}, "$attributes": {"id": 1, "name": 1}, "$options": {"$rowlimit": 5}}, enum_as_string=True
+            {
+                "AoUnit": {},
+                "$attributes": {"id": 1, "name": 1},
+                "$options": {"$rowlimit": 5},
+            },
+            enum_as_string=True,
         )
         assert "id" in r.columns
         assert "name" in r.columns
@@ -490,7 +604,12 @@ def test_query_enum_as_string():
 
         # Test with enum_as_string=False
         r = con_i.query(
-            {"AoUnit": {}, "$attributes": {"id": 1, "name": 1}, "$options": {"$rowlimit": 5}}, enum_as_string=False
+            {
+                "AoUnit": {},
+                "$attributes": {"id": 1, "name": 1},
+                "$options": {"$rowlimit": 5},
+            },
+            enum_as_string=False,
         )
         assert "id" in r.columns
         assert "name" in r.columns
@@ -502,7 +621,11 @@ def test_query_date_as_timestamp():
     with __create_con_i() as con_i:
         # Query with date fields
         r = con_i.query(
-            {"AoMeasurement": {}, "$attributes": {"id": 1, "measurement_begin": 1}, "$options": {"$rowlimit": 5}},
+            {
+                "AoMeasurement": {},
+                "$attributes": {"id": 1, "measurement_begin": 1},
+                "$options": {"$rowlimit": 5},
+            },
             date_as_timestamp=True,
         )
         assert "measurement_begin" in r.columns
@@ -513,7 +636,11 @@ def test_query_date_as_timestamp():
 
         # Test with date_as_timestamp=False
         r = con_i.query(
-            {"AoMeasurement": {}, "$attributes": {"id": 1, "measurement_begin": 1}, "$options": {"$rowlimit": 5}},
+            {
+                "AoMeasurement": {},
+                "$attributes": {"id": 1, "measurement_begin": 1},
+                "$options": {"$rowlimit": 5},
+            },
             date_as_timestamp=False,
         )
         if not r.empty and r["measurement_begin"].notna().any():
@@ -527,7 +654,11 @@ def test_query_is_null_to_nan():
     with __create_con_i() as con_i:
         # Query with is_null_to_nan=True (default)
         r = con_i.query(
-            {"AoUnit": {}, "$attributes": {"name": 1, "description": 1}, "$options": {"$rowlimit": 10}},
+            {
+                "AoUnit": {},
+                "$attributes": {"name": 1, "description": 1},
+                "$options": {"$rowlimit": 10},
+            },
             is_null_to_nan=True,
         )
         assert "description" in r.columns
@@ -537,7 +668,11 @@ def test_query_is_null_to_nan():
 
         # Query with is_null_to_nan=False
         r = con_i.query(
-            {"AoUnit": {}, "$attributes": {"name": 1, "description": 1}, "$options": {"$rowlimit": 10}},
+            {
+                "AoUnit": {},
+                "$attributes": {"name": 1, "description": 1},
+                "$options": {"$rowlimit": 10},
+            },
             is_null_to_nan=False,
         )
         assert "description" in r.columns
@@ -671,7 +806,13 @@ def test_query_with_filter():
     """Test query method with filter conditions"""
     with __create_con_i() as con_i:
         # Query with simple filter
-        r = con_i.query({"AoUnit": {"name": "m"}, "$attributes": {"name": 1, "id": 1}, "$options": {"$rowlimit": 5}})
+        r = con_i.query(
+            {
+                "AoUnit": {"name": "m"},
+                "$attributes": {"name": 1, "id": 1},
+                "$options": {"$rowlimit": 5},
+            }
+        )
         assert "name" in r.columns
         assert "id" in r.columns
         # All returned names should match filter
@@ -703,12 +844,19 @@ def test_query_with_kwargs():
     """Test query method with additional kwargs passed to to_pandas"""
     with __create_con_i() as con_i:
         # Test with custom name_separator (though this should be overridden by JAQueL naming)
-        r = con_i.query({"AoUnit": {}, "$attributes": {"name": 1}, "$options": {"$rowlimit": 1}}, name_separator="::")
+        r = con_i.query(
+            {"AoUnit": {}, "$attributes": {"name": 1}, "$options": {"$rowlimit": 1}},
+            name_separator="::",
+        )
         # JAQueL naming should take precedence
         assert "name" in r.columns
 
         r = con_i.query(
-            jaquel_query={"AoUnit": {}, "$attributes": {"name": 1}, "$options": {"$rowlimit": 1}},
+            jaquel_query={
+                "AoUnit": {},
+                "$attributes": {"name": 1},
+                "$options": {"$rowlimit": 1},
+            },
             result_naming_mode="model",
             name_separator="::",
         )

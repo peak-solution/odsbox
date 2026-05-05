@@ -2,32 +2,37 @@
 them to an pandas DataFrame for ease of use."""
 
 from __future__ import annotations
+
 import logging
+from typing import Any
 
 import numpy as np
 import pandas as pd
 
 import odsbox.proto.ods_pb2 as ods
 from odsbox.asam_time import to_pd_timestamp
-from odsbox.model_cache import ModelCache
 from odsbox.jaquel_conversion_result import JaquelConversionResult
+from odsbox.model_cache import ModelCache
 
 
 def unknown_array_values(
     unknown_array: ods.DataMatrix.Column.UnknownArray,
     date_as_timestamp: bool = False,
     prefer_np_array: bool = False,
-) -> list | np.ndarray:
+) -> list[Any] | np.ndarray:
     """
     Get the values of an UnknownArray as list or numpy array
 
-    :param ods.DataMatrix.Column.UnknownArray unknown_array: ASAM ODS unknown array to transport array of any
-    :param bool date_as_timestamp: columns of type DT_DATE or DS_DATE are returned as string.
-                                   If this is set to True the strings are converted to pandas Timestamp.
-    :param bool prefer_np_array: If set to True, prefer returning numpy arrays instead of lists.
+    Args:
+        unknown_array: ASAM ODS unknown array to transport array of any type.
+        date_as_timestamp: If True, DT_DATE/DS_DATE strings are converted to pandas Timestamp.
+        prefer_np_array: If True, prefer returning numpy arrays instead of lists.
 
-    :raises ValueError: If standard is extended by new types
-    :return list | np.array: list or numpy array containing the values of the Unknown array.
+    Returns:
+        List or numpy array containing the values of the Unknown array.
+
+    Raises:
+        ValueError: If standard is extended by new types.
     """
     if unknown_array.WhichOneof("UnknownOneOf") is None:
         return np.array([]) if prefer_np_array else []
@@ -88,7 +93,9 @@ def unknown_array_values(
 
 
 def __adjust_enums(
-    model_cache: ModelCache | None, enumeration: ods.Model.Enumeration | None, values: list[int] | None
+    model_cache: ModelCache | None,
+    enumeration: ods.Model.Enumeration | None,
+    values: list[int] | None,
 ) -> list[int] | list[str] | None:
     if values is None or enumeration is None or model_cache is None:
         return values
@@ -102,7 +109,7 @@ def __get_datamatrix_column_values(
     enumeration: ods.Model.Enumeration | None,
     date_as_timestamp: bool,
     prefer_np_array_for_unknown: bool,
-) -> list | np.ndarray | None:
+) -> list[Any] | np.ndarray | None:
     if column.WhichOneof("ValuesOneOf") is None:
         return None
 
@@ -181,7 +188,7 @@ def __get_datamatrix_column_values_ex(
     entity: ods.Model.Entity | None,
     date_as_timestamp: bool,
     prefer_np_array_for_unknown: bool,
-) -> list | np.ndarray:
+) -> list[Any] | np.ndarray:
     enumeration = None
     if (
         enum_as_string
@@ -191,8 +198,8 @@ def __get_datamatrix_column_values_ex(
     ):
         attribute = model_cache.attribute_no_throw(entity, column.name)
         if attribute is not None:
-            if attribute.enumeration is not None:
-                enumeration = model_cache.model().enumerations[attribute.enumeration]
+            if attribute.enumeration:
+                enumeration = model_cache.model().enumerations.get(attribute.enumeration)
 
     values = __get_datamatrix_column_values(
         column, model_cache, enumeration, date_as_timestamp, prefer_np_array_for_unknown
@@ -234,9 +241,12 @@ def extract_column_unit_ids(
     particular channel.  This helper harvests those ids in row order so callers can build
     a ``{channel_name: unit_id}`` mapping after correlating with the "name" column.
 
-    :param ods.DataMatrices dms: The DataMatrices returned by a data-read call.
-    :return list[int]: One ``unit_id`` per row, in the same order as the rows in the
-                       DataMatrices.  Returns an empty list when no matching column is found.
+    Args:
+        dms: The DataMatrices returned by a data-read call.
+
+    Returns:
+        One ``unit_id`` per row, in the same order as the rows in the
+        DataMatrices. Returns an empty list when no matching column is found.
     """
     matrices = dms.matrices
     if matrices is None:
@@ -262,23 +272,24 @@ def to_pandas(
     """
     Converts data in an ASAM ODS DataMatrices into a pandas DataFrame.
 
-    :param ods.DataMatrices data_matrices: matrices to be converted.
-    :param ModelCache | None model_cache: ModelCache is used to do enum conversion
-    :param bool enum_as_string: columns of type DT_ENUM or DS_ENUM are returned as int values.
-                                If this is set to True the model_cache is used to map the int values
-                                to the corresponding string values.
-    :param bool date_as_timestamp: columns of type DT_DATE or DS_DATE are returned as string.
-                                   If this is set to True the strings are converted to pandas Timestamp.
-    :param str name_separator: separator used to concatenate entity and attribute names to define
-                               column name.
-    :param bool prefer_np_array_for_unknown: If set to True, prefer returning numpy arrays instead
-                                            of lists for unknown data types.
-    :param bool is_null_to_nan: If set to True, the is_null flags are used to set corresponding values to pd.NA.
-                               This uses pandas native nullable data types for better type preservation.
-    :param JaquelConversionResult | None jaquel_conversion_result: If provided, this is used to determine
-                                 the column names based on the original JAQueL query.
-    :return pd.DataFrame: A pandas DataFrame containing all the single matrices in a single frame. The
-                          columns are named by the schema `ENTITY_NAME.ATTRIBUTE_NAME[.AGGREGATE]`.
+    Args:
+        data_matrices: Matrices to be converted.
+        model_cache: ModelCache is used to do enum conversion.
+        enum_as_string: If True, DT_ENUM/DS_ENUM int values are mapped to corresponding
+            string values using the model_cache.
+        date_as_timestamp: If True, DT_DATE/DS_DATE strings are converted to pandas Timestamp.
+        name_separator: Separator used to concatenate entity and attribute names to define
+            column name.
+        prefer_np_array_for_unknown: If True, prefer returning numpy arrays instead
+            of lists for unknown data types.
+        is_null_to_nan: If True, is_null flags set corresponding values to pd.NA using
+            pandas native nullable data types.
+        jaquel_conversion_result: If provided, used to determine column names based
+            on the original JAQueL query.
+
+    Returns:
+        A pandas DataFrame containing all the single matrices in a single frame. The
+        columns are named by the schema `ENTITY_NAME.ATTRIBUTE_NAME[.AGGREGATE]`.
     """
     if 0 == len(data_matrices.matrices):
         return pd.DataFrame()
@@ -298,7 +309,12 @@ def to_pandas(
                 logging.warning(f"Duplicate column name '{column_name}' found. Overwriting previous column.")
 
             column_dict[column_name] = __get_datamatrix_column_values_ex(
-                column, model_cache, enum_as_string, entity, date_as_timestamp, prefer_np_array_for_unknown
+                column,
+                model_cache,
+                enum_as_string,
+                entity,
+                date_as_timestamp,
+                prefer_np_array_for_unknown,
             )
 
             if is_null_to_nan and column.is_null is not None and len(column.is_null) > 0:

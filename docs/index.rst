@@ -9,10 +9,14 @@ Welcome to ASAM ODSBox docs's documentation!
    :caption: Contents:
 
    overview
-   odsbox
    con_i_factory
    jaquel
-   repository_rules
+
+.. toctree::
+   :maxdepth: 2
+   :caption: API:
+
+   autoapi/odsbox/index
 
 .. toctree::
    :maxdepth: 2
@@ -22,6 +26,13 @@ Welcome to ASAM ODSBox docs's documentation!
    Compare measurements <compare_measurement.ipynb>
    JAQuel/SelectStatement <jaquel_examples>
    JAQuel Notebook <jaquel_examples_notebook.ipynb>
+
+.. toctree::
+   :maxdepth: 2
+   :caption: ETC:
+
+   repository_rules
+
 
 Indices and tables
 ==================

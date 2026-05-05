@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import logging
 
-from odsbox.model_suggestions import ModelSuggestions
 import odsbox.proto.ods_pb2 as ods
+from odsbox.model_suggestions import ModelSuggestions
 
 
 class ModelCache:
@@ -22,9 +22,10 @@ class ModelCache:
 
     def model(self) -> ods.Model:
         """
-        Get the attached ASAM ODS model
+        Get the attached ASAM ODS model.
 
-        :return ods.Model: The used model.
+        Returns:
+            The used model.
         """
         return self.__model
 
@@ -32,9 +33,14 @@ class ModelCache:
         """
         Determine the application element id of an entity by its name.
 
-        :param str entity_or_name: entity object or case sensitive application name to lookup
-        :raises ValueError: If the entity does not exist.
-        :return int: The ApplicationElementId of the entity.
+        Args:
+            entity_or_name: Entity object or case sensitive application name to lookup.
+
+        Returns:
+            The ApplicationElementId of the entity.
+
+        Raises:
+            ValueError: If the entity does not exist.
         """
         return self.__entity(entity_or_name).aid
 
@@ -43,15 +49,20 @@ class ModelCache:
         Get the entity by name. If no application name matches,
         it will try to match the base name.
 
-        :param str entity_name: Case insensitive name of an entity.
-        :return ods.Model.Entity: The found entity.
-        :raises ValueError: If the entity does not exist.
+        Args:
+            entity_name: Case insensitive name of an entity.
+
+        Returns:
+            The found entity.
+
+        Raises:
+            ValueError: If the entity does not exist.
         """
         entity = self.entity_no_throw(entity_name)
         if entity is not None:
             return entity
         raise ValueError(
-            f"No entity named '{entity_name}' found." f"{ModelSuggestions.get_entity(self.__model, entity_name)}"
+            f"No entity named '{entity_name}' found.{ModelSuggestions.get_entity(self.__model, entity_name)}"
         )
 
     def entity_no_throw(self, entity_name: str) -> ods.Model.Entity | None:
@@ -59,8 +70,11 @@ class ModelCache:
         Get the entity by name. Returns None if not found. if no application name matches,
         it will try to match the base name.
 
-        :param str entity_name: Case insensitive name of an entity or base name.
-        :return ods.Model.Entity | None: The found entity or None.
+        Args:
+            entity_name: Case insensitive name of an entity or base name.
+
+        Returns:
+            The found entity or None.
         """
         entity = self.__model.entities.get(entity_name)
         if entity is not None:
@@ -75,8 +89,11 @@ class ModelCache:
         """
         Get the entity by its base name.
 
-        :param str entity_base_name: case insensitive name of the base model element.
-        :raises ValueError: If the entity does not exist.
+        Args:
+            entity_base_name: Case insensitive name of the base model element.
+
+        Raises:
+            ValueError: If the entity does not exist.
         """
         name_casefold = entity_base_name.casefold()
         for _, entity in self.__model.entities.items():
@@ -91,9 +108,14 @@ class ModelCache:
         """
         Get the entity by its ApplicationElementId(aid).
 
-        :param int aid: ApplicationElementId of an entity to lookup.
-        :raises ValueError: If the entity does not exist.
-        :return ods.Model.Entity: Entity corresponding to given aid.
+        Args:
+            aid: ApplicationElementId of an entity to lookup.
+
+        Returns:
+            Entity corresponding to given aid.
+
+        Raises:
+            ValueError: If the entity does not exist.
         """
         for _, entity in self.__model.entities.items():
             if aid == entity.aid:
@@ -108,10 +130,15 @@ class ModelCache:
         an attribute with the given application name and afterwards check for an
         attribute with the given base name.
 
-        :param str | ods.Model.Entity entity_or_name: entity or case insensitive name of an entity
-        :param str application_or_base_name: case insensitive name to lookup
-        :raises ValueError: If entity does not exist.
-        :return ods.Model.Attribute | None: The found attribute or None.
+        Args:
+            entity_or_name: Entity or case insensitive name of an entity.
+            application_or_base_name: Case insensitive name to lookup.
+
+        Returns:
+            The found attribute or None.
+
+        Raises:
+            ValueError: If entity does not exist.
         """
         entity = self.__entity(entity_or_name)
         attribute = entity.attributes.get(application_or_base_name)
@@ -129,10 +156,15 @@ class ModelCache:
         an attribute with the given application name and afterwards check for an
         attribute with the given base name.
 
-        :param str | ods.Model.Entity entity_or_name: entity or case insensitive name of an entity
-        :param str application_or_base_name: case insensitive name to lookup
-        :raises ValueError: If attribute does not.
-        :return ods.Model.Attribute: The found attribute.
+        Args:
+            entity_or_name: Entity or case insensitive name of an entity.
+            application_or_base_name: Case insensitive name to lookup.
+
+        Returns:
+            The found attribute.
+
+        Raises:
+            ValueError: If attribute does not exist.
         """
         entity = self.__entity(entity_or_name)
         attribute = self.attribute_no_throw(entity, application_or_base_name)
@@ -149,10 +181,15 @@ class ModelCache:
         """
         Get the attribute by base name.
 
-        :param str | ods.Model.Entity entity_or_name: entity object or case sensitive application name to lookup
-        :param str attribute_base_name: case insensitive name of the base model element.
-        :raises ValueError: If the attribute does not exist.
-        :return ods.Model.Attribute: Corresponding attribute.
+        Args:
+            entity_or_name: Entity object or case sensitive application name to lookup.
+            attribute_base_name: Case insensitive name of the base model element.
+
+        Returns:
+            Corresponding attribute.
+
+        Raises:
+            ValueError: If the attribute does not exist.
         """
         entity = self.__entity(entity_or_name)
         attributes = entity.attributes
@@ -172,10 +209,15 @@ class ModelCache:
         a relation with the given application name and afterwards check for a
         relation with the given base name.
 
-        :param str | ods.Model.Entity entity_or_name: entity or case insensitive name of an entity
-        :param str application_or_base_name: case insensitive name to lookup
-        :raises ValueError: If entity does not exist.
-        :return ods.Model.Relation | None: The relation or None if it does not exist.
+        Args:
+            entity_or_name: Entity or case insensitive name of an entity.
+            application_or_base_name: Case insensitive name to lookup.
+
+        Returns:
+            The relation or None if it does not exist.
+
+        Raises:
+            ValueError: If entity does not exist.
         """
         entity = self.__entity(entity_or_name)
         relation = entity.relations.get(application_or_base_name)
@@ -194,10 +236,15 @@ class ModelCache:
         a relation with the given application name and afterwards check for a
         relation with the given base name.
 
-        :param str | ods.Model.Entity entity_or_name: entity or case insensitive name of an entity
-        :param str application_or_base_name: case insensitive name to lookup
-        :raises ValueError: If relation does not exist.
-        :return ods.Model.Relation: The found relation.
+        Args:
+            entity_or_name: Entity or case insensitive name of an entity.
+            application_or_base_name: Case insensitive name to lookup.
+
+        Returns:
+            The found relation.
+
+        Raises:
+            ValueError: If relation does not exist.
         """
         entity = self.__entity(entity_or_name)
         relation = self.relation_no_throw(entity, application_or_base_name)
@@ -214,10 +261,15 @@ class ModelCache:
         """
         Get the relation by base name.
 
-        :param str | ods.Model.Entity entity_or_name: entity object or case sensitive application name to lookup
-        :param str relation_base_name: case insensitive name of the base model element.
-        :raises ValueError: If the relation does not exist.
-        :return ods.Model.Relation: Corresponding relation.
+        Args:
+            entity_or_name: Entity object or case sensitive application name to lookup.
+            relation_base_name: Case insensitive name of the base model element.
+
+        Returns:
+            Corresponding relation.
+
+        Raises:
+            ValueError: If the relation does not exist.
         """
         entity = self.__entity(entity_or_name)
         relations = entity.relations
@@ -233,9 +285,14 @@ class ModelCache:
         """
         Get enumeration by its name.
 
-        :param str enumeration_name: case insensitive name of the application model enumeration.
-        :raises ValueError: If the enumeration does not exist.
-        :return ods.Model.Enumeration: Corresponding enumeration.
+        Args:
+            enumeration_name: Case insensitive name of the application model enumeration.
+
+        Returns:
+            Corresponding enumeration.
+
+        Raises:
+            ValueError: If the enumeration does not exist.
         """
         enumeration = self.__model.enumerations.get(enumeration_name)
         if enumeration is not None:
@@ -250,10 +307,15 @@ class ModelCache:
         """
         Convert an enumeration value into its string representation.
 
-        :param str | ods.Model.Enumeration enumeration_or_name: ods enumeration or its case insensitive name
-        :param int lookup_value: integer value to check
-        :raises ValueError: If the enumeration does not exist or does not contain value.
-        :return str: String representation of int value.
+        Args:
+            enumeration_or_name: ODS enumeration or its case insensitive name.
+            lookup_value: Integer value to check.
+
+        Returns:
+            String representation of int value.
+
+        Raises:
+            ValueError: If the enumeration does not exist or does not contain value.
         """
         enumeration = self.__enumeration(enumeration_or_name)
         for key, value in enumeration.items.items():
@@ -265,10 +327,15 @@ class ModelCache:
         """
         Convert an enumeration integer value into its string representation.
 
-        :param str | ods.Model.Enumeration enumeration_or_name: ods enumeration or its case insensitive name
-        :param str lookup_key: case insensitive string key value to check
-        :raises ValueError: If the enumeration does not exist or does not contain the key.
-        :return str: Int representation of string value.
+        Args:
+            enumeration_or_name: ODS enumeration or its case insensitive name.
+            lookup_key: Case insensitive string key value to check.
+
+        Returns:
+            Int representation of string value.
+
+        Raises:
+            ValueError: If the enumeration does not exist or does not contain the key.
         """
         enumeration = self.__enumeration(enumeration_or_name)
         if lookup_key in enumeration.items:

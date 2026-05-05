@@ -1,24 +1,19 @@
 version: 2
 updates:
-- package-ecosystem: pip
-  directory: "/"
-  schedule:
-    interval: daily
-    time: "13:00"
-  open-pull-requests-limit: 10
-  reviewers:
-  - dciborow
-  allow:
-  - dependency-type: direct
-  - dependency-type: indirect
-  commit-message:
-    prefix: "fix: "
-  target-branch: dev
-- package-ecosystem: "github-actions"
-  directory: "/"
-  schedule:
-    interval: daily
-    time: "13:00"
-  commit-message:
-    prefix: "fix: "
-  target-branch: dev
+  - package-ecosystem: "uv"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "fix: "
+    groups:
+      dev-dependencies:
+        dependency-type: "development"
+      dependencies:
+        dependency-type: "production"
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "ci: "

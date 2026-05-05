@@ -8,6 +8,7 @@ from odsbox.bulk_reader import BulkReader
 
 if TYPE_CHECKING:
     import pandas as pd
+
     from .con_i import ConI
 
 
@@ -22,13 +23,15 @@ def submatrix_to_pandas(
 
     Remark: Use ConI.bulk.data_read instead. Stays because of compatibility reasons.
 
-    :param ConI con_i: ASAM ODS server session.
-    :param int submatrix_iid: id of a submatrix to be retrieved.
-    :param bool date_as_timestamp: columns of type DT_DATE or DS_DATE are returned as string.
-                                   If this is set to True the strings are converted to pandas Timestamp.
-    :param bool set_independent_as_index: Whether to set the independent column as the index.
-    :return pd.DataFrame: A pandas DataFrame containing the values of the localcolumn as pandas columns.
-                          The name of the localcolumn is used as pandas column name. The flags are ignored.
+    Args:
+        con_i: ASAM ODS server session.
+        submatrix_iid: ID of a submatrix to be retrieved.
+        date_as_timestamp: If True, DT_DATE/DS_DATE strings are converted to pandas Timestamp.
+        set_independent_as_index: Whether to set the independent column as the index.
+
+    Returns:
+        A pandas DataFrame containing the values of the localcolumn as pandas columns.
+        The name of the localcolumn is used as pandas column name. The flags are ignored.
     """
 
     return BulkReader(con_i).data_read(

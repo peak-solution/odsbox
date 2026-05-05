@@ -47,9 +47,10 @@ from __future__ import annotations
 import os
 import threading
 import time
+from collections.abc import Generator
 from contextlib import contextmanager
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from typing import Any, Generator
+from typing import Any
 from urllib.parse import urlparse
 
 import requests
@@ -105,13 +106,18 @@ def _discover_endpoints(ods_base_url: str, webfinger_path_prefix: str = "", *, v
     """
     Discover OIDC authorization and token endpoints via ASAM ODS WebFinger.
 
-    :param str ods_base_url: Base URL of the ODS server (e.g. ``https://host:port/api``).
-    :param str webfinger_path_prefix: Path prefix for WebFinger endpoint (default: empty string).
-        This is used to support servers that host WebFinger at a different path, than specified
-        by the ASAM ODS standard. e.g. use ``/ods`` for ``<ods_base_url>/ods/.well-known/webfinger``.
-    :param bool verify: Whether to verify TLS certificates for discovery requests (default: True).
-    :raises ValueError: If discovery fails at any step.
-    :return tuple[str, str]: Tuple of (authorization_endpoint, token_endpoint).
+    Args:
+        ods_base_url: Base URL of the ODS server (e.g. ``https://host:port/api``).
+        webfinger_path_prefix: Path prefix for WebFinger endpoint (default: empty string).
+            This is used to support servers that host WebFinger at a different path, than specified
+            by the ASAM ODS standard. e.g. use ``/ods`` for ``<ods_base_url>/ods/.well-known/webfinger``.
+        verify: Whether to verify TLS certificates for discovery requests (default: True).
+
+    Returns:
+        Tuple of (authorization_endpoint, token_endpoint).
+
+    Raises:
+        ValueError: If discovery fails at any step.
     """
     web_finger_url = PreparedRequest()
     web_finger_url.prepare_url(
@@ -179,13 +185,16 @@ class ConIFactory:
 
         Use this method for direct username/password authentication to an ODS server.
 
-        :param str url: ODS server base URL (e.g., ``https://server.com:8443/api``).
-        :param str username: Login username.
-        :param str password: Login password.
-        :param bool verify_certificate: Whether to verify the server TLS certificate (default: True).
-            Set to False for development with self-signed certificates.
-        :param kwargs: Additional keyword arguments passed to ConI (e.g., timeout, headers).
-        :return: An opened ``ConI`` connection instance ready for use.
+        Args:
+            url: ODS server base URL (e.g., ``https://server.com:8443/api``).
+            username: Login username.
+            password: Login password.
+            verify_certificate: Whether to verify the server TLS certificate (default: True).
+                Set to False for development with self-signed certificates.
+            **kwargs: Additional keyword arguments passed to ConI (e.g., timeout, headers).
+
+        Returns:
+            An opened ``ConI`` connection instance ready for use.
 
         Example::
 
@@ -237,15 +246,18 @@ class ConIFactory:
         authenticates directly with the OAuth2 token endpoint using a client ID
         and secret, without user interaction.
 
-        :param str url: ODS server base URL (e.g., ``https://server.com:8013/api``).
-        :param str token_endpoint: OAuth2 token endpoint URL (e.g., ``https://auth.com/oauth2/token``).
-        :param str client_id: OAuth2 client ID.
-        :param str client_secret: OAuth2 client secret. Should be retrieved from secure storage.
-        :param list[str] | None scope: OAuth2 scopes as a list. Defaults to ``["machine2machine"]``.
-        :param bool verify_certificate: Whether to verify the server TLS certificate (default: True).
-            Set to False for development with self-signed certificates.
-        :param kwargs: Additional keyword arguments passed to ConI (e.g., timeout, headers).
-        :return: An opened ``ConI`` connection instance ready for use.
+        Args:
+            url: ODS server base URL (e.g., ``https://server.com:8013/api``).
+            token_endpoint: OAuth2 token endpoint URL (e.g., ``https://auth.com/oauth2/token``).
+            client_id: OAuth2 client ID.
+            client_secret: OAuth2 client secret. Should be retrieved from secure storage.
+            scope: OAuth2 scopes as a list. Defaults to ``["machine2machine"]``.
+            verify_certificate: Whether to verify the server TLS certificate (default: True).
+                Set to False for development with self-signed certificates.
+            **kwargs: Additional keyword arguments passed to ConI (e.g., timeout, headers).
+
+        Returns:
+            An opened ``ConI`` connection instance ready for use.
 
         Example::
 
@@ -317,28 +329,33 @@ class ConIFactory:
         If ``authorization_endpoint`` and ``token_endpoint`` are not provided,
         they are discovered automatically via the ASAM ODS WebFinger protocol.
 
-        :param str url: ODS server base URL (e.g., ``https://server.com:8015/api``).
-        :param str client_id: OAuth2 client ID.
-        :param str redirect_uri: Local redirect URI for the OIDC callback
-            (e.g., ``http://127.0.0.1:1234``).
-        :param bool redirect_url_allow_insecure: Allow HTTP (insecure) redirect URIs for
-            local development (default: False). Set to True for development
-            with local ``localhost`` redirects.
-        :param str | None client_secret: OAuth2 client secret (optional).
-        :param list[str] | None scope: OAuth2 scopes as a list. Defaults to ``["openid", "profile"]``.
-        :param str | None authorization_endpoint: OIDC authorization endpoint. If not provided,
-            automatically discovered via WebFinger.
-        :param str | None token_endpoint: OIDC token endpoint. If not provided, automatically
-            discovered via WebFinger.
-        :param int login_timeout: Seconds to wait for the user to complete login (default: 60).
-        :param bool verify_certificate: Whether to verify the server TLS certificate
-            (default: True). Set to False for development with self-signed certificates.
-        :param str webfinger_path_prefix: Path prefix for WebFinger endpoint. Use if the
-            server hosts WebFinger at a non-standard path (e.g., ``/ods`` for
-            ``<url>/ods/.well-known/webfinger``).
-        :param kwargs: Additional keyword arguments passed to ConI (e.g., timeout, headers).
-        :raises ValueError: On discovery failure, invalid redirect URI, or login timeout.
-        :return: An opened ``ConI`` connection instance ready for use.
+        Args:
+            url: ODS server base URL (e.g., ``https://server.com:8015/api``).
+            client_id: OAuth2 client ID.
+            redirect_uri: Local redirect URI for the OIDC callback
+                (e.g., ``http://127.0.0.1:1234``).
+            redirect_url_allow_insecure: Allow HTTP (insecure) redirect URIs for
+                local development (default: False). Set to True for development
+                with local ``localhost`` redirects.
+            client_secret: OAuth2 client secret (optional).
+            scope: OAuth2 scopes as a list. Defaults to ``["openid", "profile"]``.
+            authorization_endpoint: OIDC authorization endpoint. If not provided,
+                automatically discovered via WebFinger.
+            token_endpoint: OIDC token endpoint. If not provided, automatically
+                discovered via WebFinger.
+            login_timeout: Seconds to wait for the user to complete login (default: 60).
+            verify_certificate: Whether to verify the server TLS certificate
+                (default: True). Set to False for development with self-signed certificates.
+            webfinger_path_prefix: Path prefix for WebFinger endpoint. Use if the
+                server hosts WebFinger at a non-standard path (e.g., ``/ods`` for
+                ``<url>/ods/.well-known/webfinger``).
+            **kwargs: Additional keyword arguments passed to ConI (e.g., timeout, headers).
+
+        Returns:
+            An opened ``ConI`` connection instance ready for use.
+
+        Raises:
+            ValueError: On discovery failure, invalid redirect URI, or login timeout.
 
         Example - With automatic endpoint discovery::
 

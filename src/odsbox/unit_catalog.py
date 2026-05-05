@@ -34,8 +34,11 @@ class UnitCatalog:
         """
         Get a unit by its case sensitive name.
 
-        :param str unit_name: Case sensitive name of an unit.
-        :return int | None: The unit id if the unit exists. Else `None` is returned.
+        Args:
+            unit_name: Case sensitive name of a unit.
+
+        Returns:
+            The unit id if the unit exists, else `None` is returned.
         """
         if unit_name is None or "" == unit_name:
             return self.get("-")
@@ -45,8 +48,11 @@ class UnitCatalog:
         """
         Get a unit by its case sensitive name or create one using an unknown physical dimension.
 
-        :param str unit_name: Case sensitive name of an unit.
-        :return int: The unit id if the unit exists.
+        Args:
+            unit_name: Case sensitive name of a unit.
+
+        Returns:
+            The unit id if the unit exists.
         """
         if unit_name is None or "" == unit_name:
             # Unit is obligatory
@@ -62,8 +68,11 @@ class UnitCatalog:
         """
         Create a unit by its case sensitive name using an unknown physical dimension.
 
-        :param str unit_name: Case sensitive name of an unit.
-        :return int: The unit id if the unit exists.
+        Args:
+            unit_name: Case sensitive name of a unit.
+
+        Returns:
+            The unit id of the created unit.
         """
         physical_dimension_id = self.__get_or_create_unknown_physical_dimension()
         unit_id = self.__create_auto_unit(unit_name, physical_dimension_id)
@@ -81,7 +90,7 @@ class UnitCatalog:
             {"AoPhysicalDimension": {"name": name}, "$attributes": {"id": 1}}
         )
         if existing_physical_dimension.shape[0] > 0:
-            physical_dimension_id = int(existing_physical_dimension.iloc[0, 0])  # type: ignore
+            physical_dimension_id = int(existing_physical_dimension.iloc[0, 0])  # type: ignore[arg-type]
             self.__log.debug(
                 "Physical dimension '%s' already exists. Using existing ID: %s",
                 name,

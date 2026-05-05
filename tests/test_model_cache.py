@@ -54,9 +54,15 @@ def test_base_name_access():
         mc.attribute_by_base_name("DoesNotExist", "id")
     with pytest.raises(ValueError, match="No entity named 'DoesNotExist' found."):
         mc.relation_by_base_name("DoesNotExist", "id")
-    with pytest.raises(ValueError, match="Entity 'LocalColumn' does not have attribute derived from 'DoesNotExist'."):
+    with pytest.raises(
+        ValueError,
+        match="Entity 'LocalColumn' does not have attribute derived from 'DoesNotExist'.",
+    ):
         mc.attribute_by_base_name("LocalColumn", "DoesNotExist")
-    with pytest.raises(ValueError, match="Entity 'LocalColumn' does not have relation derived from 'DoesNotExist'."):
+    with pytest.raises(
+        ValueError,
+        match="Entity 'LocalColumn' does not have relation derived from 'DoesNotExist'.",
+    ):
         mc.relation_by_base_name("LocalColumn", "DoesNotExist")
 
 
@@ -88,22 +94,22 @@ def test_entity_by_aid():
 def test_attribute_no_throw():
     mc = ModelCache(__get_model("application_model.json"))
     entity = mc.entity("MeaResult")
-    assert "StorageType" == mc.attribute_no_throw(entity, "StorageType").name  # type: ignore
-    assert "StorageType" == mc.attribute_no_throw(entity, "STORAGETYPE").name  # type: ignore
-    assert "StorageType" == mc.attribute_no_throw(entity, "ao_storagetype").name  # type: ignore
-    assert "StorageType" == mc.attribute_no_throw(entity, "ao_storagetype").name  # type: ignore
+    assert "StorageType" == mc.attribute_no_throw(entity, "StorageType").name
+    assert "StorageType" == mc.attribute_no_throw(entity, "STORAGETYPE").name
+    assert "StorageType" == mc.attribute_no_throw(entity, "ao_storagetype").name
+    assert "StorageType" == mc.attribute_no_throw(entity, "ao_storagetype").name
     assert mc.attribute_no_throw(entity, "DoesNotExist") is None
 
-    assert "StorageType" == mc.attribute_no_throw("MeaResult", "StorageType").name  # type: ignore
-    assert "StorageType" == mc.attribute_no_throw("MeaResult", "STORAGETYPE").name  # type: ignore
-    assert "StorageType" == mc.attribute_no_throw("MeaResult", "ao_storagetype").name  # type: ignore
-    assert "StorageType" == mc.attribute_no_throw("MeaResult", "ao_storagetype").name  # type: ignore
+    assert "StorageType" == mc.attribute_no_throw("MeaResult", "StorageType").name
+    assert "StorageType" == mc.attribute_no_throw("MeaResult", "STORAGETYPE").name
+    assert "StorageType" == mc.attribute_no_throw("MeaResult", "ao_storagetype").name
+    assert "StorageType" == mc.attribute_no_throw("MeaResult", "ao_storagetype").name
     assert mc.attribute_no_throw("MeaResult", "DoesNotExist") is None
 
-    assert "StorageType" == mc.attribute_no_throw("MEARESULT", "StorageType").name  # type: ignore
-    assert "StorageType" == mc.attribute_no_throw("MEARESULT", "STORAGETYPE").name  # type: ignore
-    assert "StorageType" == mc.attribute_no_throw("MEARESULT", "ao_storagetype").name  # type: ignore
-    assert "StorageType" == mc.attribute_no_throw("MEARESULT", "ao_storagetype").name  # type: ignore
+    assert "StorageType" == mc.attribute_no_throw("MEARESULT", "StorageType").name
+    assert "StorageType" == mc.attribute_no_throw("MEARESULT", "STORAGETYPE").name
+    assert "StorageType" == mc.attribute_no_throw("MEARESULT", "ao_storagetype").name
+    assert "StorageType" == mc.attribute_no_throw("MEARESULT", "ao_storagetype").name
     assert mc.attribute_no_throw("MEARESULT", "DoesNotExist") is None
 
 
@@ -125,15 +131,18 @@ def test_attribute():
     assert "StorageType" == mc.attribute("MEARESULT", "ao_storagetype").name
     assert "StorageType" == mc.attribute("MEARESULT", "ao_storagetype").name
     with pytest.raises(
-        ValueError, match="'MeaResult' has no attribute named 'DoesNotExist' as base or application name."
+        ValueError,
+        match="'MeaResult' has no attribute named 'DoesNotExist' as base or application name.",
     ):
         mc.attribute(entity, "DoesNotExist")
     with pytest.raises(
-        ValueError, match="'MeaResult' has no attribute named 'DoesNotExist' as base or application name."
+        ValueError,
+        match="'MeaResult' has no attribute named 'DoesNotExist' as base or application name.",
     ):
         mc.attribute("MeaResult", "DoesNotExist")
     with pytest.raises(
-        ValueError, match="'MeaResult' has no attribute named 'DoesNotExist' as base or application name."
+        ValueError,
+        match="'MeaResult' has no attribute named 'DoesNotExist' as base or application name.",
     ):
         mc.attribute("MEARESULT", "DoesNotExist")
 
@@ -141,16 +150,16 @@ def test_attribute():
 def test_relation_no_throw():
     mc = ModelCache(__get_model("application_model.json"))
     entity = mc.entity("MeaResult")
-    assert "TestStep" == mc.relation_no_throw(entity, "test").name  # type: ignore
-    assert "TestStep" == mc.relation_no_throw(entity, "TEST").name  # type: ignore
-    assert "TestStep" == mc.relation_no_throw(entity, "TestStep").name  # type: ignore
-    assert "TestStep" == mc.relation_no_throw(entity, "TESTSTEP").name  # type: ignore
+    assert "TestStep" == mc.relation_no_throw(entity, "test").name
+    assert "TestStep" == mc.relation_no_throw(entity, "TEST").name
+    assert "TestStep" == mc.relation_no_throw(entity, "TestStep").name
+    assert "TestStep" == mc.relation_no_throw(entity, "TESTSTEP").name
     assert mc.relation_no_throw(entity, "DoesNotExist") is None
 
-    assert "TestStep" == mc.relation_no_throw("MeaResult", "test").name  # type: ignore
-    assert "TestStep" == mc.relation_no_throw("MeaResult", "TEST").name  # type: ignore
-    assert "TestStep" == mc.relation_no_throw("MEARESULT", "TestStep").name  # type: ignore
-    assert "TestStep" == mc.relation_no_throw("MEARESULT", "TESTSTEP").name  # type: ignore
+    assert "TestStep" == mc.relation_no_throw("MeaResult", "test").name
+    assert "TestStep" == mc.relation_no_throw("MeaResult", "TEST").name
+    assert "TestStep" == mc.relation_no_throw("MEARESULT", "TestStep").name
+    assert "TestStep" == mc.relation_no_throw("MEARESULT", "TESTSTEP").name
     assert mc.relation_no_throw("MEARESULT", "DoesNotExist") is None
 
 
@@ -168,11 +177,13 @@ def test_relation():
     assert "TestStep" == mc.relation("MEARESULT", "TESTSTEP").name
 
     with pytest.raises(
-        ValueError, match="'MeaResult' has no relation named 'DoesNotExist' as base or application name."
+        ValueError,
+        match="'MeaResult' has no relation named 'DoesNotExist' as base or application name.",
     ):
         mc.relation(entity, "DoesNotExist")
     with pytest.raises(
-        ValueError, match="'MeaResult' has no relation named 'DoesNotExist' as base or application name."
+        ValueError,
+        match="'MeaResult' has no relation named 'DoesNotExist' as base or application name.",
     ):
         mc.relation("MEARESULT", "DoesNotExist")
 
@@ -287,7 +298,10 @@ def test_enum_value_suggestion_in_error():
     mc = ModelCache(__get_model("application_model.json"))
     datatype_enum = mc.enumeration("datatype_enum")
     # Test suggestion for typo close to "DT_FLOAT"
-    with pytest.raises(ValueError, match="Enumeration 'datatype_enum' does not contain the key 'DT_FLAOT'"):
+    with pytest.raises(
+        ValueError,
+        match="Enumeration 'datatype_enum' does not contain the key 'DT_FLAOT'",
+    ):
         mc.enumeration_key_to_value(datatype_enum, "DT_FLAOT")
     # Test that error message includes suggestion
     with pytest.raises(ValueError, match="Did you mean"):

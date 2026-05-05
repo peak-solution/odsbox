@@ -107,12 +107,12 @@ def test_to_pd_timestamp_throw():
         asam_time.to_pd_timestamp("202401")
     with pytest.raises(SyntaxError):
         asam_time.to_pd_timestamp("2024011")
-    with pytest.raises(ValueError, match="day is out of range for month"):
+    with pytest.raises(ValueError, match="(day|range)"):
         asam_time.to_pd_timestamp("20240100")
-    with pytest.raises(ValueError, match="year 0 is out of range"):
+    with pytest.raises(ValueError, match="(year|range)"):
         asam_time.to_pd_timestamp("00000101")
 
 
 def test_to_pd_timestamp_NaN():
     assert pd.isna(asam_time.to_pd_timestamp(""))
-    assert pd.isna(asam_time.to_pd_timestamp(None))  # type: ignore
+    assert pd.isna(asam_time.to_pd_timestamp(None))

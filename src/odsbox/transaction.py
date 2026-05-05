@@ -47,7 +47,8 @@ class Transaction:
                     # do some work
                     transaction.commit()
 
-        :param con_i: ConI instance to start the transaction on
+        Args:
+            con_i: ConI instance to start the transaction on.
         """
 
         con_i.transaction_create()
