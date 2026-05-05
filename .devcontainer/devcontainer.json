@@ -29,5 +29,5 @@
 			}
 		}
 	},
-	"onCreateCommand": "pip install uv && uv sync --all-groups"
+	"onCreateCommand": "pip install uv && uv sync --all-groups && uv run pre-commit install"
 }

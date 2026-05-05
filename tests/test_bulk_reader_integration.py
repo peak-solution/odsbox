@@ -12,7 +12,11 @@ from odsbox.con_i import ConI
 
 def __create_con_i(load_model: bool = True) -> ConI:
     """Create a connection session for an ASAM ODS server"""
-    return ConI("https://docker.peak-solution.de:10032/api", ("Demo", "mdm"), load_model=load_model)
+    return ConI(
+        "https://docker.peak-solution.de:10032/api",
+        ("Demo", "mdm"),
+        load_model=load_model,
+    )
 
 
 @pytest.mark.integration
@@ -29,7 +33,7 @@ def test_bulk_reader_simple():
         logging.getLogger().info(sm_s.shape)
         assert sm_s.shape[0] <= 1
         if 1 == sm_s.shape[0]:
-            submatrix_id = int(sm_s.iloc[0, 0])  # type: ignore
+            submatrix_id = int(sm_s.iloc[0, 0])
 
             df1 = con_i.bulk.data_read(submatrix_id, ["Time", "Coolant"], set_independent_as_index=False)
             assert df1.empty is False
@@ -43,16 +47,35 @@ def test_bulk_reader_simple():
             assert df1.attrs["unit_names"] == {"Time": "s", "Coolant": "°C"}
 
             pd.testing.assert_frame_equal(
-                df1, con_i.bulk.data_read(submatrix_id, ["time", "coolant"], True, set_independent_as_index=False)
+                df1,
+                con_i.bulk.data_read(
+                    submatrix_id,
+                    ["time", "coolant"],
+                    True,
+                    set_independent_as_index=False,
+                ),
             )
             pd.testing.assert_frame_equal(
-                df1, con_i.bulk.data_read(submatrix_id, ["Tim*", "Coola*"], False, set_independent_as_index=False)
+                df1,
+                con_i.bulk.data_read(
+                    submatrix_id,
+                    ["Tim*", "Coola*"],
+                    False,
+                    set_independent_as_index=False,
+                ),
             )
             pd.testing.assert_frame_equal(
-                df1, con_i.bulk.data_read(submatrix_id, ["tim*", "coola*"], True, set_independent_as_index=False)
+                df1,
+                con_i.bulk.data_read(
+                    submatrix_id,
+                    ["tim*", "coola*"],
+                    True,
+                    set_independent_as_index=False,
+                ),
             )
             pd.testing.assert_frame_equal(
-                df1.set_index("Time"), con_i.bulk.data_read(submatrix_id, ["t?me", "coola?t"], True)
+                df1.set_index("Time"),
+                con_i.bulk.data_read(submatrix_id, ["t?me", "coola?t"], True),
             )
 
 
@@ -92,7 +115,10 @@ def test_bulk_reader_with_unit_names():
                     "id": 1,
                     "test": {
                         "name": 1,
-                        "parent_test": {"name": 1, "parent_test": {"name": 1, "parent_test": {"name": 1}}},
+                        "parent_test": {
+                            "name": 1,
+                            "parent_test": {"name": 1, "parent_test": {"name": 1}},
+                        },
                     },
                 },
             }
@@ -103,7 +129,10 @@ def test_bulk_reader_with_unit_names():
         assert mea_title == "ElectricMotorTemperature - Campaign_05 - Profile_62"
 
         submatrices = con_i.query(
-            {"AoSubMatrix": {"measurement": mea_dict["MeaResult.Id"]}, "$attributes": {"id": 1, "number_of_rows": 1}}
+            {
+                "AoSubMatrix": {"measurement": mea_dict["MeaResult.Id"]},
+                "$attributes": {"id": 1, "number_of_rows": 1},
+            }
         )
 
         mea_bulk = con_i.bulk.data_read(submatrices["id"].iloc[0])

@@ -10,7 +10,10 @@ import numpy as np
 import pandas as pd
 
 from odsbox.datamatrices_to_pandas import extract_column_unit_ids, to_pandas
-from odsbox.proto.ods_pb2 import DataMatrices, ValueMatrixRequestStruct  # pylint: disable=E0611
+from odsbox.proto.ods_pb2 import (
+    DataMatrices,
+    ValueMatrixRequestStruct,
+)  # pylint: disable=E0611
 
 if TYPE_CHECKING:
     from .con_i import ConI
@@ -147,7 +150,7 @@ class BulkReader:
             ]:
                 if calculate_raw:
                     generation_parameters = r.get("generation_parameters")
-                    if isinstance(generation_parameters, (list, tuple)) and len(generation_parameters) >= 2:
+                    if isinstance(generation_parameters, list | tuple) and len(generation_parameters) >= 2:
                         p1 = generation_parameters[0]
                         p2 = generation_parameters[1]
                         double_vals = np.array(vals, dtype=float)
@@ -160,7 +163,7 @@ class BulkReader:
             ]:
                 if calculate_raw:
                     generation_parameters = r.get("generation_parameters")
-                    if isinstance(generation_parameters, (list, tuple)) and len(generation_parameters) >= 3:
+                    if isinstance(generation_parameters, list | tuple) and len(generation_parameters) >= 3:
                         p1 = generation_parameters[0]
                         p2 = generation_parameters[1]
                         p3 = generation_parameters[2]
@@ -174,7 +177,7 @@ class BulkReader:
             ]:
                 if calculate_raw:
                     generation_parameters = r.get("generation_parameters")
-                    if isinstance(generation_parameters, (list, tuple)) and len(generation_parameters) >= 3:
+                    if isinstance(generation_parameters, list | tuple) and len(generation_parameters) >= 6:
                         p1 = generation_parameters[0]
                         p2 = generation_parameters[1]
                         p3 = generation_parameters[2]
@@ -287,7 +290,9 @@ class BulkReader:
         )
         unit_names = self._extract_unit_names(localcolumn_bulk_dms)
         localcolumn_bulk_df = to_pandas(
-            localcolumn_bulk_dms, date_as_timestamp=date_as_timestamp, prefer_np_array_for_unknown=True
+            localcolumn_bulk_dms,
+            date_as_timestamp=date_as_timestamp,
+            prefer_np_array_for_unknown=True,
         )
         del localcolumn_bulk_dms  # free memory
         localcolumn_bulk_df.columns = [attr for attr in attributes]
@@ -430,7 +435,11 @@ class BulkReader:
             )
         )
         unit_names = self._extract_unit_names(raw_dms)
-        df = to_pandas(raw_dms, date_as_timestamp=date_as_timestamp, prefer_np_array_for_unknown=True)
+        df = to_pandas(
+            raw_dms,
+            date_as_timestamp=date_as_timestamp,
+            prefer_np_array_for_unknown=True,
+        )
         del raw_dms  # free memory
         df.columns = ["name", "values"]
         rv = pd.DataFrame({name: values for name, values in zip(df["name"].values, df["values"].values)})
@@ -486,8 +495,8 @@ class BulkReader:
         if not column_patterns:
             return
 
-        inset_names = []
-        like_names = []
+        inset_names: list[str] = []
+        like_names: list[str] = []
         for p in column_patterns:
             if not p or p == "*":
                 continue
@@ -501,11 +510,11 @@ class BulkReader:
 
         opt = {"$options": "i"} if column_patterns_case_insensitive else {}
 
-        clauses = []
+        clauses: list[dict[str, Any]] = []
         if inset_names:
             clauses.append({"name": {"$in": inset_names, **opt}})
-        for pattern in like_names:
-            clauses.append({"name": {"$like": pattern, **opt}})
+        for like_name in like_names:
+            clauses.append({"name": {"$like": like_name, **opt}})
 
         if len(clauses) == 1:
             conditions.update(clauses[0])

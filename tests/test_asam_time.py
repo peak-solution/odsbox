@@ -115,4 +115,4 @@ def test_to_pd_timestamp_throw():
 
 def test_to_pd_timestamp_NaN():
     assert pd.isna(asam_time.to_pd_timestamp(""))
-    assert pd.isna(asam_time.to_pd_timestamp(None))  # type: ignore
+    assert pd.isna(asam_time.to_pd_timestamp(None))
