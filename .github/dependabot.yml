@@ -4,6 +4,7 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    target-branch: "dev"
     commit-message:
       prefix: "fix: "
     groups:
@@ -15,5 +16,6 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    target-branch: "dev"
     commit-message:
       prefix: "ci: "
