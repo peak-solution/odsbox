@@ -2,6 +2,25 @@
 
 <!-- version list -->
 
+## v1.4.1 (2026-05-07)
+
+### Bug Fixes
+
+- Bump mypy from 1.20.2 to 2.0.0 in the dev-dependencies group
+  ([#252](https://github.com/peak-solution/odsbox/pull/252),
+  [`33e3b41`](https://github.com/peak-solution/odsbox/commit/33e3b416f35edc0b4970d672b0db813ff9e3211e))
+
+### Documentation
+
+- Google-site-verification is missing in new schema
+  ([#252](https://github.com/peak-solution/odsbox/pull/252),
+  [`33e3b41`](https://github.com/peak-solution/odsbox/commit/33e3b416f35edc0b4970d672b0db813ff9e3211e))
+
+- Make sure documentation contains correct documentation
+  ([#252](https://github.com/peak-solution/odsbox/pull/252),
+  [`33e3b41`](https://github.com/peak-solution/odsbox/commit/33e3b416f35edc0b4970d672b0db813ff9e3211e))
+
+
 ## v1.4.0 (2026-05-05)
 
 ### Features

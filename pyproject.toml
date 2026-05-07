@@ -1,6 +1,6 @@
 [project]
 name = "odsbox"
-version = "1.4.0"
+version = "1.4.1"
 authors = [{ name = "Andreas Krantz", email = "a.krantz@peak-solution.de" }]
 description = "Toolbox for accessing ASAM ODS servers using the HTTP API"
 license = "MIT"
