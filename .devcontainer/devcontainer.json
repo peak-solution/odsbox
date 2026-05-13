@@ -15,6 +15,8 @@
 			],
 			"settings": {
 				"python.defaultInterpreterPath": "/usr/local/bin/python",
+				"files.insertFinalNewline": true,
+				"files.trimFinalNewlines": false,
 				"editor.formatOnSave": true,
 				"[python]": {
 					"editor.defaultFormatter": "charliermarsh.ruff"
@@ -22,5 +24,5 @@
 			}
 		}
 	},
-	"onCreateCommand": "pip install uv && uv sync --all-groups"
+	"onCreateCommand": "pip install uv && uv sync --all-groups --all-extras"
 }
