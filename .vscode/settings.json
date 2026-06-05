@@ -1,6 +1,8 @@
 {
     "editor.formatOnSave": true,
     "editor.formatOnPaste": true,
+    "files.insertFinalNewline": true,
+    "files.trimFinalNewlines": false,
     "files.trimTrailingWhitespace": true,
     "files.autoSave": "onFocusChange",
     "git.autofetch": true,
