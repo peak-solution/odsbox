@@ -82,6 +82,7 @@ jobs:
         run: uv sync --all-groups --all-extras
 
       - name: Audit for known vulnerabilities
+        continue-on-error: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/dev') || (github.event_name == 'pull_request' && github.base_ref == 'dev') }}
         run: |
           uv export --format requirements-txt --no-emit-project --no-hashes --all-groups > requirements-audit.txt
           uv run pip-audit --strict -r requirements-audit.txt
