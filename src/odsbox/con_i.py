@@ -34,6 +34,17 @@ from odsbox.security import Security
 from odsbox.transaction import Transaction
 
 
+class PartialResultError(RuntimeError):
+    """
+    Raised when the ASAM ODS server reports that a response was truncated.
+
+    The server sets ``DataMatrices.partial_result`` when its maximum response size was
+    exceeded and it could not return all data matching the request in a single call.
+    Retry with ``values_start``/``row_start`` (``$seqskip``/``$rowskip`` in JAQueL)
+    advanced past the data already received to fetch the remainder.
+    """
+
+
 class ConI:
     """
     This is a helper to hold an ASAM ODS HTTP API ConI session.
@@ -290,6 +301,8 @@ class ConI:
 
         Raises:
             requests.HTTPError: If query fails.
+            PartialResultError: If the server could not return all data matching the
+                request in this response (see ``DataMatrices.partial_result``).
         """
         if result_naming_mode not in ("query", "model"):
             raise ValueError(f"result_naming_mode must be 'query' or 'model', got '{result_naming_mode}'")
@@ -341,6 +354,8 @@ class ConI:
 
         Raises:
             requests.HTTPError: If query fails.
+            PartialResultError: If the server could not return all data matching the
+                request in this response (see ``DataMatrices.partial_result``).
         """
         if result_naming_mode not in ("query", "model"):
             raise ValueError(f"result_naming_mode must be 'query' or 'model', got '{result_naming_mode}'")
@@ -387,6 +402,8 @@ class ConI:
 
         Raises:
             requests.HTTPError: If query fails.
+            PartialResultError: If the server could not return all data matching the
+                request in this response (see ``DataMatrices.partial_result``).
         """
         jaquel = Jaquel(self.model(), query)
         return self.data_read(jaquel.select_statement)
@@ -404,12 +421,15 @@ class ConI:
 
         Raises:
             requests.HTTPError: If query fails.
+            PartialResultError: If the server could not return all data matching the
+                request in this response (see ``DataMatrices.partial_result``).
         """
         if not isinstance(select_statement, ods.SelectStatement):
             raise TypeError(f"data_read expects 'ods.SelectStatement', got '{type(select_statement).__name__}'")
         response = self.ods_post_request("data-read", select_statement)
         return_value = ods.DataMatrices()
         return_value.ParseFromString(response.content)
+        ConI._check_partial_result(return_value)
         return return_value
 
     def data_create(self, data: ods.DataMatrices) -> list[int]:
@@ -580,12 +600,15 @@ class ConI:
 
         Raises:
             requests.HTTPError: If ValueMatrix access fails.
+            PartialResultError: If the server could not return all data matching the
+                request in this response (see ``DataMatrices.partial_result``).
         """
         if not isinstance(request, ods.ValueMatrixRequestStruct):
             raise TypeError(f"valuematrix_read expects 'ods.ValueMatrixRequestStruct', got '{type(request).__name__}'")
         response = self.ods_post_request("valuematrix-read", request)
         return_value = ods.DataMatrices()
         return_value.ParseFromString(response.content)
+        ConI._check_partial_result(return_value)
         return return_value
 
     def model_read(self) -> ods.Model:
@@ -972,6 +995,15 @@ class ConI:
                     response=response,
                 )
             response.raise_for_status()
+
+    @staticmethod
+    def _check_partial_result(data_matrices: ods.DataMatrices) -> None:
+        if data_matrices.partial_result:
+            raise PartialResultError(
+                "Server returned a partial result: its maximum response size was exceeded and not "
+                "all data matching the request was returned. Retry with 'values_start'/'row_start' "
+                "('$seqskip'/'$rowskip' in JAQueL) advanced past the data already received."
+            )
 
     @property
     def mc(self) -> ModelCache:
