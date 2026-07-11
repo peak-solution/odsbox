@@ -244,8 +244,6 @@ class BulkReader:
 
         Raises:
             requests.HTTPError: If access fails.
-            PartialResultError: If the server could not return all data matching the
-                request in this response (see ``DataMatrices.partial_result``).
         """
 
         lc_meta_df: pd.DataFrame = self.__con_i.query_data(
@@ -375,8 +373,6 @@ class BulkReader:
 
         Raises:
             requests.HTTPError: If access fails.
-            PartialResultError: If the server could not return all data matching the
-                request in this response (see ``DataMatrices.partial_result``).
         """
 
         conditions = {"submatrix": submatrix_iid}
@@ -439,8 +435,6 @@ class BulkReader:
 
         Raises:
             requests.HTTPError: If access fails.
-            PartialResultError: If the server could not return all data matching the
-                request in this response (see ``DataMatrices.partial_result``).
         """
         sm_e = self.__con_i.mc.entity_by_base_name("AoSubmatrix")
         lc_e = self.__con_i.mc.entity_by_base_name("AoLocalColumn")
