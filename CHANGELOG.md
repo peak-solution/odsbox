@@ -2,6 +2,48 @@
 
 <!-- version list -->
 
+## v1.5.0 (2026-07-17)
+
+### Bug Fixes
+
+- Move partial_result handling to pandas conversion
+  ([#269](https://github.com/peak-solution/odsbox/pull/269),
+  [`05d38c7`](https://github.com/peak-solution/odsbox/commit/05d38c7aee42cf54481ea9f0ef0f4a1de74059cb))
+
+- Move partial_result handling to pandas conversion
+  ([#266](https://github.com/peak-solution/odsbox/pull/266),
+  [`d990868`](https://github.com/peak-solution/odsbox/commit/d990868a837b5ae010d94a4073074fdc7fc3576f))
+
+- Raise PartialResultError when server truncates a response
+  ([#269](https://github.com/peak-solution/odsbox/pull/269),
+  [`05d38c7`](https://github.com/peak-solution/odsbox/commit/05d38c7aee42cf54481ea9f0ef0f4a1de74059cb))
+
+- Raise PartialResultError when server truncates a response
+  ([#266](https://github.com/peak-solution/odsbox/pull/266),
+  [`d990868`](https://github.com/peak-solution/odsbox/commit/d990868a837b5ae010d94a4073074fdc7fc3576f))
+
+### Continuous Integration
+
+- Bump actions/checkout from 6 to 7 ([#263](https://github.com/peak-solution/odsbox/pull/263),
+  [`dd3965d`](https://github.com/peak-solution/odsbox/commit/dd3965dff61054b02779a63bed57ccd163976204))
+
+- Bump astral-sh/setup-uv from 8.1.0 to 8.2.0
+  ([#257](https://github.com/peak-solution/odsbox/pull/257),
+  [`e632926`](https://github.com/peak-solution/odsbox/commit/e63292618c8538b9864bed4530636d5903086160))
+
+- Bump astral-sh/setup-uv from 8.2.0 to 8.3.2
+  ([#267](https://github.com/peak-solution/odsbox/pull/267),
+  [`9d2c2e5`](https://github.com/peak-solution/odsbox/commit/9d2c2e53c35adabb7e383a7c67c3058085f498b7))
+
+### Features
+
+- Add URL validation and construction for OIDC discovery and WebFinger endpoints
+  ([`69714c9`](https://github.com/peak-solution/odsbox/commit/69714c924bb07481af9fcae797bec05df084e3cb))
+
+- Implement partial result handling in bulk reader
+  ([`f71743d`](https://github.com/peak-solution/odsbox/commit/f71743d781eb069e45273e83d604a685375b688a))
+
+
 ## v1.4.1 (2026-05-07)
 
 ### Bug Fixes
