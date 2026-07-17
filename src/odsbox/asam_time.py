@@ -40,7 +40,7 @@ def to_pd_timestamp(asam_time: str | None) -> pd.Timestamp:
     asam_time_normalized = __normalize_datetime_string(asam_time)
     asam_time_len = len(asam_time_normalized)
 
-    return pd.Timestamp(
+    rv: pd.Timestamp = pd.Timestamp(
         year=int(asam_time_normalized[0:4]) if asam_time_len >= 4 else 0,
         month=int(asam_time_normalized[4:6]) if asam_time_len >= 6 else 1,
         day=int(asam_time_normalized[6:8]) if asam_time_len >= 8 else 1,
@@ -50,6 +50,7 @@ def to_pd_timestamp(asam_time: str | None) -> pd.Timestamp:
         microsecond=int(asam_time_normalized[14:20]) if asam_time_len >= 20 else 0,
         nanosecond=int(asam_time_normalized[20:23]) if asam_time_len >= 23 else 0,
     )
+    return rv
 
 
 def from_pd_timestamp(timestamp: pd.Timestamp | None, length: int = 17) -> str:
