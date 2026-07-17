@@ -19,10 +19,14 @@ class PartialResultError(RuntimeError):
     """
     Raised when the ASAM ODS server reports that a response was truncated.
 
-    The server sets ``DataMatrices.partial_result`` when its maximum response size was
-    exceeded and it could not return all data matching the request in a single call.
-    Retry with ``values_start``/``row_start`` (``$seqskip``/``$rowskip`` in JAQueL)
-    advanced past the data already received to fetch the remainder.
+    The server sets ``DataMatrices.partial_result`` when the requested amount of data
+    could not be delivered in a single response (typically because the server's maximum
+    response size was exceeded). ``partial_result`` therefore means "the requested
+    ``values_limit`` / ``row_limit`` could not be fully delivered". The remedy is to
+    reduce the requested limit (``values_limit`` / ``row_limit`` in the bulk reader,
+    ``$seqlimit`` / ``$rowlimit`` in JAQueL) and retry. A limit of ``0`` means "no
+    client-side limit" and is therefore the default configuration most likely to hit
+    the server-side maximum.
     """
 
 
@@ -279,6 +283,7 @@ def to_pandas(
     prefer_np_array_for_unknown: bool = False,
     is_null_to_nan: bool = False,
     jaquel_conversion_result: JaquelConversionResult | None = None,
+    *,
     raise_on_partial_result: bool = False,
 ) -> pd.DataFrame:
     """
@@ -319,9 +324,11 @@ def to_pandas(
     """
     if raise_on_partial_result and data_matrices.partial_result:
         raise PartialResultError(
-            "Server returned a partial result: its maximum response size was exceeded and not "
-            "all data matching the request was returned. Retry with 'values_start'/'row_start' "
-            "('$seqskip'/'$rowskip' in JAQueL) advanced past the data already received."
+            "Server returned a partial result: the requested amount of data could not be "
+            "fully delivered in this response (typically because the server's maximum "
+            "response size was exceeded). Reduce the requested limit "
+            "('values_limit'/'row_limit' in the bulk reader, '$seqlimit'/'$rowlimit' in "
+            "JAQueL; note that 0 means 'no client-side limit') and retry."
         )
 
     if 0 == len(data_matrices.matrices):
