@@ -51,7 +51,7 @@ from collections.abc import Generator
 from contextlib import contextmanager
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Any
-from urllib.parse import urlparse
+from urllib.parse import ParseResult, urlparse, urlunparse
 
 import requests
 from oauthlib.oauth2 import BackendApplicationClient
@@ -102,6 +102,63 @@ class _AuthCodeHTTPServer(HTTPServer):
             pass
 
 
+def _parse_and_validate_url(url_value: str, *, field_name: str) -> ParseResult:
+    """Parse and validate a URL used in OIDC discovery flow."""
+    normalized_url = url_value.strip()
+    parsed_url = urlparse(normalized_url)
+    if not parsed_url.scheme or not parsed_url.netloc:
+        raise ValueError(f"Invalid {field_name}: {url_value!r}")
+    if parsed_url.query or parsed_url.fragment:
+        raise ValueError(f"{field_name} must not include query or fragment")
+    return parsed_url
+
+
+def _build_openid_configuration_url(issuer: str) -> str:
+    """Validate issuer and build OpenID configuration URL safely."""
+    parsed_issuer = _parse_and_validate_url(issuer, field_name="OIDC issuer URL")
+
+    issuer_path = parsed_issuer.path.rstrip("/")
+    openid_config_path = (
+        f"{issuer_path}/.well-known/openid-configuration" if issuer_path else "/.well-known/openid-configuration"
+    )
+
+    return urlunparse(
+        (
+            parsed_issuer.scheme,
+            parsed_issuer.netloc,
+            openid_config_path,
+            "",
+            "",
+            "",
+        )
+    )
+
+
+def _build_webfinger_url(ods_base_url: str, webfinger_path_prefix: str) -> str:
+    """Validate ODS base URL and build WebFinger URL safely."""
+    parsed_base_url = _parse_and_validate_url(ods_base_url, field_name="ODS base URL")
+
+    base_path = parsed_base_url.path.rstrip("/")
+    normalized_prefix = webfinger_path_prefix.strip()
+    if "?" in normalized_prefix or "#" in normalized_prefix:
+        raise ValueError("WebFinger path prefix must not include query or fragment")
+    if normalized_prefix and not normalized_prefix.startswith("/"):
+        normalized_prefix = f"/{normalized_prefix}"
+    prefix_path = normalized_prefix.rstrip("/")
+
+    webfinger_path = f"{base_path}{prefix_path}/.well-known/webfinger"
+    return urlunparse(
+        (
+            parsed_base_url.scheme,
+            parsed_base_url.netloc,
+            webfinger_path,
+            "",
+            "",
+            "",
+        )
+    )
+
+
 def _discover_endpoints(ods_base_url: str, webfinger_path_prefix: str = "", *, verify: bool = True) -> tuple[str, str]:
     """
     Discover OIDC authorization and token endpoints via ASAM ODS WebFinger.
@@ -121,7 +178,7 @@ def _discover_endpoints(ods_base_url: str, webfinger_path_prefix: str = "", *, v
     """
     web_finger_url = PreparedRequest()
     web_finger_url.prepare_url(
-        f"{ods_base_url}{webfinger_path_prefix}/.well-known/webfinger",
+        _build_webfinger_url(ods_base_url, webfinger_path_prefix),
         {"rel": "http://openid.net/specs/connect/1.0/issuer"},
     )
     url = web_finger_url.url
@@ -139,7 +196,8 @@ def _discover_endpoints(ods_base_url: str, webfinger_path_prefix: str = "", *, v
     if not issuer:
         raise ValueError("OIDC issuer not found in WebFinger response")
 
-    openid_config_response = requests.get(f"{issuer}/.well-known/openid-configuration", verify=verify)
+    openid_configuration_url = _build_openid_configuration_url(issuer)
+    openid_config_response = requests.get(openid_configuration_url, verify=verify)
     if openid_config_response.status_code != 200:
         raise ValueError(f"OIDC config request failed: {openid_config_response.status_code}")
 
