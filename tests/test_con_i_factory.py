@@ -378,6 +378,146 @@ class TestDiscoverEndpoints:
             with pytest.raises(ValueError, match="Missing endpoints"):
                 _discover_endpoints("https://server/api")
 
+    @pytest.mark.parametrize(
+        ("ods_base_url", "webfinger_path_prefix", "expected_first_request_base"),
+        [
+            (
+                "https://server.example.com/api/",
+                "",
+                "https://server.example.com/api/.well-known/webfinger",
+            ),
+            (
+                "  https://server.example.com/api  ",
+                " /ods/ ",
+                "https://server.example.com/api/ods/.well-known/webfinger",
+            ),
+            (
+                "https://server.example.com",
+                "ods",
+                "https://server.example.com/ods/.well-known/webfinger",
+            ),
+        ],
+    )
+    def test_webfinger_url_is_normalized(
+        self, ods_base_url: str, webfinger_path_prefix: str, expected_first_request_base: str
+    ) -> None:
+        webfinger_response = MagicMock()
+        webfinger_response.status_code = 200
+        webfinger_response.json.return_value = {
+            "links": [
+                {
+                    "rel": "http://openid.net/specs/connect/1.0/issuer",
+                    "href": "https://idp.example.com",
+                }
+            ]
+        }
+
+        oidc_config_response = MagicMock()
+        oidc_config_response.status_code = 200
+        oidc_config_response.json.return_value = {
+            "authorization_endpoint": "https://idp.example.com/authorize",
+            "token_endpoint": "https://idp.example.com/token",
+        }
+
+        with patch("odsbox.con_i_factory.requests.get") as mock_get:
+            mock_get.side_effect = [webfinger_response, oidc_config_response]
+            _discover_endpoints(ods_base_url, webfinger_path_prefix)
+
+        assert mock_get.call_count == 2
+        assert mock_get.call_args_list[0].args[0].startswith(expected_first_request_base)
+        assert "rel=http%3A%2F%2Fopenid.net%2Fspecs%2Fconnect%2F1.0%2Fissuer" in mock_get.call_args_list[0].args[0]
+
+    @pytest.mark.parametrize(
+        "ods_base_url",
+        [
+            "server.example.com/api",
+            "https://server.example.com/api?query=1",
+            "https://server.example.com/api#fragment",
+        ],
+    )
+    def test_invalid_ods_base_url_raises(self, ods_base_url: str) -> None:
+        with pytest.raises(ValueError, match="ODS base URL"):
+            _discover_endpoints(ods_base_url)
+
+    @pytest.mark.parametrize(
+        "webfinger_path_prefix",
+        [
+            "/ods?query=1",
+            "/ods#fragment",
+            "  /ods?query=1  ",
+        ],
+    )
+    def test_invalid_webfinger_path_prefix_raises(self, webfinger_path_prefix: str) -> None:
+        with pytest.raises(ValueError, match="WebFinger path prefix"):
+            _discover_endpoints("https://server.example.com/api", webfinger_path_prefix)
+
+    @pytest.mark.parametrize(
+        ("issuer", "expected_url"),
+        [
+            (
+                "https://idp.example.com/",
+                "https://idp.example.com/.well-known/openid-configuration",
+            ),
+            (
+                "  https://idp.example.com  ",
+                "https://idp.example.com/.well-known/openid-configuration",
+            ),
+            (
+                "https://idp.example.com/tenant/",
+                "https://idp.example.com/tenant/.well-known/openid-configuration",
+            ),
+        ],
+    )
+    def test_issuer_url_is_normalized_for_openid_config_request(self, issuer: str, expected_url: str) -> None:
+        webfinger_response = MagicMock()
+        webfinger_response.status_code = 200
+        webfinger_response.json.return_value = {
+            "links": [
+                {
+                    "rel": "http://openid.net/specs/connect/1.0/issuer",
+                    "href": issuer,
+                }
+            ]
+        }
+
+        oidc_config_response = MagicMock()
+        oidc_config_response.status_code = 200
+        oidc_config_response.json.return_value = {
+            "authorization_endpoint": "https://idp.example.com/authorize",
+            "token_endpoint": "https://idp.example.com/token",
+        }
+
+        with patch("odsbox.con_i_factory.requests.get") as mock_get:
+            mock_get.side_effect = [webfinger_response, oidc_config_response]
+            _discover_endpoints("https://server/api")
+
+        assert mock_get.call_count == 2
+        assert mock_get.call_args_list[1].args[0] == expected_url
+
+    @pytest.mark.parametrize(
+        "issuer",
+        [
+            "idp.example.com",
+            "https://idp.example.com?query=1",
+            "https://idp.example.com#fragment",
+        ],
+    )
+    def test_invalid_issuer_url_raises(self, issuer: str) -> None:
+        webfinger_response = MagicMock()
+        webfinger_response.status_code = 200
+        webfinger_response.json.return_value = {
+            "links": [
+                {
+                    "rel": "http://openid.net/specs/connect/1.0/issuer",
+                    "href": issuer,
+                }
+            ]
+        }
+
+        with patch("odsbox.con_i_factory.requests.get", return_value=webfinger_response):
+            with pytest.raises(ValueError, match="issuer"):
+                _discover_endpoints("https://server/api")
+
 
 # ---------------------------------------------------------------------------
 # AuthCodeHTTPServer
