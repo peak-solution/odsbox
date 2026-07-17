@@ -15,6 +15,21 @@ from odsbox.jaquel_conversion_result import JaquelConversionResult
 from odsbox.model_cache import ModelCache
 
 
+class PartialResultError(RuntimeError):
+    """
+    Raised when the ASAM ODS server reports that a response was truncated.
+
+    The server sets ``DataMatrices.partial_result`` when the requested amount of data
+    could not be delivered in a single response (typically because the server's maximum
+    response size was exceeded). ``partial_result`` therefore means "the requested
+    ``values_limit`` / ``row_limit`` could not be fully delivered". The remedy is to
+    reduce the requested limit (``values_limit`` / ``row_limit`` in the bulk reader,
+    ``$seqlimit`` / ``$rowlimit`` in JAQueL) and retry. A limit of ``0`` means "no
+    client-side limit" and is therefore the default configuration most likely to hit
+    the server-side maximum.
+    """
+
+
 def unknown_array_values(
     unknown_array: ods.DataMatrix.Column.UnknownArray,
     date_as_timestamp: bool = False,
@@ -268,9 +283,16 @@ def to_pandas(
     prefer_np_array_for_unknown: bool = False,
     is_null_to_nan: bool = False,
     jaquel_conversion_result: JaquelConversionResult | None = None,
+    *,
+    raise_on_partial_result: bool = False,
 ) -> pd.DataFrame:
     """
     Converts data in an ASAM ODS DataMatrices into a pandas DataFrame.
+
+    The ``DataMatrices.partial_result`` flag — set by the server when its maximum
+    response size was exceeded and not all data matching the request was returned —
+    is preserved as ``df.attrs["partial_result"]`` since it is otherwise lost in the
+    conversion.
 
     Args:
         data_matrices: Matrices to be converted.
@@ -286,16 +308,34 @@ def to_pandas(
             pandas native nullable data types.
         jaquel_conversion_result: If provided, used to determine column names based
             on the original JAQueL query.
+        raise_on_partial_result: If True, raise :class:`PartialResultError` when
+            ``data_matrices.partial_result`` is set instead of returning a truncated
+            DataFrame. Defaults to False to keep existing behavior.
 
     Returns:
         A pandas DataFrame containing all the single matrices in a single frame. The
         columns are named by the schema `ENTITY_NAME.ATTRIBUTE_NAME[.AGGREGATE]`.
+        ``df.attrs["partial_result"]`` is set to the ``partial_result`` flag of the
+        DataMatrices.
+
+    Raises:
+        PartialResultError: If ``raise_on_partial_result`` is True and the server
+            could not return all data matching the request in this response.
     """
+    if raise_on_partial_result and data_matrices.partial_result:
+        raise PartialResultError(
+            "Server returned a partial result: the requested amount of data could not be "
+            "fully delivered in this response (typically because the server's maximum "
+            "response size was exceeded). Reduce the requested limit "
+            "('values_limit'/'row_limit' in the bulk reader, '$seqlimit'/'$rowlimit' in "
+            "JAQueL; note that 0 means 'no client-side limit') and retry."
+        )
+
     if 0 == len(data_matrices.matrices):
-        return pd.DataFrame()
+        return _set_partial_result_attr(pd.DataFrame(), data_matrices)
 
     if 0 == len(data_matrices.matrices[0].columns):
-        return pd.DataFrame()
+        return _set_partial_result_attr(pd.DataFrame(), data_matrices)
 
     column_dict = {}
     null_masks = {}  # Store null masks for post-processing
@@ -353,4 +393,9 @@ def to_pandas(
 
             rv.loc[mask_array, column_name] = pd.NA
 
-    return rv
+    return _set_partial_result_attr(rv, data_matrices)
+
+
+def _set_partial_result_attr(df: pd.DataFrame, data_matrices: ods.DataMatrices) -> pd.DataFrame:
+    df.attrs["partial_result"] = data_matrices.partial_result
+    return df
