@@ -208,6 +208,8 @@ class BulkReader:
         values_start: int = 0,
         values_limit: int = 0,
         calculate_raw: bool = True,
+        *,
+        raise_on_partial_result: bool = False,
     ) -> pd.DataFrame:
         """
         Query bulk data for local columns based on the provided Jaquel query condition.
@@ -236,14 +238,22 @@ class BulkReader:
             values_start: Zero-based starting index for the values to be processed. Used for chunk loading.
             values_limit: Maximum number of values to be retrieved in this chunk. 0 means all remaining values.
             calculate_raw: Whether to calculate raw values for certain raw sequence representations.
+            raise_on_partial_result: If True, raise
+                :class:`~odsbox.datamatrices_to_pandas.PartialResultError` when the server
+                returns a partial result instead of returning a truncated DataFrame.
+                Defaults to False to preserve existing behavior.
 
         Returns:
             The Pandas DataFrame contains the local_column metadata and values as DataFrame columns.
             ``df.attrs["unit_names"]`` is set to a ``dict[str, str]`` mapping each local column
             name to its unit name (empty string when the unit id is unknown or zero).
+            ``df.attrs["partial_result"]`` is set to the ``partial_result`` flag reported by the
+            server (see :func:`~odsbox.datamatrices_to_pandas.to_pandas`).
 
         Raises:
             requests.HTTPError: If access fails.
+            odsbox.datamatrices_to_pandas.PartialResultError: If ``raise_on_partial_result``
+                is True and the server could not return all matching data in this response.
         """
 
         lc_meta_df: pd.DataFrame = self.__con_i.query_data(
@@ -303,8 +313,11 @@ class BulkReader:
             localcolumn_bulk_dms,
             date_as_timestamp=date_as_timestamp,
             prefer_np_array_for_unknown=True,
+            raise_on_partial_result=raise_on_partial_result,
         )
         del localcolumn_bulk_dms  # free memory
+        # capture partial_result flag before merge (pandas does not propagate .attrs through merge)
+        partial_result = bool(localcolumn_bulk_df.attrs.get("partial_result", False))
         localcolumn_bulk_df.columns = [attr for attr in attributes]
 
         # merge metadata into bulk, preserving bulk order (left join)
@@ -328,6 +341,7 @@ class BulkReader:
         new_column_order = desired_first_cols + remaining_cols
         merged = merged[new_column_order]
         self._attach_unit_attr(merged, merged["name"], unit_names)
+        merged.attrs["partial_result"] = partial_result
 
         return merged
 
@@ -340,6 +354,8 @@ class BulkReader:
         set_independent_as_index: bool = True,
         values_start: int = 0,
         values_limit: int = 0,
+        *,
+        raise_on_partial_result: bool = False,
     ) -> pd.DataFrame:
         """
         Loads an ASAM ODS SubMatrix and returns it as a pandas DataFrame. The method uses the HTTP API method
@@ -365,14 +381,22 @@ class BulkReader:
             set_independent_as_index: Whether to set the independent column as the index.
             values_start: Zero-based starting index for the values to be processed. Used for chunk loading.
             values_limit: Maximum number of values to be retrieved in this chunk. 0 means all remaining values.
+            raise_on_partial_result: If True, raise
+                :class:`~odsbox.datamatrices_to_pandas.PartialResultError` when the server
+                returns a partial result instead of returning a truncated DataFrame.
+                Defaults to False to preserve existing behavior.
 
         Returns:
             The Pandas DataFrame contains one column per local column, named after the local
             column name. ``df.attrs["unit_names"]`` is set to a ``dict[str, str]`` mapping
             each column name to its unit name (empty string when the unit id is unknown or zero).
+            ``df.attrs["partial_result"]`` is set to the ``partial_result`` flag reported by
+            the server (see :func:`~odsbox.datamatrices_to_pandas.to_pandas`).
 
         Raises:
             requests.HTTPError: If access fails.
+            odsbox.datamatrices_to_pandas.PartialResultError: If ``raise_on_partial_result``
+                is True and the server could not return all matching data in this response.
         """
 
         conditions = {"submatrix": submatrix_iid}
@@ -383,11 +407,13 @@ class BulkReader:
             date_as_timestamp=date_as_timestamp,
             values_start=values_start,
             values_limit=values_limit,
+            raise_on_partial_result=raise_on_partial_result,
         )
 
         # Create DataFrame from column data
         rv = pd.DataFrame({r["name"]: r["values"] for _, r in localcolumn_df.iterrows()})
         rv.attrs["unit_names"] = localcolumn_df.attrs.get("unit_names", {})
+        rv.attrs["partial_result"] = bool(localcolumn_df.attrs.get("partial_result", False))
 
         # Set independent column as index if requested
         if set_independent_as_index:
@@ -405,6 +431,8 @@ class BulkReader:
         date_as_timestamp: bool = True,
         values_start: int = 0,
         values_limit: int = 0,
+        *,
+        raise_on_partial_result: bool = False,
     ) -> pd.DataFrame:
         """
         Loads an ASAM ODS SubMatrix and returns it as a pandas DataFrame.
@@ -427,14 +455,22 @@ class BulkReader:
             date_as_timestamp: Whether to treat date columns as timestamps.
             values_start: Zero-based starting index for the values to be processed. Used for chunk loading.
             values_limit: Maximum number of values to be retrieved in this chunk. 0 means all remaining values.
+            raise_on_partial_result: If True, raise
+                :class:`~odsbox.datamatrices_to_pandas.PartialResultError` when the server
+                returns a partial result instead of returning a truncated DataFrame.
+                Defaults to False to preserve existing behavior.
 
         Returns:
             The Pandas DataFrame contains one column per local column, named after the local
             column name. ``df.attrs["unit_names"]`` is set to a ``dict[str, str]`` mapping
             each column name to its unit name (empty string when the unit id is unknown or zero).
+            ``df.attrs["partial_result"]`` is set to the ``partial_result`` flag reported by
+            the server (see :func:`~odsbox.datamatrices_to_pandas.to_pandas`).
 
         Raises:
             requests.HTTPError: If access fails.
+            odsbox.datamatrices_to_pandas.PartialResultError: If ``raise_on_partial_result``
+                is True and the server could not return all matching data in this response.
         """
         sm_e = self.__con_i.mc.entity_by_base_name("AoSubmatrix")
         lc_e = self.__con_i.mc.entity_by_base_name("AoLocalColumn")
@@ -459,11 +495,14 @@ class BulkReader:
             raw_dms,
             date_as_timestamp=date_as_timestamp,
             prefer_np_array_for_unknown=True,
+            raise_on_partial_result=raise_on_partial_result,
         )
         del raw_dms  # free memory
+        partial_result = bool(df.attrs.get("partial_result", False))
         df.columns = ["name", "values"]
         rv = pd.DataFrame({name: values for name, values in zip(df["name"].values, df["values"].values)})
         self._attach_unit_attr(rv, df["name"], unit_names)
+        rv.attrs["partial_result"] = partial_result
         return rv
 
     def _attach_unit_attr(self, df: pd.DataFrame, column_names: pd.Series, unit_names: list[str]) -> None:

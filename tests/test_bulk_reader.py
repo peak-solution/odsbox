@@ -183,7 +183,7 @@ def test_query_merges_and_prefixes_duplicate_names(monkeypatch):
     fake = FakeConI()
 
     # to_pandas should return bulk data with id and values columns (will be renamed inside query)
-    def fake_to_pandas(dms, date_as_timestamp=True, prefer_np_array_for_unknown=True):
+    def fake_to_pandas(dms, date_as_timestamp=True, prefer_np_array_for_unknown=True, raise_on_partial_result=False):
         return pd.DataFrame([[1, [1, 2]], [2, [3, 4]]], columns=["a", "b"])
 
     monkeypatch.setattr("odsbox.bulk_reader.to_pandas", fake_to_pandas)
@@ -220,7 +220,7 @@ def test_valuematrix_read_maps_names_and_values(monkeypatch):
     fake = FakeConI()
 
     # monkeypatch to_pandas to return names and values
-    def fake_to_pandas(dms, date_as_timestamp=True, prefer_np_array_for_unknown=True):
+    def fake_to_pandas(dms, date_as_timestamp=True, prefer_np_array_for_unknown=True, raise_on_partial_result=False):
         return pd.DataFrame({"name": ["a", "b"], "values": [[1, 2], [3, 4]]})
 
     monkeypatch.setattr("odsbox.bulk_reader.to_pandas", fake_to_pandas)
@@ -254,7 +254,9 @@ def test_query_raises_on_missing_metadata(monkeypatch):
         def data_read_jaquel(self, jaquel_query):
             return object()
 
-    def fake_to_pandas_bulk(dms, date_as_timestamp=True, prefer_np_array_for_unknown=True):
+    def fake_to_pandas_bulk(
+        dms, date_as_timestamp=True, prefer_np_array_for_unknown=True, raise_on_partial_result=False
+    ):
         # bulk contains id 2 which lacks metadata
         return pd.DataFrame([[2, [9, 9]]], columns=["id", "values"])
 
@@ -322,7 +324,7 @@ def test_generation_parameters_requested_when_raw_seq(monkeypatch):
             return object()
 
     # to_pandas should return id, values, generation_parameters columns (will be renamed inside query)
-    def fake_to_pandas(dms, date_as_timestamp=True, prefer_np_array_for_unknown=True):
+    def fake_to_pandas(dms, date_as_timestamp=True, prefer_np_array_for_unknown=True, raise_on_partial_result=False):
         return pd.DataFrame([[1, [1, 2], [1.0, 2.0]]])
 
     monkeypatch.setattr("odsbox.bulk_reader.to_pandas", fake_to_pandas)
@@ -354,7 +356,7 @@ def test_generation_parameters_not_requested_when_not_raw(monkeypatch):
         def data_read_jaquel(self, jaquel_query):
             return object()
 
-    def fake_to_pandas2(dms, date_as_timestamp=True, prefer_np_array_for_unknown=True):
+    def fake_to_pandas2(dms, date_as_timestamp=True, prefer_np_array_for_unknown=True, raise_on_partial_result=False):
         return pd.DataFrame([[1, [7, 8]]])
 
     monkeypatch.setattr("odsbox.bulk_reader.to_pandas", fake_to_pandas2)
@@ -595,3 +597,193 @@ def test_valuematrix_read_propagates_unit_names(monkeypatch):
 
     df = br.valuematrix_read(1)
     assert df.attrs["unit_names"] == {"Time": "s", "Force": "N"}
+
+
+# --- Tests for partial_result propagation and raise_on_partial_result ---
+
+
+def _make_partial_result_query_fakes():
+    """Build a minimal FakeConI + fake_to_pandas for exercising ``query()`` paths."""
+
+    class FakeConI:
+        def query_data(self, query):
+            return pd.DataFrame(
+                [
+                    {
+                        "id": 1,
+                        "name": "Time",
+                        "independent": True,
+                        "sequence_representation": 0,
+                        "submatrix": 5,
+                        "number_of_rows": 2,
+                    },
+                    {
+                        "id": 2,
+                        "name": "Force",
+                        "independent": False,
+                        "sequence_representation": 0,
+                        "submatrix": 5,
+                        "number_of_rows": 2,
+                    },
+                ]
+            )
+
+        def data_read_jaquel(self, query):
+            return object()
+
+    return FakeConI()
+
+
+def test_query_partial_result_attr_preserved(monkeypatch):
+    """query() must preserve df.attrs['partial_result'] across merge/reorder."""
+
+    def fake_to_pandas(dms, **kwargs):
+        df = pd.DataFrame([[1, [0.0, 1.0]], [2, [10.0, 20.0]]], columns=["a", "b"])
+        df.attrs["partial_result"] = True
+        return df
+
+    monkeypatch.setattr("odsbox.bulk_reader.to_pandas", fake_to_pandas)
+    monkeypatch.setattr("odsbox.bulk_reader.extract_column_unit_ids", lambda dms: [])
+
+    br = BulkReader(_make_partial_result_query_fakes())  # type: ignore[arg-type]
+    br._unit_name_lookup_cache = {}
+
+    merged = br.query({"submatrix": 5})
+    assert merged.attrs["partial_result"] is True
+
+
+def test_query_partial_result_attr_defaults_to_false(monkeypatch):
+    """query() sets df.attrs['partial_result'] to False when to_pandas reports no partial result."""
+
+    def fake_to_pandas(dms, **kwargs):
+        df = pd.DataFrame([[1, [0.0, 1.0]], [2, [10.0, 20.0]]], columns=["a", "b"])
+        df.attrs["partial_result"] = False
+        return df
+
+    monkeypatch.setattr("odsbox.bulk_reader.to_pandas", fake_to_pandas)
+    monkeypatch.setattr("odsbox.bulk_reader.extract_column_unit_ids", lambda dms: [])
+
+    br = BulkReader(_make_partial_result_query_fakes())  # type: ignore[arg-type]
+    br._unit_name_lookup_cache = {}
+
+    merged = br.query({"submatrix": 5})
+    assert merged.attrs["partial_result"] is False
+
+
+def test_query_raise_on_partial_result_propagates(monkeypatch):
+    """query() forwards raise_on_partial_result to to_pandas and lets PartialResultError propagate."""
+    from odsbox.datamatrices_to_pandas import PartialResultError
+
+    captured = {}
+
+    def fake_to_pandas(dms, **kwargs):
+        captured["raise_on_partial_result"] = kwargs.get("raise_on_partial_result")
+        if kwargs.get("raise_on_partial_result"):
+            raise PartialResultError("simulated partial result")
+        df = pd.DataFrame([[1, [0.0]]], columns=["a", "b"])
+        df.attrs["partial_result"] = True
+        return df
+
+    monkeypatch.setattr("odsbox.bulk_reader.to_pandas", fake_to_pandas)
+    monkeypatch.setattr("odsbox.bulk_reader.extract_column_unit_ids", lambda dms: [])
+
+    br = BulkReader(_make_partial_result_query_fakes())  # type: ignore[arg-type]
+    br._unit_name_lookup_cache = {}
+
+    with pytest.raises(PartialResultError):
+        br.query({"submatrix": 5}, raise_on_partial_result=True)
+    assert captured["raise_on_partial_result"] is True
+
+
+def test_data_read_partial_result_attr_propagated(monkeypatch):
+    """data_read() copies df.attrs['partial_result'] from the intermediate query result."""
+
+    def fake_to_pandas(dms, **kwargs):
+        df = pd.DataFrame([[1, [0.0, 1.0]], [2, [10.0, 20.0]]], columns=["a", "b"])
+        df.attrs["partial_result"] = True
+        return df
+
+    monkeypatch.setattr("odsbox.bulk_reader.to_pandas", fake_to_pandas)
+    monkeypatch.setattr("odsbox.bulk_reader.extract_column_unit_ids", lambda dms: [])
+
+    br = BulkReader(_make_partial_result_query_fakes())  # type: ignore[arg-type]
+    br._unit_name_lookup_cache = {}
+
+    df = br.data_read(5, set_independent_as_index=False)
+    assert df.attrs["partial_result"] is True
+
+
+def test_data_read_raise_on_partial_result_propagates(monkeypatch):
+    """data_read() forwards raise_on_partial_result to query()/to_pandas."""
+    from odsbox.datamatrices_to_pandas import PartialResultError
+
+    def fake_to_pandas(dms, **kwargs):
+        if kwargs.get("raise_on_partial_result"):
+            raise PartialResultError("simulated partial result")
+        return pd.DataFrame([[1, [0.0]]], columns=["a", "b"])
+
+    monkeypatch.setattr("odsbox.bulk_reader.to_pandas", fake_to_pandas)
+    monkeypatch.setattr("odsbox.bulk_reader.extract_column_unit_ids", lambda dms: [])
+
+    br = BulkReader(_make_partial_result_query_fakes())  # type: ignore[arg-type]
+    br._unit_name_lookup_cache = {}
+
+    with pytest.raises(PartialResultError):
+        br.data_read(5, set_independent_as_index=False, raise_on_partial_result=True)
+
+
+def _make_valuematrix_read_fakes():
+    """Build a minimal FakeConI for exercising ``valuematrix_read()`` paths."""
+
+    class FakeMC:
+        def entity_by_base_name(self, base_name):
+            return type("E", (), {"aid": 1})()
+
+        def attribute_by_base_name(self, entity, name):
+            return type("A", (), {"name": name})()
+
+    class FakeConI:
+        def __init__(self):
+            self.mc = FakeMC()
+
+        def valuematrix_read(self, vmreq):
+            return object()
+
+    return FakeConI()
+
+
+def test_valuematrix_read_partial_result_attr_preserved(monkeypatch):
+    """valuematrix_read() preserves df.attrs['partial_result'] on the returned DataFrame."""
+
+    def fake_to_pandas(dms, **kwargs):
+        df = pd.DataFrame({"name": ["Time", "Force"], "values": [[0.0, 1.0], [10.0, 20.0]]})
+        df.attrs["partial_result"] = True
+        return df
+
+    monkeypatch.setattr("odsbox.bulk_reader.to_pandas", fake_to_pandas)
+    monkeypatch.setattr("odsbox.bulk_reader.extract_column_unit_ids", lambda dms: [])
+
+    br = BulkReader(_make_valuematrix_read_fakes())  # type: ignore[arg-type]
+    br._unit_name_lookup_cache = {}
+
+    df = br.valuematrix_read(1)
+    assert df.attrs["partial_result"] is True
+
+
+def test_valuematrix_read_raise_on_partial_result_propagates(monkeypatch):
+    """valuematrix_read() forwards raise_on_partial_result to to_pandas."""
+    from odsbox.datamatrices_to_pandas import PartialResultError
+
+    def fake_to_pandas(dms, **kwargs):
+        if kwargs.get("raise_on_partial_result"):
+            raise PartialResultError("simulated partial result")
+        return pd.DataFrame({"name": ["a"], "values": [[0.0]]})
+
+    monkeypatch.setattr("odsbox.bulk_reader.to_pandas", fake_to_pandas)
+    monkeypatch.setattr("odsbox.bulk_reader.extract_column_unit_ids", lambda dms: [])
+
+    br = BulkReader(_make_valuematrix_read_fakes())  # type: ignore[arg-type]
+    br._unit_name_lookup_cache = {}
+
+    with pytest.raises(PartialResultError):
+        br.valuematrix_read(1, raise_on_partial_result=True)

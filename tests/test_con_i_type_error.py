@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import pytest
 
+import odsbox.proto.ods_pb2 as ods
 from odsbox.con_i import ConI
 from odsbox.proto.ods_pb2 import DataMatrix
 
@@ -124,3 +125,41 @@ def test_file_access_delete_type_error(dummy_con_i):
     with pytest.raises(TypeError) as exc:
         dummy_con_i.file_access_delete(123)
     assert "file_access_delete expects 'ods.FileIdentifier'" in str(exc.value)
+
+
+def test_query_forwards_raise_on_partial_result_to_to_pandas(dummy_con_i, monkeypatch):
+    captured_kwargs = {}
+
+    class FakeJaquel:
+        def __init__(self, _model, _query):
+            self.select_statement = ods.SelectStatement()
+
+    def fake_to_pandas(_data_matrices, **kwargs):
+        captured_kwargs.update(kwargs)
+        return object()
+
+    dummy_con_i._ConI__mc = object()
+    monkeypatch.setattr(dummy_con_i, "model", lambda: ods.Model())
+    monkeypatch.setattr(dummy_con_i, "data_read", lambda _select_statement: ods.DataMatrices())
+    monkeypatch.setattr("odsbox.con_i.Jaquel", FakeJaquel)
+    monkeypatch.setattr("odsbox.con_i.to_pandas", fake_to_pandas)
+
+    dummy_con_i.query({"AoUnit": {}}, raise_on_partial_result=True)
+
+    assert captured_kwargs["raise_on_partial_result"] is True
+
+
+def test_query_data_forwards_raise_on_partial_result_to_to_pandas(dummy_con_i, monkeypatch):
+    captured_kwargs = {}
+
+    def fake_to_pandas(_data_matrices, **kwargs):
+        captured_kwargs.update(kwargs)
+        return object()
+
+    dummy_con_i._ConI__mc = object()
+    monkeypatch.setattr(dummy_con_i, "data_read", lambda _select_statement: ods.DataMatrices())
+    monkeypatch.setattr("odsbox.con_i.to_pandas", fake_to_pandas)
+
+    dummy_con_i.query_data(ods.SelectStatement(), raise_on_partial_result=True)
+
+    assert captured_kwargs["raise_on_partial_result"] is True

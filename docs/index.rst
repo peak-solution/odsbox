@@ -11,6 +11,7 @@ Welcome to ASAM ODSBox docs's documentation!
    overview
    con_i_factory
    jaquel
+   partial_results
 
 .. toctree::
    :maxdepth: 2
