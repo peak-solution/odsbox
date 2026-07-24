@@ -862,3 +862,31 @@ def test_query_with_kwargs():
         )
         # Should use custom separator
         assert any("::" in col for col in r.columns)
+
+
+@pytest.mark.integration
+def test_context_property_returns_uppercase_dict_keys():
+    with __create_con_i() as con_i:
+        context_values = con_i.context
+
+        assert isinstance(context_values, dict)
+        assert context_values
+        assert all(key == key.upper() for key in context_values)
+
+
+@pytest.mark.integration
+def test_context_property_refreshes_after_context_update():
+    with __create_con_i() as con_i:
+        first_read = con_i.context
+
+        unique_key = "MY_CONTEXT_TEST_KEY"
+        unique_value = "my-context-test-value"
+
+        update_payload = ods.ContextVariables()
+        update_payload.variables[unique_key].string_array.values.append(unique_value)
+        con_i.context_update(update_payload)
+
+        second_read = con_i.context
+
+        assert first_read is not second_read
+        assert second_read.get(unique_key) == unique_value
