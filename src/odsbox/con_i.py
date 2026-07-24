@@ -108,7 +108,8 @@ class ConI:
             auth: Auth object for the requests package.
                 For basic auth `("USER", "PASSWORD")` can be used.
                 Ignored if `custom_session` is provided.
-            context_variables: Context variables for the connection. Defaults to None.
+            context_variables: Context variables for the connection.
+                Accepts `ods.ContextVariables` or a plain dict. Defaults to None.
             verify_certificate: If no certificate is provided for https, insecure access
                 can be enabled. Defaults to True. Ignored if `custom_session` is provided.
             load_model: Whether to read the model after connection is established. Defaults to True.
@@ -130,6 +131,7 @@ class ConI:
         self.__bulk_reader: BulkReader | None = None
         self.__connection_timeout: float = connection_timeout
         self.__request_timeout: float = request_timeout
+        self.__context: dict[str, Any] | None = None
 
         session = custom_session
         if session is None:
@@ -137,14 +139,13 @@ class ConI:
             session.auth = auth
             session.verify = verify_certificate
 
-        _context_variables = None
+        _context_variables: ods.ContextVariables | None = None
         if isinstance(context_variables, ods.ContextVariables):
             _context_variables = context_variables
         else:
-            _context_variables = ods.ContextVariables()
-            if isinstance(context_variables, dict):
-                for key, value in context_variables.items():
-                    _context_variables.variables[key].string_array.values.append(value)
+            from .utils.context import to_context_variables
+
+            _context_variables = to_context_variables(context_variables)
 
         response = session.post(
             url + "/ods",
@@ -745,6 +746,7 @@ class ConI:
         if not isinstance(context_variables, ods.ContextVariables):
             raise TypeError(f"context_update expects 'ods.ContextVariables', got '{type(context_variables).__name__}'")
         self.ods_post_request("context-update", context_variables)
+        self.__context = None  # reset cached context to force re-read on next access
 
     def password_update(self, password_update: ods.PasswordUpdate) -> None:
         """
@@ -1030,3 +1032,33 @@ class ConI:
         if self.__bulk_reader is None:
             self.__bulk_reader = BulkReader(self)
         return self.__bulk_reader
+
+    @property
+    def context(self) -> dict[str, Any]:
+        """
+        Get the context values for the current session.
+
+        Example::
+            from odsbox.con_i import ConI
+
+            with ConI(
+                url="https://MYSERVER/api",
+                auth=("USER", "PASSWORD"),
+            ) as con_i:
+                ods_version = con_i.context.get("ODSVERSION", None)
+                print(ods_version)
+
+        Returns:
+            Dictionary containing the context values where key is always uppercase.
+
+        Raises:
+            requests.HTTPError: If context retrieval fails.
+        """
+        if self.__session is None:
+            raise ValueError("No open session!")
+
+        if self.__context is None:
+            from .utils.context import from_context_variables
+
+            self.__context = from_context_variables(self.context_read())
+        return self.__context
