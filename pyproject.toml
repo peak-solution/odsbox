@@ -22,6 +22,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Scientific/Engineering :: Information Analysis",
     "Typing :: Typed",
@@ -54,6 +55,7 @@ dev = [
     "pytest-cov>=7.1.0",
     "pytest-mock>=3.14.0",
     "python-semantic-release>=9.0.0",
+    "gitpython>=3.1.51",
     "ruff>=0.15.0",
     "types-requests>=2.30.0",
     "click>=8.3.3",
@@ -80,7 +82,15 @@ build-backend = "uv_build"
 
 [tool.ruff]
 line-length = 120
-exclude = ["*_pb2.py", "*_pb2.pyi", "*_pb2_grpc.py", "*_pb2_grpc.pyi", "*.ipynb"]
+force-exclude = true
+exclude = [
+    "*_pb2.py",
+    "*_pb2.pyi",
+    "*_pb2_grpc.py",
+    "*_pb2_grpc.pyi",
+    "*.ipynb",
+    "docs/**/*.md",
+]
 
 [tool.ruff.lint]
 select = ["E", "W", "F", "I", "UP", "B"]
@@ -97,7 +107,12 @@ module = ["odsbox.proto.*"]
 ignore_errors = true
 
 [[tool.mypy.overrides]]
-module = ["odsbox.model_cache", "odsbox.jaquel", "odsbox.datamatrices_to_pandas", "odsbox.bulk_reader"]
+module = [
+    "odsbox.model_cache",
+    "odsbox.jaquel",
+    "odsbox.datamatrices_to_pandas",
+    "odsbox.bulk_reader",
+]
 disable_error_code = ["no-any-return"]
 
 [[tool.mypy.overrides]]

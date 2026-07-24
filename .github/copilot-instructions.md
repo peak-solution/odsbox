@@ -36,8 +36,10 @@ from __future__ import annotations  # Required in all modules
 
 from typing import Any  # Use for proto message interactions
 
+
 # Use built-in generics (Python 3.10+ with __future__):
 def foo(items: list[str]) -> dict[str, Any]: ...
+
 
 # For proto objects, Any is acceptable to avoid no-any-return errors
 ```
@@ -79,11 +81,13 @@ JAQuel queries are Python dicts converted to ASAM ODS `SelectStatement` protobuf
 
 ```python
 # Query with JAQuel dict
-df = con_i.query({
-    "AoMeasurement": {"name": {"$like": "test*"}},
-    "$attributes": {"name": 1, "id": 1},
-    "$options": {"$rowlimit": 50},
-})
+df = con_i.query(
+    {
+        "AoMeasurement": {"name": {"$like": "test*"}},
+        "$attributes": {"name": 1, "id": 1},
+        "$options": {"$rowlimit": 50},
+    }
+)
 ```
 
 ### ConI Context Manager
