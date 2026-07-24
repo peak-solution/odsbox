@@ -34,7 +34,7 @@ and [pandas DataFrames](https://pandas.pydata.org/).
                 "$options": {"$rowlimit": 50},
             }
         )
-        print(measurements) # print pandas DataFrame with column "name" and "id"
+        print(measurements)  # print pandas DataFrame with column "name" and "id"
     ```
 
 ## Documentation
