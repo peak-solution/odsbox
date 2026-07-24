@@ -2,6 +2,23 @@
 
 <!-- version list -->
 
+## v1.6.0 (2026-07-24)
+
+### Continuous Integration
+
+- Bump actions/setup-python from 6 to 7 ([#273](https://github.com/peak-solution/odsbox/pull/273),
+  [`57cc3b9`](https://github.com/peak-solution/odsbox/commit/57cc3b9114da3941edcad42e593c1d784d19b7ff))
+
+- Bump astral-sh/setup-uv from 8.3.2 to 9.0.0
+  ([#274](https://github.com/peak-solution/odsbox/pull/274),
+  [`1c00872`](https://github.com/peak-solution/odsbox/commit/1c008727eda38dd73c0889c912f4cafdbf70f8d8))
+
+### Features
+
+- Added context utilities
+  ([`9447be8`](https://github.com/peak-solution/odsbox/commit/9447be84ba7b0b21024f5e7d2f911fffdf1fe84f))
+
+
 ## v1.5.0 (2026-07-17)
 
 ### Bug Fixes
