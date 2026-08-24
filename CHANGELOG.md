@@ -2,6 +2,43 @@
 
 <!-- version list -->
 
+## v1.7.0 (2026-08-24)
+
+### Bug Fixes
+
+- Vulnerabilities
+  ([`7096b02`](https://github.com/peak-solution/odsbox/commit/7096b02c326c7147aea33cf92eecd7be3dcfccfe))
+
+- Vulnerabilities
+  ([`08c881d`](https://github.com/peak-solution/odsbox/commit/08c881dd735b87c287d13c27efb47552f868b63c))
+
+### Continuous Integration
+
+- Bump astral-sh/setup-uv from 9.0.0 to 10.0.1
+  ([#279](https://github.com/peak-solution/odsbox/pull/279),
+  [`6144258`](https://github.com/peak-solution/odsbox/commit/6144258f8887bae248b20bf904b42a086ee8bfa0))
+
+- Bump astral-sh/setup-uv from 9.0.0 to 10.0.1
+  ([#279](https://github.com/peak-solution/odsbox/pull/279),
+  [`86b1128`](https://github.com/peak-solution/odsbox/commit/86b1128c590044584c7b228fe1fde15fa3b7e0b0))
+
+- Bump gitpython from 3.1.55 to 3.1.58 ([#278](https://github.com/peak-solution/odsbox/pull/278),
+  [`cda78fe`](https://github.com/peak-solution/odsbox/commit/cda78feabb162a5096163e8a63759538a3920f38))
+
+- Bump gitpython from 3.1.55 to 3.1.58 ([#278](https://github.com/peak-solution/odsbox/pull/278),
+  [`bbc69e5`](https://github.com/peak-solution/odsbox/commit/bbc69e532dbde209a398db581cc9eef33027dced))
+
+### Features
+
+- Add the ability to use localcolumn flags in BulkReader
+  ([#280](https://github.com/peak-solution/odsbox/pull/280),
+  [`2ddbb51`](https://github.com/peak-solution/odsbox/commit/2ddbb5147b5c87708236051d954a066c52eaa93a))
+
+- Add the ability to use localcolumn flags in BulkReader
+  ([#280](https://github.com/peak-solution/odsbox/pull/280),
+  [`bad51d8`](https://github.com/peak-solution/odsbox/commit/bad51d8033c9b8ac4400dc7184b73d8c82c8cd02))
+
+
 ## v1.6.0 (2026-07-24)
 
 ### Continuous Integration
