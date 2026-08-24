@@ -54,6 +54,7 @@
         "NOTINSET",
         "NOTLIKE",
         "notnull",
+        "nullable",
         "odsbox",
         "Oneof",
         "preconfigured",
@@ -71,5 +72,6 @@
         "TESTSTEP",
         "valuematrix",
         "webfinger"
-    ]
+    ],
+    "chat.disableAIFeatures": false
 }
