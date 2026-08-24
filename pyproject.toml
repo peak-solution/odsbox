@@ -60,6 +60,7 @@ dev = [
     "types-requests>=2.30.0",
     "click>=8.3.3",
     "msgpack>=1.2.1",
+    "pip>=26.2",
 ]
 docs = [
     "sphinx>=8.0.0",
