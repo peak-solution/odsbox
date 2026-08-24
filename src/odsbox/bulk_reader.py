@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 import pandas as pd
 
-from odsbox.datamatrices_to_pandas import extract_column_unit_ids, to_pandas
+from odsbox.datamatrices_to_pandas import ensure_nullable_dtype, extract_column_unit_ids, to_pandas
 from odsbox.proto.ods_pb2 import (
     DataMatrices,
     ValueMatrixRequestStruct,
@@ -62,6 +62,12 @@ class BulkReader:
 
     Remark: If the provided methods do not work for a client the source code can be used
     to create customer specific code to retrieve bulk data.
+
+    Remark: ``query()``, ``data_read()`` and ``valuematrix_read()`` support quality filtering
+    via ``load_flags``/``valid_flag``. When enabled, values whose ASAM ODS local column
+    ``flags`` bit-wise match the (default or given) bitmask are replaced by a missing value
+    (``pd.NA``, or ``NaN`` for floating point columns) instead of being dropped, so the
+    returned DataFrame keeps its original shape and column dtypes stay stable.
     """
 
     _log: logging.Logger = logging.getLogger(__name__)
@@ -210,6 +216,7 @@ class BulkReader:
         calculate_raw: bool = True,
         *,
         raise_on_partial_result: bool = False,
+        load_flags: bool = False,
     ) -> pd.DataFrame:
         """
         Query bulk data for local columns based on the provided Jaquel query condition.
@@ -242,6 +249,8 @@ class BulkReader:
                 :class:`~odsbox.datamatrices_to_pandas.PartialResultError` when the server
                 returns a partial result instead of returning a truncated DataFrame.
                 Defaults to False to preserve existing behavior.
+            load_flags: If True, load the flags attribute for each local column. This requires that the AoLocalColumn
+                entity has an attribute derived from base name "flags".
 
         Returns:
             The Pandas DataFrame contains the local_column metadata and values as DataFrame columns.
@@ -270,14 +279,16 @@ class BulkReader:
                 "$options": {"$rowlimit": row_limit},
             }
         )
-        lc_meta_df.columns = [
-            "id",
-            "name",
-            "independent",
-            "sequence_representation",
-            "submatrix",
-            "number_of_rows",
-        ]
+        lc_meta_df.columns = pd.Index(
+            [
+                "id",
+                "name",
+                "independent",
+                "sequence_representation",
+                "submatrix",
+                "number_of_rows",
+            ]
+        )
         lc_meta_df.set_index("id", inplace=True)
 
         raw_seq_rep_values = {
@@ -296,6 +307,9 @@ class BulkReader:
         }
         if contains_raw_seq_rep:
             attributes["generation_parameters"] = 1
+
+        if load_flags and self.__con_i.mc.attribute_no_throw("AoLocalColumn", "flags") is not None:
+            attributes["flags"] = 1
 
         localcolumn_bulk_dms = self.__con_i.data_read_jaquel(
             {
@@ -318,7 +332,7 @@ class BulkReader:
         del localcolumn_bulk_dms  # free memory
         # capture partial_result flag before merge (pandas does not propagate .attrs through merge)
         partial_result = bool(localcolumn_bulk_df.attrs.get("partial_result", False))
-        localcolumn_bulk_df.columns = [attr for attr in attributes]
+        localcolumn_bulk_df.columns = pd.Index([attr for attr in attributes])
 
         # merge metadata into bulk, preserving bulk order (left join)
         merged: pd.DataFrame = localcolumn_bulk_df.merge(lc_meta_df, left_on="id", right_index=True, how="left")
@@ -356,6 +370,7 @@ class BulkReader:
         values_limit: int = 0,
         *,
         raise_on_partial_result: bool = False,
+        valid_flag: int | bool | None = None,
     ) -> pd.DataFrame:
         """
         Loads an ASAM ODS SubMatrix and returns it as a pandas DataFrame. The method uses the HTTP API method
@@ -385,6 +400,11 @@ class BulkReader:
                 :class:`~odsbox.datamatrices_to_pandas.PartialResultError` when the server
                 returns a partial result instead of returning a truncated DataFrame.
                 Defaults to False to preserve existing behavior.
+            valid_flag: Integer bitmask used for quality filtering. Values whose flags
+                bitwise-AND with the effective bitmask are replaced with a missing value
+                (``pd.NA``, or ``NaN`` for floating point columns) while keeping the
+                column's original dtype stable. ``True``, ``False`` also map
+                to the default bitmask 15 and are there for simplicity.
 
         Returns:
             The Pandas DataFrame contains one column per local column, named after the local
@@ -408,10 +428,11 @@ class BulkReader:
             values_start=values_start,
             values_limit=values_limit,
             raise_on_partial_result=raise_on_partial_result,
+            load_flags=valid_flag is not None,
         )
 
         # Create DataFrame from column data
-        rv = pd.DataFrame({r["name"]: r["values"] for _, r in localcolumn_df.iterrows()})
+        rv: pd.DataFrame = self._create_dataframe_from_localcolumns(valid_flag, localcolumn_df)
         rv.attrs["unit_names"] = localcolumn_df.attrs.get("unit_names", {})
         rv.attrs["partial_result"] = bool(localcolumn_df.attrs.get("partial_result", False))
 
@@ -424,6 +445,40 @@ class BulkReader:
 
         return rv
 
+    @staticmethod
+    def _create_dataframe_from_localcolumns(
+        valid_flag: int | bool | None, localcolumn_df: pd.DataFrame
+    ) -> pd.DataFrame:
+        if "flags" in localcolumn_df.columns:
+            valid_flag_value: int = 15 if isinstance(valid_flag, bool) or valid_flag is None else valid_flag
+            columns_data: dict[str, Any] = {}
+            for _, r in localcolumn_df.iterrows():
+                name = r["name"]
+                values = r["values"]
+                flags = r.get("flags")
+                if flags is not None and len(flags) > 0:
+                    flags_array = np.asarray(flags, dtype=int)
+                    if len(flags_array) != len(values):
+                        # servers may return flags in the same compact form used for implicit/raw
+                        # sequence representations (e.g. 2 samples for implicit_linear); a single
+                        # repeated flag value applies to every row, anything else can't be aligned
+                        unique_flags = np.unique(flags_array)
+                        if len(unique_flags) != 1:
+                            raise ValueError(
+                                f"'flags' length {len(flags_array)} does not match 'values' length "
+                                f"{len(values)} for column '{name}' and cannot be aligned."
+                            )
+                        flags_array = np.full(len(values), unique_flags[0])
+                    invalid_mask = (flags_array & valid_flag_value) != 0
+                    if invalid_mask.any():
+                        values = ensure_nullable_dtype(pd.Series(values))
+                        values.loc[invalid_mask] = pd.NA
+                columns_data[name] = values
+            rv = pd.DataFrame(columns_data)
+        else:
+            rv = pd.DataFrame({r["name"]: r["values"] for _, r in localcolumn_df.iterrows()})
+        return rv
+
     def valuematrix_read(
         self,
         submatrix_iid: int,
@@ -433,6 +488,7 @@ class BulkReader:
         values_limit: int = 0,
         *,
         raise_on_partial_result: bool = False,
+        valid_flag: int | bool | None = None,
     ) -> pd.DataFrame:
         """
         Loads an ASAM ODS SubMatrix and returns it as a pandas DataFrame.
@@ -459,6 +515,11 @@ class BulkReader:
                 :class:`~odsbox.datamatrices_to_pandas.PartialResultError` when the server
                 returns a partial result instead of returning a truncated DataFrame.
                 Defaults to False to preserve existing behavior.
+            valid_flag: Integer bitmask used for quality filtering. Values whose flags
+                bitwise-AND with the effective bitmask are replaced with a missing value
+                (``pd.NA``, or ``NaN`` for floating point columns) while keeping the
+                column's original dtype stable. ``True``, ``False`` also map
+                to the default bitmask 15 and are there for simplicity.
 
         Returns:
             The Pandas DataFrame contains one column per local column, named after the local
@@ -475,16 +536,20 @@ class BulkReader:
         sm_e = self.__con_i.mc.entity_by_base_name("AoSubmatrix")
         lc_e = self.__con_i.mc.entity_by_base_name("AoLocalColumn")
         name_patterns = column_patterns or ["*"]
+        attribute_base_names = ["name", "values"]
+        if valid_flag is not None and self.__con_i.mc.attribute_no_throw("AoLocalColumn", "flags") is not None:
+            attribute_base_names.append("flags")
+
+        attributes = [
+            self.__con_i.mc.attribute_by_base_name(lc_e, base_name).name for base_name in attribute_base_names
+        ]
 
         raw_dms = self.__con_i.valuematrix_read(
             ValueMatrixRequestStruct(
                 aid=sm_e.aid,
                 iid=submatrix_iid,
                 columns=[ValueMatrixRequestStruct.ColumnItem(name=name_pattern) for name_pattern in name_patterns],
-                attributes=[
-                    self.__con_i.mc.attribute_by_base_name(lc_e, "name").name,
-                    self.__con_i.mc.attribute_by_base_name(lc_e, "values").name,
-                ],
+                attributes=attributes,
                 mode=ValueMatrixRequestStruct.ModeEnum.MO_CALCULATED,
                 values_start=values_start,
                 values_limit=values_limit,
@@ -499,8 +564,8 @@ class BulkReader:
         )
         del raw_dms  # free memory
         partial_result = bool(df.attrs.get("partial_result", False))
-        df.columns = ["name", "values"]
-        rv = pd.DataFrame({name: values for name, values in zip(df["name"].values, df["values"].values)})
+        df.columns = pd.Index(attribute_base_names)
+        rv = self._create_dataframe_from_localcolumns(valid_flag, df)
         self._attach_unit_attr(rv, df["name"], unit_names)
         rv.attrs["partial_result"] = partial_result
         return rv
