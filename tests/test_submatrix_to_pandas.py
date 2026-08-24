@@ -16,6 +16,8 @@ Test map
     - test_passes_set_independent_as_index_false_to_bulk_reader
         Verifies the wrapper correctly forwards `set_independent_as_index=False`
         to `BulkReader.data_read`.
+    - test_passes_valid_flag_to_bulk_reader
+        Verifies the wrapper correctly forwards `valid_flag` to `BulkReader.data_read`.
     - test_can_opt_in_to_set_independent_as_index
         Verifies that passing `set_independent_as_index=True` promotes the
         independent column to the index (opt-in path).
@@ -122,6 +124,24 @@ class TestSubmatrixToPandasDefaultBehavior:
             submatrix_iid=42,
             date_as_timestamp=False,
             set_independent_as_index=False,
+            valid_flag=None,
+        )
+
+    def test_passes_valid_flag_to_bulk_reader(self):
+        """`submatrix_to_pandas` must forward `valid_flag` to `BulkReader.data_read`."""
+        con_i = MagicMock()
+
+        with patch("odsbox.submatrix_to_pandas.BulkReader") as MockBulkReader:
+            mock_br = MockBulkReader.return_value
+            mock_br.data_read.return_value = pd.DataFrame({"time": [0], "speed": [10]})
+
+            submatrix_to_pandas(con_i, submatrix_iid=42, valid_flag=1)
+
+        mock_br.data_read.assert_called_once_with(
+            submatrix_iid=42,
+            date_as_timestamp=False,
+            set_independent_as_index=False,
+            valid_flag=1,
         )
 
     def test_can_opt_in_to_set_independent_as_index(self):

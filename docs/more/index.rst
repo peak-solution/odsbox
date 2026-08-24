@@ -6,3 +6,4 @@ More
 
    ../session_context
    ../partial_results
+   ../con_read_bulk

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -787,3 +788,647 @@ def test_valuematrix_read_raise_on_partial_result_propagates(monkeypatch):
 
     with pytest.raises(PartialResultError):
         br.valuematrix_read(1, raise_on_partial_result=True)
+
+
+# --- Tests for valid_flag parameter of valuematrix_read() ---
+
+
+class _FakeMCForValuematrixValidFlag:
+    """Stand-in for mc used by valuematrix_read(), records attribute_no_throw() calls."""
+
+    def __init__(self, flags_attribute_exists: bool = True) -> None:
+        self.__flags_attribute_exists = flags_attribute_exists
+        self.attribute_no_throw_calls: list[tuple] = []
+
+    def entity_by_base_name(self, base_name):
+        return type("E", (), {"aid": 1})()
+
+    def attribute_by_base_name(self, entity, name):
+        return type("A", (), {"name": name})()
+
+    def attribute_no_throw(self, entity_or_name, application_or_base_name):
+        self.attribute_no_throw_calls.append((entity_or_name, application_or_base_name))
+        return object() if self.__flags_attribute_exists else None
+
+
+def _make_valuematrix_read_valid_flag_fake(flags_attribute_exists: bool = True):
+    """Build a minimal FakeConI whose mc records attribute_no_throw() calls."""
+
+    class FakeConI:
+        def __init__(self):
+            self.mc = _FakeMCForValuematrixValidFlag(flags_attribute_exists)
+
+        def valuematrix_read(self, vmreq):
+            return object()  # ignored by monkeypatched to_pandas
+
+    return FakeConI()
+
+
+def test_valuematrix_read_valid_flag_none_default_does_not_request_flags(monkeypatch) -> None:
+    """valid_flag defaults to None: 'flags' is neither requested nor even checked for existence."""
+
+    def fake_to_pandas(dms, **kwargs):
+        return pd.DataFrame({"name": ["Time", "Signal"], "values": [[0, 1, 2], [10, 20, 30]]})
+
+    monkeypatch.setattr("odsbox.bulk_reader.to_pandas", fake_to_pandas)
+    monkeypatch.setattr("odsbox.bulk_reader.extract_column_unit_ids", lambda dms: [])
+
+    fake = _make_valuematrix_read_valid_flag_fake()
+    br = BulkReader(fake)  # type: ignore[arg-type]
+    br._unit_name_lookup_cache = {}
+
+    df = br.valuematrix_read(1)
+
+    # attribute_no_throw is short-circuited away when valid_flag is None
+    assert fake.mc.attribute_no_throw_calls == []
+    assert list(df.columns) == ["Time", "Signal"]
+
+
+def test_valuematrix_read_valid_flag_true_requests_flags_and_masks_default_bitmask(monkeypatch) -> None:
+    """valid_flag=True requests 'flags' and masks values using the default bitmask (15)."""
+
+    def fake_to_pandas(dms, **kwargs):
+        return pd.DataFrame(
+            {
+                "name": ["Time", "Signal"],
+                "values": [[0, 1, 2, 3], [10, 20, 30, 40]],
+                "flags": [[0, 0, 0, 0], [0, 1, 0, 8]],
+            }
+        )
+
+    monkeypatch.setattr("odsbox.bulk_reader.to_pandas", fake_to_pandas)
+    monkeypatch.setattr("odsbox.bulk_reader.extract_column_unit_ids", lambda dms: [])
+
+    fake = _make_valuematrix_read_valid_flag_fake(flags_attribute_exists=True)
+    br = BulkReader(fake)  # type: ignore[arg-type]
+    br._unit_name_lookup_cache = {}
+
+    df = br.valuematrix_read(1, valid_flag=True)
+
+    assert fake.mc.attribute_no_throw_calls == [("AoLocalColumn", "flags")]
+    assert "flags" not in df.columns
+    assert str(df["Signal"].dtype) == "Int64"
+    assert df["Signal"].tolist() == [10, pd.NA, 30, pd.NA]
+    # column without any invalid flags keeps its original (non-nullable) dtype
+    assert str(df["Time"].dtype) == "int64"
+    assert df["Time"].tolist() == [0, 1, 2, 3]
+
+
+def test_valuematrix_read_valid_flag_custom_bitmask_masks_only_matching_bits(monkeypatch) -> None:
+    """A custom integer valid_flag only masks values whose flags match that specific bitmask."""
+
+    def fake_to_pandas(dms, **kwargs):
+        return pd.DataFrame({"name": ["Signal"], "values": [[10, 20, 30, 40]], "flags": [[0, 1, 2, 3]]})
+
+    monkeypatch.setattr("odsbox.bulk_reader.to_pandas", fake_to_pandas)
+    monkeypatch.setattr("odsbox.bulk_reader.extract_column_unit_ids", lambda dms: [])
+
+    fake = _make_valuematrix_read_valid_flag_fake(flags_attribute_exists=True)
+    br = BulkReader(fake)  # type: ignore[arg-type]
+    br._unit_name_lookup_cache = {}
+
+    df = br.valuematrix_read(1, valid_flag=1)
+
+    # flag=2 does not have bit 0 set, so it stays valid even though bitmask 15 would mask it
+    assert df["Signal"].tolist() == [10, pd.NA, 30, pd.NA]
+
+
+def test_valuematrix_read_valid_flag_true_but_attribute_missing_is_ignored(monkeypatch) -> None:
+    """valid_flag=True is silently ignored when AoLocalColumn has no 'flags' base attribute."""
+
+    def fake_to_pandas(dms, **kwargs):
+        return pd.DataFrame({"name": ["Signal"], "values": [[10, 20, 30]]})
+
+    monkeypatch.setattr("odsbox.bulk_reader.to_pandas", fake_to_pandas)
+    monkeypatch.setattr("odsbox.bulk_reader.extract_column_unit_ids", lambda dms: [])
+
+    fake = _make_valuematrix_read_valid_flag_fake(flags_attribute_exists=False)
+    br = BulkReader(fake)  # type: ignore[arg-type]
+    br._unit_name_lookup_cache = {}
+
+    df = br.valuematrix_read(1, valid_flag=True)
+
+    assert fake.mc.attribute_no_throw_calls == [("AoLocalColumn", "flags")]
+    assert "flags" not in df.columns
+    assert str(df["Signal"].dtype) == "int64"
+    assert df["Signal"].tolist() == [10, 20, 30]
+
+
+def test_valuematrix_read_valid_flag_false_also_masks_with_default_bitmask(monkeypatch) -> None:
+    """valid_flag=False is documented to behave like True/None: it still requests and masks with bitmask 15."""
+
+    def fake_to_pandas(dms, **kwargs):
+        return pd.DataFrame({"name": ["Signal"], "values": [[10, 20, 30, 40]], "flags": [[0, 1, 0, 8]]})
+
+    monkeypatch.setattr("odsbox.bulk_reader.to_pandas", fake_to_pandas)
+    monkeypatch.setattr("odsbox.bulk_reader.extract_column_unit_ids", lambda dms: [])
+
+    fake = _make_valuematrix_read_valid_flag_fake(flags_attribute_exists=True)
+    br = BulkReader(fake)  # type: ignore[arg-type]
+    br._unit_name_lookup_cache = {}
+
+    df = br.valuematrix_read(1, valid_flag=False)
+
+    assert fake.mc.attribute_no_throw_calls == [("AoLocalColumn", "flags")]
+    assert df["Signal"].tolist() == [10, pd.NA, 30, pd.NA]
+
+
+# --- Tests for load_flags parameter of query() ---
+
+
+class _FakeMCAttribute:
+    """Stand-in for mc.attribute_no_throw(), controls whether the 'flags' attribute exists."""
+
+    def __init__(self, exists: bool) -> None:
+        self.__exists = exists
+
+    def attribute_no_throw(self, entity_or_name, application_or_base_name):
+        return object() if self.__exists else None
+
+
+def _make_load_flags_query_fake(exists: bool, captured_query: dict):
+    """Build a minimal FakeConI recording the jaquel query passed to data_read_jaquel()."""
+
+    class FakeConI:
+        def __init__(self):
+            self.mc = _FakeMCAttribute(exists)
+
+        def query_data(self, query):
+            return pd.DataFrame(
+                [
+                    {
+                        "id": 1,
+                        "name": "colA",
+                        "independent": False,
+                        "sequence_representation": SeqRepEnum.explicit.value,
+                        "submatrix": 20,
+                        "number_of_rows": 2,
+                    },
+                    {
+                        "id": 2,
+                        "name": "colB",
+                        "independent": False,
+                        "sequence_representation": SeqRepEnum.explicit.value,
+                        "submatrix": 20,
+                        "number_of_rows": 2,
+                    },
+                ]
+            )
+
+        def data_read_jaquel(self, jaquel_query):
+            captured_query.update(jaquel_query)
+            return object()  # ignored by monkeypatched to_pandas
+
+    return FakeConI()
+
+
+def test_query_load_flags_true_requests_and_returns_flags_when_attribute_exists(monkeypatch) -> None:
+    """load_flags=True adds 'flags' to the requested attributes and to the result when the attribute exists."""
+    captured_query: dict = {}
+
+    def fake_to_pandas(dms, **kwargs):
+        # columns order matches attributes dict: id, values, flags
+        return pd.DataFrame([[1, [1, 2], [0, 1]], [2, [3, 4], [1, 0]]])
+
+    monkeypatch.setattr("odsbox.bulk_reader.to_pandas", fake_to_pandas)
+    monkeypatch.setattr("odsbox.bulk_reader.extract_column_unit_ids", lambda dms: [])
+
+    br = BulkReader(_make_load_flags_query_fake(exists=True, captured_query=captured_query))  # type: ignore[arg-type]
+    br._unit_name_lookup_cache = {}
+
+    merged = br.query({"submatrix": 20}, load_flags=True)
+
+    assert "flags" in captured_query["$attributes"]
+    assert "flags" in merged.columns
+    assert list(merged["flags"]) == [[0, 1], [1, 0]]
+
+
+def test_query_load_flags_false_by_default_does_not_request_flags(monkeypatch) -> None:
+    """load_flags defaults to False: 'flags' must not be requested nor present in the result."""
+    captured_query: dict = {}
+
+    def fake_to_pandas(dms, **kwargs):
+        return pd.DataFrame([[1, [1, 2]], [2, [3, 4]]])
+
+    monkeypatch.setattr("odsbox.bulk_reader.to_pandas", fake_to_pandas)
+    monkeypatch.setattr("odsbox.bulk_reader.extract_column_unit_ids", lambda dms: [])
+
+    br = BulkReader(_make_load_flags_query_fake(exists=True, captured_query=captured_query))  # type: ignore[arg-type]
+    br._unit_name_lookup_cache = {}
+
+    merged = br.query({"submatrix": 20})
+
+    assert "flags" not in captured_query["$attributes"]
+    assert "flags" not in merged.columns
+
+
+def test_query_load_flags_true_but_attribute_missing_is_ignored(monkeypatch) -> None:
+    """load_flags=True is silently ignored when AoLocalColumn has no 'flags' base attribute."""
+    captured_query: dict = {}
+
+    def fake_to_pandas(dms, **kwargs):
+        return pd.DataFrame([[1, [1, 2]], [2, [3, 4]]])
+
+    monkeypatch.setattr("odsbox.bulk_reader.to_pandas", fake_to_pandas)
+    monkeypatch.setattr("odsbox.bulk_reader.extract_column_unit_ids", lambda dms: [])
+
+    br = BulkReader(_make_load_flags_query_fake(exists=False, captured_query=captured_query))  # type: ignore[arg-type]
+    br._unit_name_lookup_cache = {}
+
+    merged = br.query({"submatrix": 20}, load_flags=True)
+
+    assert "flags" not in captured_query["$attributes"]
+    assert "flags" not in merged.columns
+
+
+def test_query_load_flags_merges_with_metadata_preserving_order(monkeypatch) -> None:
+    """flags values are merged onto the correct row per local column id, preserving bulk order."""
+    captured_query: dict = {}
+
+    def fake_to_pandas(dms, **kwargs):
+        # bulk order is [2, 1] here to make sure merge doesn't rely on sorted ids
+        return pd.DataFrame([[2, [3, 4], [1, 0]], [1, [1, 2], [0, 1]]])
+
+    monkeypatch.setattr("odsbox.bulk_reader.to_pandas", fake_to_pandas)
+    monkeypatch.setattr("odsbox.bulk_reader.extract_column_unit_ids", lambda dms: [])
+
+    br = BulkReader(_make_load_flags_query_fake(exists=True, captured_query=captured_query))  # type: ignore[arg-type]
+    br._unit_name_lookup_cache = {}
+
+    merged = br.query({"submatrix": 20}, load_flags=True)
+
+    assert list(merged["name"]) == ["colB", "colA"]
+    assert list(merged["flags"]) == [[1, 0], [0, 1]]
+
+
+def test_create_dataframe_from_localcolumns_valid_flag_false_uses_default_mask() -> None:
+    localcolumn_df = pd.DataFrame(
+        [
+            {
+                "name": "Signal",
+                "values": [10, 20, 30, 40],
+                "flags": [0, 1, 0, 8],
+            }
+        ]
+    )
+
+    rv = BulkReader._create_dataframe_from_localcolumns(False, localcolumn_df)
+
+    assert str(rv["Signal"].dtype) == "Int64"
+    assert rv["Signal"].tolist() == [10, pd.NA, 30, pd.NA]
+
+
+def test_create_dataframe_from_localcolumns_valid_flag_none_uses_default_mask() -> None:
+    localcolumn_df = pd.DataFrame(
+        [
+            {
+                "name": "Signal",
+                "values": [1, 2, 3],
+                "flags": [0, 15, 0],
+            }
+        ]
+    )
+
+    rv = BulkReader._create_dataframe_from_localcolumns(None, localcolumn_df)
+
+    assert str(rv["Signal"].dtype) == "Int64"
+    assert rv["Signal"].tolist() == [1, pd.NA, 3]
+
+
+# --- Tests for valid_flag parameter of data_read() ---
+
+
+def test_data_read_valid_flag_none_default_does_not_request_flags():
+    """valid_flag defaults to None: query() is called with load_flags=False and no masking occurs."""
+    from odsbox.bulk_reader import BulkReader as BR
+
+    br = BR(None)  # type: ignore[arg-type]
+    captured_kwargs: dict = {}
+
+    qdf = pd.DataFrame(
+        [
+            {"name": "time", "values": [0, 1, 2], "independent": True},
+            {"name": "val", "values": [10, 11, 12], "independent": False},
+        ]
+    )
+
+    def fake_query(*args, **kwargs):
+        captured_kwargs.update(kwargs)
+        return qdf
+
+    br.query = fake_query
+
+    df = br.data_read(submatrix_iid=1, set_independent_as_index=False)
+
+    assert captured_kwargs["load_flags"] is False
+    assert df["val"].tolist() == [10, 11, 12]
+    assert str(df["val"].dtype) == "int64"
+
+
+def test_data_read_valid_flag_true_requests_flags_and_masks_default_bitmask():
+    """valid_flag=True requests flags from query() and masks values using the default bitmask (15)."""
+    from odsbox.bulk_reader import BulkReader as BR
+
+    br = BR(None)  # type: ignore[arg-type]
+    captured_kwargs: dict = {}
+
+    qdf = pd.DataFrame(
+        [
+            {"name": "time", "values": [0, 1, 2, 3], "independent": True, "flags": [0, 0, 0, 0]},
+            {"name": "val", "values": [10, 20, 30, 40], "independent": False, "flags": [0, 1, 0, 8]},
+        ]
+    )
+
+    def fake_query(*args, **kwargs):
+        captured_kwargs.update(kwargs)
+        return qdf
+
+    br.query = fake_query
+
+    df = br.data_read(submatrix_iid=1, set_independent_as_index=False, valid_flag=True)
+
+    assert captured_kwargs["load_flags"] is True
+    assert str(df["val"].dtype) == "Int64"
+    assert df["val"].tolist() == [10, pd.NA, 30, pd.NA]
+    # column without any invalid flags keeps its original (non-nullable) dtype
+    assert str(df["time"].dtype) == "int64"
+    assert df["time"].tolist() == [0, 1, 2, 3]
+
+
+def test_data_read_valid_flag_custom_bitmask_masks_only_matching_bits():
+    """A custom integer valid_flag only masks values whose flags match that specific bitmask."""
+    from odsbox.bulk_reader import BulkReader as BR
+
+    br = BR(None)  # type: ignore[arg-type]
+
+    qdf = pd.DataFrame(
+        [
+            {"name": "val", "values": [10, 20, 30, 40], "independent": False, "flags": [0, 1, 2, 3]},
+        ]
+    )
+
+    br.query = lambda *args, **kwargs: qdf
+
+    df = br.data_read(submatrix_iid=1, set_independent_as_index=False, valid_flag=1)
+
+    # flag=2 does not have bit 0 set, so it stays valid even though bitmask 15 would mask it
+    assert df["val"].tolist() == [10, pd.NA, 30, pd.NA]
+
+
+def test_data_read_valid_flag_false_also_requests_and_masks_with_default_bitmask():
+    """valid_flag=False is documented to behave like True/None: it still requests and masks with bitmask 15."""
+    from odsbox.bulk_reader import BulkReader as BR
+
+    br = BR(None)  # type: ignore[arg-type]
+    captured_kwargs: dict = {}
+
+    qdf = pd.DataFrame(
+        [
+            {"name": "val", "values": [10, 20, 30, 40], "independent": False, "flags": [0, 1, 0, 8]},
+        ]
+    )
+
+    def fake_query(*args, **kwargs):
+        captured_kwargs.update(kwargs)
+        return qdf
+
+    br.query = fake_query
+
+    df = br.data_read(submatrix_iid=1, set_independent_as_index=False, valid_flag=False)
+
+    # False is not None, so flags are still requested from query()
+    assert captured_kwargs["load_flags"] is True
+    assert df["val"].tolist() == [10, pd.NA, 30, pd.NA]
+
+
+def test_data_read_valid_flag_preserves_unit_names_and_partial_result_attrs():
+    """valid_flag masking must not interfere with existing unit_names/partial_result propagation."""
+    from odsbox.bulk_reader import BulkReader as BR
+
+    br = BR(None)  # type: ignore[arg-type]
+
+    qdf = pd.DataFrame(
+        [
+            {"name": "val", "values": [10, 20, 30], "independent": False, "flags": [0, 1, 0]},
+        ]
+    )
+    qdf.attrs["unit_names"] = {"val": "N"}
+    qdf.attrs["partial_result"] = True
+
+    br.query = lambda *args, **kwargs: qdf
+
+    df = br.data_read(submatrix_iid=1, set_independent_as_index=False, valid_flag=True)
+
+    assert df.attrs["unit_names"] == {"val": "N"}
+    assert df.attrs["partial_result"] is True
+    assert df["val"].tolist() == [10, pd.NA, 30]
+
+
+def test_data_read_valid_flag_with_independent_index_set():
+    """valid_flag composes correctly with set_independent_as_index=True."""
+    from odsbox.bulk_reader import BulkReader as BR
+
+    br = BR(None)  # type: ignore[arg-type]
+
+    qdf = pd.DataFrame(
+        [
+            {"name": "time", "values": [0, 1, 2], "independent": True, "flags": [0, 0, 0]},
+            {"name": "val", "values": [10, 20, 30], "independent": False, "flags": [0, 1, 0]},
+        ]
+    )
+
+    br.query = lambda *args, **kwargs: qdf
+
+    df = br.data_read(submatrix_iid=1, set_independent_as_index=True, valid_flag=True)
+
+    assert df.index.tolist() == [0, 1, 2]
+    assert list(df.columns) == ["val"]
+    assert df["val"].tolist() == [10, pd.NA, 30]
+
+
+# --- Additional tests for _create_dataframe_from_localcolumns (static method) ---
+
+
+def test_create_dataframe_from_localcolumns_without_flags_column_returns_values_unchanged():
+    """When 'flags' is not part of the metadata, values are used verbatim regardless of valid_flag."""
+    localcolumn_df = pd.DataFrame(
+        [
+            {"name": "Time", "values": [0, 1, 2]},
+            {"name": "Signal", "values": [10, 20, 30]},
+        ]
+    )
+
+    rv = BulkReader._create_dataframe_from_localcolumns(True, localcolumn_df)
+
+    assert list(rv.columns) == ["Time", "Signal"]
+    assert rv["Time"].tolist() == [0, 1, 2]
+    assert rv["Signal"].tolist() == [10, 20, 30]
+    assert str(rv["Signal"].dtype) == "int64"
+
+
+def test_create_dataframe_from_localcolumns_custom_int_bitmask():
+    """A custom integer bitmask only masks values whose flags match that specific mask."""
+    localcolumn_df = pd.DataFrame(
+        [
+            {
+                "name": "Signal",
+                "values": [10, 20, 30, 40],
+                "flags": [0, 1, 2, 3],
+            }
+        ]
+    )
+
+    rv = BulkReader._create_dataframe_from_localcolumns(1, localcolumn_df)
+
+    # flag=2 does not have bit 0 set, so it stays valid even though bitmask 15 would mask it
+    assert rv["Signal"].tolist() == [10, pd.NA, 30, pd.NA]
+
+
+def test_create_dataframe_from_localcolumns_valid_flag_true_matches_default_mask():
+    """valid_flag=True behaves identically to False/None: all map to the default bitmask 15."""
+    localcolumn_df = pd.DataFrame(
+        [
+            {
+                "name": "Signal",
+                "values": [10, 20, 30, 40],
+                "flags": [0, 1, 0, 8],
+            }
+        ]
+    )
+
+    rv = BulkReader._create_dataframe_from_localcolumns(True, localcolumn_df)
+
+    assert str(rv["Signal"].dtype) == "Int64"
+    assert rv["Signal"].tolist() == [10, pd.NA, 30, pd.NA]
+
+
+def test_create_dataframe_from_localcolumns_no_invalid_flags_keeps_original_dtype():
+    """When no flag matches the bitmask, values keep their original (non-nullable) dtype."""
+    localcolumn_df = pd.DataFrame(
+        [
+            {
+                "name": "Signal",
+                "values": [10, 20, 30],
+                "flags": [0, 0, 0],
+            }
+        ]
+    )
+
+    rv = BulkReader._create_dataframe_from_localcolumns(True, localcolumn_df)
+
+    assert str(rv["Signal"].dtype) == "int64"
+    assert rv["Signal"].tolist() == [10, 20, 30]
+
+
+def test_create_dataframe_from_localcolumns_empty_flags_list_skips_masking():
+    """An empty flags list (e.g. a zero-row column) leaves the values untouched."""
+    localcolumn_df = pd.DataFrame(
+        [
+            {
+                "name": "Signal",
+                "values": [],
+                "flags": [],
+            }
+        ]
+    )
+
+    rv = BulkReader._create_dataframe_from_localcolumns(True, localcolumn_df)
+
+    assert rv["Signal"].tolist() == []
+
+
+def test_create_dataframe_from_localcolumns_float_values_use_nan_for_masked():
+    """Float columns keep their float dtype and use NaN (not pd.NA) for masked entries."""
+    localcolumn_df = pd.DataFrame(
+        [
+            {
+                "name": "Signal",
+                "values": np.array([1.5, 2.5, 3.5], dtype=float),
+                "flags": [0, 1, 0],
+            }
+        ]
+    )
+
+    rv = BulkReader._create_dataframe_from_localcolumns(True, localcolumn_df)
+
+    assert str(rv["Signal"].dtype) == "float64"
+    assert rv["Signal"].iloc[0] == 1.5
+    assert np.isnan(rv["Signal"].iloc[1])
+    assert rv["Signal"].iloc[2] == 3.5
+
+
+def test_create_dataframe_from_localcolumns_boolean_values_use_nullable_boolean():
+    """Boolean columns convert to the nullable BooleanDtype so pd.NA can be stored."""
+    localcolumn_df = pd.DataFrame(
+        [
+            {
+                "name": "Signal",
+                "values": np.array([True, False, True]),
+                "flags": [0, 1, 0],
+            }
+        ]
+    )
+
+    rv = BulkReader._create_dataframe_from_localcolumns(True, localcolumn_df)
+
+    assert str(rv["Signal"].dtype) == "boolean"
+    assert rv["Signal"].tolist() == [True, pd.NA, True]
+
+
+def test_create_dataframe_from_localcolumns_multiple_columns_independent_masking():
+    """Each local column's mask is computed independently; unaffected columns are untouched."""
+    localcolumn_df = pd.DataFrame(
+        [
+            {"name": "Time", "values": [0, 1, 2, 3], "flags": [0, 0, 0, 0]},
+            {"name": "Signal", "values": [10, 20, 30, 40], "flags": [0, 1, 0, 8]},
+        ]
+    )
+
+    rv = BulkReader._create_dataframe_from_localcolumns(True, localcolumn_df)
+
+    assert str(rv["Time"].dtype) == "int64"
+    assert rv["Time"].tolist() == [0, 1, 2, 3]
+    assert str(rv["Signal"].dtype) == "Int64"
+    assert rv["Signal"].tolist() == [10, pd.NA, 30, pd.NA]
+
+
+def test_create_dataframe_from_localcolumns_constant_flags_shorter_than_values_are_broadcast():
+    """Servers may return 'flags' in the same compact form used for implicit/raw sequence
+    representations (e.g. 2 samples for an implicit_linear column with 4 rows). When every
+    returned flag sample is identical, that single value must apply to every row."""
+    localcolumn_df = pd.DataFrame(
+        [
+            {"name": "Time", "values": [0, 1, 2, 3], "flags": [15, 15]},
+        ]
+    )
+
+    rv = BulkReader._create_dataframe_from_localcolumns(True, localcolumn_df)
+
+    assert str(rv["Time"].dtype) == "Int64"
+    assert rv["Time"].tolist() == [pd.NA, pd.NA, pd.NA, pd.NA]
+
+
+def test_create_dataframe_from_localcolumns_constant_valid_flags_shorter_than_values_no_masking():
+    """A short constant 'flags' sample that does not match the bitmask leaves values untouched."""
+    localcolumn_df = pd.DataFrame(
+        [
+            {"name": "Time", "values": [0, 1, 2, 3], "flags": [0, 0]},
+        ]
+    )
+
+    rv = BulkReader._create_dataframe_from_localcolumns(True, localcolumn_df)
+
+    assert str(rv["Time"].dtype) == "int64"
+    assert rv["Time"].tolist() == [0, 1, 2, 3]
+
+
+def test_create_dataframe_from_localcolumns_non_constant_length_mismatch_raises():
+    """A 'flags' array that neither matches the values length nor is constant cannot be aligned."""
+    localcolumn_df = pd.DataFrame(
+        [
+            {"name": "Time", "values": [0, 1, 2, 3], "flags": [0, 15]},
+        ]
+    )
+
+    with pytest.raises(ValueError, match="cannot be aligned"):
+        BulkReader._create_dataframe_from_localcolumns(True, localcolumn_df)
