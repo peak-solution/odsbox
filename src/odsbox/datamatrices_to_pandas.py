@@ -376,21 +376,7 @@ def to_pandas(
     if is_null_to_nan and null_masks:
         for column_name, null_mask in null_masks.items():
             mask_array = np.array(null_mask)
-
-            if rv[column_name].dtype == np.bool_:
-                rv[column_name] = rv[column_name].astype(pd.BooleanDtype())
-            elif pd.api.types.is_integer_dtype(rv[column_name].dtype):
-                if rv[column_name].dtype == np.uint8:
-                    rv[column_name] = rv[column_name].astype(pd.UInt8Dtype())
-                elif rv[column_name].dtype == np.int16:
-                    rv[column_name] = rv[column_name].astype(pd.Int16Dtype())
-                elif rv[column_name].dtype == np.int32:
-                    rv[column_name] = rv[column_name].astype(pd.Int32Dtype())
-                elif rv[column_name].dtype == np.int64:
-                    rv[column_name] = rv[column_name].astype(pd.Int64Dtype())
-                else:
-                    rv[column_name] = rv[column_name].astype(pd.Int64Dtype())  # fallback
-
+            rv[column_name] = ensure_nullable_dtype(rv[column_name])
             rv.loc[mask_array, column_name] = pd.NA
 
     return _set_partial_result_attr(rv, data_matrices)
@@ -399,3 +385,32 @@ def to_pandas(
 def _set_partial_result_attr(df: pd.DataFrame, data_matrices: ods.DataMatrices) -> pd.DataFrame:
     df.attrs["partial_result"] = data_matrices.partial_result
     return df
+
+
+def ensure_nullable_dtype(series: pd.Series) -> pd.Series:
+    """
+    Convert a numpy-backed boolean/integer Series to the matching pandas nullable dtype.
+
+    Plain numpy bool/int arrays cannot hold missing values, so assigning ``pd.NA`` into them
+    silently upcasts to ``float64`` or ``object`` and loses the original dtype. Converting to
+    the pandas nullable equivalent first keeps the dtype stable once ``pd.NA`` is assigned.
+    Series of any other dtype (e.g. float, object) already support missing values natively and
+    are returned unchanged.
+
+    Args:
+        series: The Series to convert.
+
+    Returns:
+        A Series using a pandas nullable dtype when applicable, otherwise the original Series.
+    """
+    if series.dtype == np.bool_:
+        return series.astype(pd.BooleanDtype())
+    if pd.api.types.is_integer_dtype(series.dtype):
+        nullable_dtype = {
+            np.dtype(np.uint8): pd.UInt8Dtype(),
+            np.dtype(np.int16): pd.Int16Dtype(),
+            np.dtype(np.int32): pd.Int32Dtype(),
+            np.dtype(np.int64): pd.Int64Dtype(),
+        }.get(series.dtype, pd.Int64Dtype())
+        return series.astype(nullable_dtype)
+    return series

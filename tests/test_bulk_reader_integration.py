@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -98,6 +99,101 @@ def test_bulk_reader_query():
             assert len(time_vals) > 0
             assert len(coolant_vals) > 0
             assert len(time_vals) == len(coolant_vals)
+
+
+@pytest.mark.integration
+def test_bulk_reader_query_load_flags() -> None:
+    with __create_con_i() as con_i:
+        conditions = {"submatrix.measurement.name": {"$like": "Profile_5?"}}
+        con_i.bulk.add_column_filters(conditions, ["Time", "Coolant"], column_patterns_case_insensitive=False)
+
+        # AoLocalColumn.flags is not requested unless load_flags=True
+        df_without_flags = con_i.bulk.query(conditions, load_flags=False)
+        assert df_without_flags.empty is False
+        assert "flags" not in df_without_flags.columns
+
+        df_with_flags = con_i.bulk.query(conditions, load_flags=True)
+        assert df_with_flags.empty is False
+        assert "flags" in df_with_flags.columns
+        for flags in df_with_flags["flags"]:
+            assert len(flags) > 0
+
+        # requesting flags must not change the other columns/values
+        pd.testing.assert_frame_equal(df_without_flags, df_with_flags.drop(columns=["flags"]))
+
+
+@pytest.mark.integration
+def test_bulk_reader_data_read_valid_flag() -> None:
+    with __create_con_i() as con_i:
+        sm_s = con_i.query_data(
+            {
+                "AoSubmatrix": {"measurement.name": "Profile_52"},
+                "$options": {"$rowlimit": 1},
+                "$attributes": {"id": 1, "measurement.name": 1},
+            }
+        )
+
+        assert sm_s.shape[0] <= 1
+        if 1 == sm_s.shape[0]:
+            submatrix_id = int(sm_s.iloc[0, 0])
+
+            df_plain = con_i.bulk.data_read(submatrix_id, ["Time", "Coolant"], set_independent_as_index=False)
+
+            # independently fetch the raw flags to derive the expected mask
+            conditions = {"submatrix": submatrix_id}
+            con_i.bulk.add_column_filters(conditions, ["Time", "Coolant"], column_patterns_case_insensitive=False)
+            flagged = con_i.bulk.query(conditions, load_flags=True)
+            assert "flags" in flagged.columns
+
+            df_filtered = con_i.bulk.data_read(
+                submatrix_id, ["Time", "Coolant"], set_independent_as_index=False, valid_flag=True
+            )
+
+            assert list(df_filtered.columns) == list(df_plain.columns)
+            for _, row in flagged.iterrows():
+                name = row["name"]
+                flags = np.asarray(row["flags"], dtype=int)
+                if len(flags) != len(df_plain[name]):
+                    # servers may return flags in the same compact form used for implicit/raw
+                    # sequence representations; a constant sample set applies to every row
+                    assert len(np.unique(flags)) == 1
+                    flags = np.full(len(df_plain[name]), flags[0])
+                invalid_mask = (flags & 15) != 0
+                if invalid_mask.any():
+                    assert df_filtered[name].isna().tolist() == invalid_mask.tolist()
+                    assert df_filtered[name][~invalid_mask].tolist() == df_plain[name][~invalid_mask].tolist()
+                else:
+                    pd.testing.assert_series_equal(df_filtered[name], df_plain[name], check_names=False)
+
+
+@pytest.mark.integration
+def test_bulk_reader_valuematrix_read_valid_flag() -> None:
+    with __create_con_i() as con_i:
+        sm_s = con_i.query_data(
+            {
+                "AoSubmatrix": {"measurement.name": "Profile_52"},
+                "$options": {"$rowlimit": 1},
+                "$attributes": {"id": 1, "measurement.name": 1},
+            }
+        )
+
+        assert sm_s.shape[0] <= 1
+        if 1 == sm_s.shape[0]:
+            submatrix_id = int(sm_s.iloc[0, 0])
+
+            # data_read()'s masking is already verified independently above; use it as the
+            # reference to confirm valuematrix_read() applies the same masking for valid_flag.
+            df_data_read = con_i.bulk.data_read(
+                submatrix_id, ["Time", "Coolant"], set_independent_as_index=False, valid_flag=True
+            )
+            df_valuematrix = con_i.bulk.valuematrix_read(submatrix_id, ["Time", "Coolant"], valid_flag=True)
+
+            pd.testing.assert_frame_equal(df_data_read, df_valuematrix)
+            assert df_valuematrix.attrs["unit_names"] == df_data_read.attrs["unit_names"]
+
+            # plain read (no valid_flag) must still work and keep the same columns
+            df_plain = con_i.bulk.valuematrix_read(submatrix_id, ["Time", "Coolant"])
+            assert list(df_plain.columns) == list(df_valuematrix.columns)
 
 
 @pytest.mark.integration
