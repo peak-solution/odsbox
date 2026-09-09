@@ -55,7 +55,7 @@ dev = [
     "pytest-cov>=7.1.0",
     "pytest-mock>=3.14.0",
     "python-semantic-release>=9.0.0",
-    "gitpython>=3.1.51",
+    "gitpython>=3.1.59",
     "ruff>=0.15.0",
     "types-requests>=2.30.0",
     "click>=8.3.3",
@@ -75,6 +75,7 @@ docs = [
     "ipython>=8.0.0",
     "mistune>=3.3.0",
     "soupsieve>=2.8.4",
+    "tornado>=6.5.8",
 ]
 
 [build-system]
