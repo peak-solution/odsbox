@@ -67,6 +67,31 @@ def test_valuematrix_read_type_error(dummy_con_i):
     assert "valuematrix_read expects 'ods.ValueMatrixRequestStruct'" in str(exc.value)
 
 
+def test_valuematrix_append_type_error(dummy_con_i):
+    with pytest.raises(TypeError) as exc:
+        dummy_con_i.valuematrix_append(())
+    assert "valuematrix_append expects 'ods.ValueMatrixAppendStruct'" in str(exc.value)
+
+
+def test_valuematrix_append_calls_ods_post_request(dummy_con_i, monkeypatch):
+    captured = {}
+    request = ods.ValueMatrixAppendStruct()
+
+    def fake_ods_post_request(operation, payload=None, timeout=None):
+        captured["operation"] = operation
+        captured["payload"] = payload
+        captured["timeout"] = timeout
+        return object()
+
+    monkeypatch.setattr(dummy_con_i, "ods_post_request", fake_ods_post_request)
+
+    dummy_con_i.valuematrix_append(request)
+
+    assert captured["operation"] == "valuematrix-append"
+    assert captured["payload"] is request
+    assert captured["timeout"] is None
+
+
 def test_model_update_type_error(dummy_con_i):
     with pytest.raises(TypeError) as exc:
         dummy_con_i.model_update([])

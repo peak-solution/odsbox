@@ -645,6 +645,14 @@ class ValueMatrixRequestStruct(_message.Message):
     exd_group_ids: _containers.RepeatedScalarFieldContainer[int]
     def __init__(self, mode: _Optional[_Union[ValueMatrixRequestStruct.ModeEnum, str]] = ..., aid: _Optional[int] = ..., iid: _Optional[int] = ..., attributes: _Optional[_Iterable[str]] = ..., columns: _Optional[_Iterable[_Union[ValueMatrixRequestStruct.ColumnItem, _Mapping]]] = ..., values_limit: _Optional[int] = ..., values_start: _Optional[int] = ..., exd_group_ids: _Optional[_Iterable[int]] = ...) -> None: ...
 
+class ValueMatrixAppendStruct(_message.Message):
+    __slots__ = ("instance", "data")
+    INSTANCE_FIELD_NUMBER: _ClassVar[int]
+    DATA_FIELD_NUMBER: _ClassVar[int]
+    instance: Instance
+    data: DataMatrix
+    def __init__(self, instance: _Optional[_Union[Instance, _Mapping]] = ..., data: _Optional[_Union[DataMatrix, _Mapping]] = ...) -> None: ...
+
 class ContextVariables(_message.Message):
     __slots__ = ("variables",)
     class ContextVariableValue(_message.Message):

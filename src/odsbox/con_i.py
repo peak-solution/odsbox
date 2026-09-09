@@ -589,6 +589,23 @@ class ConI:
         return_value.ParseFromString(response.content)
         return return_value
 
+    def valuematrix_append(self, request: ods.ValueMatrixAppendStruct) -> None:
+        """
+        Append bulk data to a submatrix or measurement.
+
+        Args:
+            request: Define measurement or submatrix to append to.
+
+        Remarks:
+            Introduced in ASAM ODS 6.2.1.
+
+        Raises:
+            requests.HTTPError: If ValueMatrix append fails.
+        """
+        if not isinstance(request, ods.ValueMatrixAppendStruct):
+            raise TypeError(f"valuematrix_append expects 'ods.ValueMatrixAppendStruct', got '{type(request).__name__}'")
+        self.ods_post_request("valuematrix-append", request)
+
     def model_read(self) -> ods.Model:
         """
         Read the model from server and update cached version.
