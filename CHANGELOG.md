@@ -2,6 +2,25 @@
 
 <!-- version list -->
 
+## v1.8.0 (2026-09-09)
+
+### Features
+
+- Add valuematrix_append method to ConI class
+  ([#287](https://github.com/peak-solution/odsbox/pull/287),
+  [`4cdb091`](https://github.com/peak-solution/odsbox/commit/4cdb0914c09d15abfdc123dd5b688bcbf213c6cf))
+
+- Integrate ASAM ODS v6.2.1 interface definitions
+  ([#287](https://github.com/peak-solution/odsbox/pull/287),
+  [`4cdb091`](https://github.com/peak-solution/odsbox/commit/4cdb0914c09d15abfdc123dd5b688bcbf213c6cf))
+
+- Regenerate stub with v6.2.1 ([#287](https://github.com/peak-solution/odsbox/pull/287),
+  [`4cdb091`](https://github.com/peak-solution/odsbox/commit/4cdb0914c09d15abfdc123dd5b688bcbf213c6cf))
+
+- Update to ASAM ODS v6.2.1 interface ([#287](https://github.com/peak-solution/odsbox/pull/287),
+  [`4cdb091`](https://github.com/peak-solution/odsbox/commit/4cdb0914c09d15abfdc123dd5b688bcbf213c6cf))
+
+
 ## v1.7.0 (2026-08-24)
 
 ### Bug Fixes
