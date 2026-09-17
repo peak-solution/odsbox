@@ -2,6 +2,23 @@
 
 <!-- version list -->
 
+## v1.8.1 (2026-09-17)
+
+### Bug Fixes
+
+- Enhance OIDC flow handling ([#290](https://github.com/peak-solution/odsbox/pull/290),
+  [`8b6c9e7`](https://github.com/peak-solution/odsbox/commit/8b6c9e73e87d66202197da57f31d8c82191a24ee))
+
+- Work on OIDC flow (harden, fix) ([#290](https://github.com/peak-solution/odsbox/pull/290),
+  [`8b6c9e7`](https://github.com/peak-solution/odsbox/commit/8b6c9e73e87d66202197da57f31d8c82191a24ee))
+
+### Continuous Integration
+
+- Bump astral-sh/setup-uv from 10.0.1 to 10.1.0
+  ([#290](https://github.com/peak-solution/odsbox/pull/290),
+  [`8b6c9e7`](https://github.com/peak-solution/odsbox/commit/8b6c9e73e87d66202197da57f31d8c82191a24ee))
+
+
 ## v1.8.0 (2026-09-09)
 
 ### Features
