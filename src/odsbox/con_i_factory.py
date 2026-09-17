@@ -44,14 +44,15 @@ Quick Start Examples::
 
 from __future__ import annotations
 
+import logging
 import os
 import threading
 import time
 from collections.abc import Generator
 from contextlib import contextmanager
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
-from urllib.parse import ParseResult, urlparse, urlunparse
+from urllib.parse import ParseResult, parse_qs, urlparse, urlunparse
 
 import requests
 from oauthlib.oauth2 import BackendApplicationClient
@@ -81,22 +82,55 @@ def _temp_env(**kwargs: Any) -> Generator[None, None, None]:
                 os.environ[key] = old_value
 
 
-class _AuthCodeHTTPServer(HTTPServer):
+class _AuthCodeHTTPServer(ThreadingHTTPServer):
     """HTTPServer subclass with an auth_code attribute for OIDC callback."""
+
+    daemon_threads = True
 
     def __init__(self, redirect_host: str, redirect_port: int) -> None:
         super().__init__((redirect_host, redirect_port), self._CallbackHandler)
         self.auth_code: str | None = None
+        self.auth_error: str | None = None
 
     class _CallbackHandler(BaseHTTPRequestHandler):
         server: _AuthCodeHTTPServer
+        logger = logging.getLogger(__name__)
 
         def do_GET(self) -> None:
-            self.send_response(200)
-            self.end_headers()
-            self.wfile.write(b"Login successful! You can close this window.")
-            if "code" in self.path:
+            query_params = parse_qs(urlparse(self.path).query)
+
+            if "code" in query_params:
                 self.server.auth_code = self.path
+                self._reply(200, "Login successful! You can close this window.")
+                return
+
+            # RFC 6749 4.1.2.1: "error" is the required field on failure; the rest are optional details.
+            if "error" in query_params:
+                error_code = query_params["error"][0]
+                description = query_params.get("error_description", [""])[0]
+                error = f"{error_code}: {description}" if description else error_code
+                self.logger.error("OAuth error: %s", error)
+                self.server.auth_error = error
+                self._reply(400, f"Login failed! You can close this window.\nError: {error}")
+                return
+
+            if not query_params:
+                # Stray browser request (e.g. /favicon.ico), not the OAuth redirect - ignore it.
+                self._reply(404, "Not found.")
+                return
+
+            # Redirect carried query params but neither 'code' nor 'error' - treat as a failed login.
+            self.logger.error("Unexpected OAuth callback without 'code' or 'error': %s", self.path)
+            self.server.auth_error = "authorization response contained neither 'code' nor 'error'"
+            self._reply(400, "Login failed! You can close this window.")
+
+        def _reply(self, status: int, message: str) -> None:
+            body = message.encode("utf-8")
+            self.send_response(status)
+            self.send_header("Content-Type", "text/plain; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
 
         def log_message(self, format: str, *args: Any) -> None:
             pass
@@ -478,7 +512,6 @@ class ConIFactory:
             )
 
             authorization_url, _state = oauth.authorization_url(authorization_endpoint)
-            webbrowser.open(authorization_url)
 
             # Parse redirect URI for local callback server
             parsed = urlparse(redirect_uri)
@@ -488,19 +521,31 @@ class ConIFactory:
             server = _AuthCodeHTTPServer(parsed.hostname, parsed.port)
             server_thread = threading.Thread(target=server.serve_forever, daemon=True)
             server_thread.start()
+            try:
+                if not webbrowser.open(authorization_url):
+                    raise ValueError("Failed to open web browser for authorization URL")
 
-            start_time = time.time()
-            while server.auth_code is None and (time.time() - start_time) < login_timeout:
-                time.sleep(0.1)
-            server.shutdown()
+                start_time = time.time()
+                while (
+                    server.auth_code is None
+                    and server.auth_error is None
+                    and (time.time() - start_time) < login_timeout
+                ):
+                    time.sleep(0.1)
+            finally:
+                server.shutdown()
+                server.server_close()
 
-            if not server.auth_code:
-                raise ValueError("Login timed out")
+            if server.auth_error is not None:
+                raise ValueError(f"OAuth login failed: {server.auth_error}")
+            if server.auth_code is None:
+                raise ValueError(f"OAuth login timed out after {login_timeout} seconds")
 
             oauth.verify = verify_certificate
             oauth.fetch_token(
                 token_url=token_endpoint,
                 authorization_response=server.auth_code,
                 client_secret=client_secret,
+                timeout=60,
             )
             return ConI(url=url, custom_session=oauth, **kwargs)

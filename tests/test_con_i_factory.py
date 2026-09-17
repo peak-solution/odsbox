@@ -138,7 +138,8 @@ class TestOidcAuth:
 
             # Simulate the callback server receiving the auth code immediately
             mock_server = MagicMock()
-            mock_server.auth_code = "/?code=abc123"
+            mock_server.auth_code = "http://127.0.0.1:5678/?code=abc123"
+            mock_server.auth_error = None
             mock_server_cls.return_value = mock_server
 
             con = ConIFactory.oidc(
@@ -174,7 +175,8 @@ class TestOidcAuth:
             mock_session_cls.return_value = mock_session
 
             mock_server = MagicMock()
-            mock_server.auth_code = "/?code=xyz"
+            mock_server.auth_code = "http://127.0.0.1:1234/?code=xyz"
+            mock_server.auth_error = None
             mock_server_cls.return_value = mock_server
 
             con = ConIFactory.oidc(
@@ -202,9 +204,10 @@ class TestOidcAuth:
 
             mock_server = MagicMock()
             mock_server.auth_code = None  # never receives a code
+            mock_server.auth_error = None
             mock_server_cls.return_value = mock_server
 
-            with pytest.raises(ValueError, match="Login timed out"):
+            with pytest.raises(ValueError, match="timed out after 0 seconds"):
                 ConIFactory.oidc(
                     url="https://server/api",
                     client_id="cid",
@@ -248,7 +251,8 @@ class TestOidcAuth:
             mock_session_cls.return_value = mock_session
 
             mock_server = MagicMock()
-            mock_server.auth_code = "/?code=xyz"
+            mock_server.auth_code = "http://127.0.0.1:1234/?code=xyz"
+            mock_server.auth_error = None
             mock_server_cls.return_value = mock_server
 
             ConIFactory.oidc(
@@ -282,7 +286,8 @@ class TestOidcAuth:
                 mock_session_cls.return_value = mock_session
 
                 mock_server = MagicMock()
-                mock_server.auth_code = "/?code=xyz"
+                mock_server.auth_code = "http://127.0.0.1:1234/?code=xyz"
+                mock_server.auth_error = None
                 mock_server_cls.return_value = mock_server
 
                 ConIFactory.oidc(
