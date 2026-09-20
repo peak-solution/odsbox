@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.9.0 (2026-09-20)
+
+### Features
+
+- Add OdsUnitConverter and related documentation
+  ([`bd42d7c`](https://github.com/peak-solution/odsbox/commit/bd42d7c98357e2fb3f6d9509081b1dbe6ba5bf93))
+
+
 ## v1.8.1 (2026-09-17)
 
 ### Bug Fixes
