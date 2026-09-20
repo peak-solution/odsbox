@@ -890,3 +890,13 @@ def test_context_property_refreshes_after_context_update():
 
         assert first_read is not second_read
         assert second_read.get(unique_key) == unique_value
+
+
+@pytest.mark.integration
+def test_ods_unit_converter_initialization():
+    from odsbox.utils import OdsUnitConverter
+
+    with __create_con_i() as con_i:
+        unit_converter = OdsUnitConverter(con_i)
+
+        assert unit_converter is not None
