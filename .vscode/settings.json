@@ -57,6 +57,7 @@
         "nullable",
         "odsbox",
         "Oneof",
+        "physdim",
         "preconfigured",
         "pycln",
         "pyproject",
