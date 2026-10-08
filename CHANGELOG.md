@@ -2,6 +2,21 @@
 
 <!-- version list -->
 
+## v1.10.0 (2026-10-08)
+
+### Continuous Integration
+
+- Bump astral-sh/setup-uv from 10.1.0 to 10.2.0
+  ([#293](https://github.com/peak-solution/odsbox/pull/293),
+  [`ab5fde8`](https://github.com/peak-solution/odsbox/commit/ab5fde81aa3294738f6d5dd3035669a6bc45adc7))
+
+### Features
+
+- #294 optimize BulkReader performance and add comprehensive tests for large local columns
+  ([#295](https://github.com/peak-solution/odsbox/pull/295),
+  [`0711d0c`](https://github.com/peak-solution/odsbox/commit/0711d0c9bc5a0b3187792e2170a0a88a35b68c00))
+
+
 ## v1.9.0 (2026-09-20)
 
 ### Features
