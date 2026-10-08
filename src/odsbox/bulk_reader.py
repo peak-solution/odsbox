@@ -120,15 +120,34 @@ class BulkReader:
             values_limit: Maximum number of values to be processed.
             calculate_raw: Whether to calculate raw values for certain sequence representations.
         """
-        for index, r in localcolumn_df.iterrows():
-            name = r.get("name")
+        names = localcolumn_df["name"].tolist()
+        values_list = localcolumn_df["values"].tolist()
+        seq_reps = (
+            localcolumn_df["sequence_representation"].fillna(SeqRepEnum.explicit.value).tolist()
+            if "sequence_representation" in localcolumn_df.columns
+            else [SeqRepEnum.explicit.value] * len(names)
+        )
+        num_rows = (
+            localcolumn_df["number_of_rows"].fillna(0).tolist()
+            if "number_of_rows" in localcolumn_df.columns
+            else [0] * len(names)
+        )
+        gen_params = localcolumn_df.get("generation_parameters", None)
+        gen_params_list = gen_params.tolist() if gen_params is not None else [None] * len(names)
+
+        new_values = []
+
+        for index, (name, vals, sequence_representation, number_of_rows, generation_parameters) in enumerate(
+            zip(names, values_list, seq_reps, num_rows, gen_params_list)
+        ):
+            sequence_representation = int(sequence_representation)
+            number_of_rows = int(number_of_rows)
+
             if name is None:
                 raise ValueError(f"Missing 'name' field for row at index {index}.")
-            vals = r.get("values")
             if vals is None:
                 raise ValueError(f"Missing 'values' field for column '{name}' at index {index}.")
-            sequence_representation = int(r.get("sequence_representation", SeqRepEnum.explicit.value))
-            number_of_rows = int(r.get("number_of_rows", 0))
+
             if values_start > number_of_rows:
                 raise ValueError(
                     f"values_start {values_start} is greater than number_of_rows {number_of_rows} for column '{name}'."
@@ -141,18 +160,17 @@ class BulkReader:
                 SeqRepEnum.explicit,
                 SeqRepEnum.external_component,
             ]:
-                pass  # explicit values are already correctly stored in vals
+                new_values.append(vals)
             elif sequence_representation == SeqRepEnum.implicit_constant:
-                # generation parameters expected to be stored in vals as [offset, factor, ...]
                 if len(vals) >= 1:
-                    localcolumn_df.at[index, "values"] = [vals[0]] * values_count  # type: ignore[assignment]
+                    new_values.append([vals[0]] * values_count)
                 else:
                     raise ValueError(f"Generation parameters missing for implicit_constant in column '{name}'.")
             elif sequence_representation == SeqRepEnum.implicit_linear:
                 if len(vals) >= 2:
-                    localcolumn_df.at[index, "values"] = [  # type: ignore[assignment]
-                        vals[0] + x * vals[1] for x in range(0 + values_start, values_count + values_start)
-                    ]
+                    new_values.append(
+                        [vals[0] + x * vals[1] for x in range(0 + values_start, values_count + values_start)]
+                    )
                 else:
                     raise ValueError(f"Generation parameters missing for implicit_linear in column '{name}'.")
             elif sequence_representation in [
@@ -160,34 +178,35 @@ class BulkReader:
                 SeqRepEnum.raw_linear_external,
             ]:
                 if calculate_raw:
-                    generation_parameters = r.get("generation_parameters")
                     if isinstance(generation_parameters, list | tuple) and len(generation_parameters) >= 2:
                         p1 = generation_parameters[0]
                         p2 = generation_parameters[1]
                         double_vals = np.array(vals, dtype=float)
-                        localcolumn_df.at[index, "values"] = p1 + p2 * double_vals
+                        new_values.append((p1 + p2 * double_vals).tolist())
                     else:
                         raise ValueError(f"Generation parameters missing for raw_linear in column '{name}'.")
+                else:
+                    new_values.append(vals)
             elif sequence_representation in [
                 SeqRepEnum.raw_linear_calibrated,
                 SeqRepEnum.raw_linear_calibrated_external,
             ]:
                 if calculate_raw:
-                    generation_parameters = r.get("generation_parameters")
                     if isinstance(generation_parameters, list | tuple) and len(generation_parameters) >= 3:
                         p1 = generation_parameters[0]
                         p2 = generation_parameters[1]
                         p3 = generation_parameters[2]
                         double_vals = np.array(vals, dtype=float)
-                        localcolumn_df.at[index, "values"] = (p1 + p2 * double_vals) * p3
+                        new_values.append(((p1 + p2 * double_vals) * p3).tolist())
                     else:
                         raise ValueError(f"Generation parameters missing for raw_linear_calibrated in column '{name}'.")
+                else:
+                    new_values.append(vals)
             elif sequence_representation in [
                 SeqRepEnum.raw_rational,
                 SeqRepEnum.raw_rational_external,
             ]:
                 if calculate_raw:
-                    generation_parameters = r.get("generation_parameters")
                     if isinstance(generation_parameters, list | tuple) and len(generation_parameters) >= 6:
                         p1 = generation_parameters[0]
                         p2 = generation_parameters[1]
@@ -196,15 +215,19 @@ class BulkReader:
                         p5 = generation_parameters[4]
                         p6 = generation_parameters[5]
                         double_vals = np.array(vals, dtype=float)
-                        localcolumn_df.at[index, "values"] = (p1 * double_vals**2 + p2 * double_vals + p3) / (
-                            p4 * double_vals**2 + p5 * double_vals + p6
-                        )
+                        numerator = p1 * double_vals**2 + p2 * double_vals + p3
+                        denominator = p4 * double_vals**2 + p5 * double_vals + p6
+                        new_values.append((numerator / denominator).tolist())
                     else:
                         raise ValueError(f"Generation parameters missing for raw_rational in column '{name}'.")
+                else:
+                    new_values.append(vals)
             else:
                 raise ValueError(
                     f"Unhandled sequence representation {SeqRepEnum(sequence_representation).name} for column '{name}'."
                 )
+
+        localcolumn_df["values"] = new_values
 
     def query(
         self,
@@ -452,10 +475,12 @@ class BulkReader:
         if "flags" in localcolumn_df.columns:
             valid_flag_value: int = 15 if isinstance(valid_flag, bool) or valid_flag is None else valid_flag
             columns_data: dict[str, Any] = {}
-            for _, r in localcolumn_df.iterrows():
-                name = r["name"]
-                values = r["values"]
-                flags = r.get("flags")
+            names = localcolumn_df["name"].tolist()
+            values_list = localcolumn_df["values"].tolist()
+            flags_col = localcolumn_df.get("flags", None)
+            flags_list = flags_col.tolist() if flags_col is not None else [None] * len(names)
+
+            for name, values, flags in zip(names, values_list, flags_list):
                 if flags is not None and len(flags) > 0:
                     flags_array = np.asarray(flags, dtype=int)
                     if len(flags_array) != len(values):
@@ -476,7 +501,7 @@ class BulkReader:
                 columns_data[name] = values
             rv = pd.DataFrame(columns_data)
         else:
-            rv = pd.DataFrame({r["name"]: r["values"] for _, r in localcolumn_df.iterrows()})
+            rv = pd.DataFrame(dict(zip(localcolumn_df["name"], localcolumn_df["values"])))
         return rv
 
     def valuematrix_read(
