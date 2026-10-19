@@ -2,6 +2,26 @@
 
 <!-- version list -->
 
+## v1.10.1 (2026-10-19)
+
+### Bug Fixes
+
+- Add resource parameter to WebFinger URL in endpoint discovery like specified
+  ([#299](https://github.com/peak-solution/odsbox/pull/299),
+  [`48c0c46`](https://github.com/peak-solution/odsbox/commit/48c0c46d0182adcdc0c865f76f37ae1159147c52))
+
+### Continuous Integration
+
+- Bump astral-sh/setup-uv from 10.2.0 to 10.3.0
+  ([#298](https://github.com/peak-solution/odsbox/pull/298),
+  [`caf3430`](https://github.com/peak-solution/odsbox/commit/caf3430f8fed8c4929f1b4ec5b4093163d39adef))
+
+### Documentation
+
+- Add ASAM ODS brief overview ([#300](https://github.com/peak-solution/odsbox/pull/300),
+  [`7d675f4`](https://github.com/peak-solution/odsbox/commit/7d675f4265b40a11c7e327ed1eca6ec33539494d))
+
+
 ## v1.10.0 (2026-10-08)
 
 ### Continuous Integration
