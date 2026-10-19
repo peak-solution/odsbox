@@ -213,7 +213,7 @@ def _discover_endpoints(ods_base_url: str, webfinger_path_prefix: str = "", *, v
     web_finger_url = PreparedRequest()
     web_finger_url.prepare_url(
         _build_webfinger_url(ods_base_url, webfinger_path_prefix),
-        {"rel": "http://openid.net/specs/connect/1.0/issuer"},
+        {"rel": "http://openid.net/specs/connect/1.0/issuer", "resource": ods_base_url},
     )
     url = web_finger_url.url
     if url is None:
